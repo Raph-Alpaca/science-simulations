@@ -225,3 +225,17 @@ Git 작성자 이름은 기존 설정 Alpaca Teacher. 설정된 이메일은 Git
 이전 스테이징 80개와 작업 파일 사이에 변경이 없음을 재확인했다. 이번 변경은 README의 로컬 커밋 상태와 이 STATUS 기록뿐이며 두 문서만 다시 스테이징한다. 승인된 유전 개발 초안 5개를 포함하고, PDF 원문·.local·실환경/키·의존성·빌드/검사 결과물은 계속 제외한다. Pages 비활성화와 미승인 콘텐츠 제외 규칙은 그대로다. 앱 코드 변경이 없어 기존 전체 검사 결과를 유지하며 이번에는 인덱스·파일 일치·제외 경로·diff 검사를 수행한다.
 
 이 절을 포함하는 최초 커밋의 메시지는 `chore: initialize science simulations catalog`다. 커밋 ID는 자기 참조를 피하기 위해 본문에 넣지 않고 `git log -1 --format=%H`와 완료 보고로 확인한다. 커밋 직후 실제 ID·파일 수·작성자 확인·작업트리 결과는 공개 대상이 아닌 `.local/evidence/pages04/first-commit-result.json`에 기록한다. 원격 추가·이력 병합·push·Pages 배포는 수행하지 않는다. GitHub 기존 README와 커밋은 변경하지 않으며 05단계는 진행하지 않는다.
+
+## 04 기존 저장소 연결·병합 및 업로드 전 재검사 — 2026-09-13
+
+사용자가 기존 Public 저장소에 프로젝트 코드와 유전 초안 소스를 업로드하도록 승인했다. Pages 배포·학생용 사이트 공개는 승인하지 않았다. 시작 시 현재 폴더 science-simulations, main, 첫 커밋 `33e1a1a3d72247c95e7e53eb579377babde44536`, 작업트리 깨끗함, 원격 없음 확인. 해당 커밋에 로컬 백업 브랜치 `backup/pre-origin-merge-33e1a1a`를 만든 뒤 지정 주소를 origin으로 추가하고 fetch했다.
+
+최신 원격 HEAD/기본 브랜치는 main, 커밋 `8dbba6dc724983cf47ae4f784a9256850ab50f24`, 파일은 README.md 하나였다. 공통 조상 없음(merge-base 종료1)을 확인한 경우에만 allow-unrelated-histories로 병합했다. README add/add 충돌만 발생했고 로컬의 상세 설명을 보존하면서 원격의 science-simulations 이름을 제목에 합쳤다. 다른 코드·설정 충돌이나 앱 변경은 없다. 작성자는 기존 Alpaca Teacher와 저장소 전용 GitHub noreply 설정을 유지한다.
+
+업로드 전 GitHub Settings → Pages를 실제 브라우저로 읽었다. “GitHub Pages is currently disabled”, Source=Deploy from a branch, Branch=None이었다. 설정을 바꾸지 않았다. 저장소의 유일한 Pages workflow는 workflow_dispatch만 받고 publish 기본값 false 및 별도 활성화 변수 조건을 유지한다. push 트리거가 없어 이번 소스 업로드로 배포를 실행하지 않는다.
+
+필수 검사 실제 재실행 결과: upload-audit 문제0(후보80개), validate 종료0(승인0), typecheck 종료0, 단위23/23, 유전 브라우저8/8, 기존 자료실 브라우저9/9, build:catalog·check-pages·verify-pages-browser 모두 종료0. Windows에서 npm.cmd를 사용했다. 최종 dist/catalog는 기존과 동일한 SHA-256 `cb3440667699e4c005a2c262adf925d63481023c06cd3072c1b09c843de35ad3`, 파일4개·카드0개다. 실제 Chrome에서 /science-simulations/ 빈 상태·새로고침·유전 주소404를 확인했다.
+
+두 기존 커밋 전체의 파일 버전81개를 추가 검사해 제외 경로·인증키 표식 문제0을 확인했다. 현재 후보 내용 감사도 문제0이다. 유전 초안 소스5개는 업로드에 포함하지만 PDF 원문·.local·실환경값·키·의존성·빌드/검사 산출물은 제외한다. 기존 원본은 보존한다. 패턴 검사가 모든 민감정보 탐지를 보증하지는 않는다.
+
+이 절 작성 시점은 검사 완료·병합 커밋 및 push 직전이다. 실제 업로드 결과는 후속 기록을 따른다. Linux GitHub Actions 및 실제 Pages 배포는 미실행·미검증이며 실행하지 않는다. 교육과정·교과서·이용 범위 미확인을 유지하고 05단계는 진행하지 않는다.

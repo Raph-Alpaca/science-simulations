@@ -1,4 +1,4 @@
-# 과학 시뮬레이션 제작실 — 구축용 시작 폴더
+# science-simulations — 과학 시뮬레이션 제작실
 
 02단계 공개 자료실과 03단계 유전 로컬 시제품을 구현했습니다. 승인된 교육 콘텐츠가 없어 정식 공개 목록은 비어 있습니다. 관리 앱·외부 배포는 아직 구현하지 않았습니다.
 
@@ -10,11 +10,11 @@ VS Code로 이 폴더를 열고 Codex에 입력하세요.
 먼저 docs/OWNER_INPUT.md, references/source_index.json, docs/DESIGN_BRIEF.md를 확인합니다.
 비공개 원문은 .local/reference에만 두고 Git 제외 여부를 검사하세요. 실제 키는 .env.local 또는 공급사 Secret에 넣으며 채팅·커밋·로그에 넣지 않습니다.
 
-외부 계정은 아직 연결하지 않았습니다. 초기 AI_EXECUTION_ENABLED=false, AUTO_PUBLISH=false입니다. 유료 호출과 실제 공개는 확인 후 진행합니다.
+GitHub의 기존 저장소를 origin으로 연결했습니다. 초기 AI_EXECUTION_ENABLED=false, AUTO_PUBLISH=false입니다. 유료 호출과 학생용 사이트 공개는 별도 확인 후 진행합니다.
 
 ## 현재 상태 — 2026-09-13
 
-00 환경 확인, 01 설계, 02 자료실과 03 유전 시제품의 로컬 검증, 04 업로드 전 점검과 Pages 설정 작성을 진행했습니다. 승인한 소스·문서는 main의 첫 로컬 커밋으로 관리합니다. 대상은 기존 Public 저장소 Raph-Alpaca/science-simulations입니다. 원격 연결·외부 업로드·공개 배포는 하지 않았습니다. 실제 증거와 미검증 항목은 [docs/STATUS.md](docs/STATUS.md)에 기록합니다.
+00 환경 확인, 01 설계, 02 자료실과 03 유전 시제품의 로컬 검증, 04 업로드 전 점검과 Pages 설정 작성을 진행했습니다. 승인한 소스·문서는 기존 Public 저장소 Raph-Alpaca/science-simulations의 이력을 보존하여 관리합니다. 사용자는 프로젝트 코드와 유전 초안 소스 업로드를 승인했습니다. Pages는 비활성화 상태이며 학생용 사이트는 공개하지 않습니다. 실제 업로드 결과와 미검증 항목은 [docs/STATUS.md](docs/STATUS.md)에 기록합니다.
 
 로컬은 Windows PowerShell입니다. npm 명령은 `npm.cmd`로 실행하고 PowerShell 실행 정책은 변경하지 않습니다. WSL 명령과 혼용하지 않습니다.
 
