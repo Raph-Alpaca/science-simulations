@@ -1,0 +1,80 @@
+name: Verify and optionally deploy empty catalog
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the verified EMPTY catalog (requires repository variable and environment approval)'
+        required: true
+        type: boolean
+        default: false
+
+permissions: {}
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Install test browser on disposable Linux runner
+        run: npx playwright install --with-deps chrome
+      - name: Required catalog checks
+        run: |
+          node automation/catalog/audit-upload.mjs
+          npm run validate
+          npm run typecheck
+          node --test --test-timeout=30000 tests/unit/catalog.test.mjs
+          npm run test:e2e
+      - name: Check genetics only if its source was approved for repository upload
+        if: hashFiles('content/simulations/mendel-inheritance/meta.json') != ''
+        run: |
+          npm run test
+          npm run test:genetics
+      - name: Final build from tested commit and strict empty artifact check
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code
+          npm run build:catalog
+          node automation/catalog/check-pages.mjs
+          sha256sum dist/catalog/index.html dist/catalog/catalog.json dist/catalog/assets/app.js dist/catalog/assets/styles.css > "$RUNNER_TEMP/pages.sha256"
+      - name: Browser-check the final output without rebuilding
+        run: node automation/catalog/verify-pages-browser.mjs
+      - name: Verify bytes unchanged after browser checks
+        run: sha256sum --check "$RUNNER_TEMP/pages.sha256"
+      - name: Upload only verified static output
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist/catalog
+          retention-days: 1
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && inputs.publish && vars.PAGES_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy same-run verified artifact (no checkout or rebuild)
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

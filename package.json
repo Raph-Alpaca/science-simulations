@@ -1,0 +1,27 @@
+{
+  "name": "science-simulations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "dev:catalog": "node automation/catalog/serve.mjs --build",
+    "validate": "node automation/catalog/validate.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --test-timeout=30000 tests/unit/*.test.mjs",
+    "test:e2e": "playwright test",
+    "build:catalog": "node automation/catalog/build.mjs",
+    "preview:catalog": "node automation/catalog/serve.mjs",
+    "test:fixtures": "node tests/fixtures/serve.mjs",
+    "dev:genetics": "node automation/catalog/preview-genetics.mjs",
+    "test:genetics": "playwright test --config playwright.genetics.config.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "esbuild": "0.28.2",
+    "parse5": "8.0.1",
+    "typescript": "7.0.2"
+  }
+}

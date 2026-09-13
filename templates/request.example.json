@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "operation": "create_simulation",
+  "topic": "중3 생식과 유전에서 우열·분리·독립의 법칙을 학생이 조작하며 이해하도록 만들기",
+  "grade": 3,
+  "unit": "생식과 유전",
+  "schoolYear": null,
+  "curriculumRevision": null,
+  "targetContentId": null,
+  "requirements": [
+    "예측·조작·관찰·설명",
+    "이론과 관찰 결과 분리"
+  ],
+  "idempotencyKey": "SERVER_MUST_GENERATE",
+  "note": "직접 실행하는 API 요청이 아닌 입력 계약 예시"
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "mendel-inheritance",
+  "title": "부모에서 자손으로, 멘델의 유전 탐구",
+  "grade": 3,
+  "unit": "생식과 유전",
+  "summary": "부모의 대립유전자가 생식세포로 나뉘고 수정으로 다시 만나는 과정을 예측하고 탐구하는 로컬 초안입니다.",
+  "concepts": ["우열의 원리", "분리의 법칙", "독립의 법칙"],
+  "schoolYear": null,
+  "curriculumRevision": null,
+  "entry": "index.html",
+  "sourceIds": ["curriculum-required", "openstax-inheritance", "textbook-selected"],
+  "stage": "draft",
+  "assumptions": ["완전 우성의 씨 모양: R 둥근 모양, r 주름진 모양", "독립 모형의 두 유전자는 서로 다른 염색체에 위치", "씨 색깔 Y/y도 완전 우성이며 유전자 간 상호작용 없음", "각 생식세포의 수정 가능성이 같고 자손의 생존 차이를 고려하지 않음", "여러 감수분열에서 RY/Ry/rY/ry 확률은 각각 1/4", "교육과정·교과서 대조 미완료이며 모든 유전에 일반화하지 않음"],
+  "approvalIsExternal": true,
+  "note": "미승인 로컬 초안. sourceIds는 근거 목록의 참조이며 교육과정·교과서 검토 완료를 뜻하지 않습니다. 학년도와 독립의 법칙 수업 범위는 미확인입니다."
+}

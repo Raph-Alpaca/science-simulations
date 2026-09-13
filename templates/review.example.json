@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "status": "needs_evidence",
+  "candidateHash": null,
+  "role": "independent_reviewer",
+  "sourceChecks": [],
+  "checksExecuted": [],
+  "checksNotExecuted": [
+    "교육과정 대조",
+    "실제 브라우저 검사"
+  ],
+  "blockingIssues": [
+    "실제 제작·검증 전 예시"
+  ],
+  "approver": null,
+  "note": "모델의 이 JSON만으로 공개를 승인하지 않음"
+}

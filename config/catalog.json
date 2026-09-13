@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "basePath": "/science-simulations/",
+  "grades": [{"value":1,"label":"중1"},{"value":2,"label":"중2"},{"value":3,"label":"중3"}],
+  "units": [{"grade":3,"label":"생식과 유전"}],
+  "note": "확인된 첫 제작 주제의 탐색용 단원명만 등록. 학년별 교육과정 전체 목록이나 검토 완료를 뜻하지 않음."
+}

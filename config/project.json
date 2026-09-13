@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "proposalOnly": true,
+  "catalogName": "과학 시뮬레이션 자료실",
+  "studioName": "과학 시뮬레이션 제작실",
+  "repositoryName": "science-simulations",
+  "defaultSchoolYear": null,
+  "curriculumByGrade": {},
+  "language": "ko",
+  "timeZone": "Asia/Seoul",
+  "aiExecutionEnabled": false,
+  "autoPublish": false,
+  "maxRepairAttempts": 2,
+  "maxConcurrentJobs": 1,
+  "maxJobsPerDay": null,
+  "cloudSourcePolicy": "public_or_owner_written_only",
+  "note": "시작 제안값. 실제 구현은 스키마·서버 권한·환경 변수와 검증해야 함."
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "mendel-inheritance",
+  "title": "멘델의 유전 원리 탐구",
+  "grade": 3,
+  "unit": "생식과 유전",
+  "summary": "부모의 대립유전자와 생식세포, 자손의 관계를 조작하며 탐구합니다.",
+  "concepts": [
+    "우열의 원리",
+    "분리의 법칙",
+    "독립의 법칙"
+  ],
+  "schoolYear": null,
+  "curriculumRevision": null,
+  "entry": "index.html",
+  "sourceIds": [
+    "curriculum-required",
+    "openstax-inheritance",
+    "textbook-selected"
+  ],
+  "stage": "draft",
+  "assumptions": [
+    "완전 우성 모형",
+    "독립의 법칙은 서로 다른 염색체의 두 유전자 모형"
+  ],
+  "approvalIsExternal": true,
+  "note": "형식 예시. 필수값이 비어 있으므로 공개 승인 근거가 아님."
+}

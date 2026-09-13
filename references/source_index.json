@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "curriculum-required",
+      "title": "적용 과학 교육과정 원문 — 선정 필요",
+      "url": null,
+      "publisher": null,
+      "edition": null,
+      "pages": null,
+      "scope": "학년도·학년별로 확인",
+      "status": "missing",
+      "visibility": "metadata_only",
+      "redistribution": "not_confirmed",
+      "aiUsePermission": "not_confirmed"
+    },
+    {
+      "id": "openstax-inheritance",
+      "title": "Biology 2e, 12.3 Laws of Inheritance",
+      "url": "https://openstax.org/books/biology-2e/pages/12-3-laws-of-inheritance",
+      "publisher": "OpenStax",
+      "edition": "2e",
+      "pages": "section 12.3",
+      "scope": "교과 개념 검토 참고. 한국 교육과정 원문을 대체하지 않음.",
+      "status": "candidate_not_project_reviewed",
+      "visibility": "public_link",
+      "redistribution": "link_only_in_this_kit",
+      "aiUsePermission": "check_terms_before_ingestion"
+    },
+    {
+      "id": "textbook-selected",
+      "title": "사용 교과서 — 선정 필요",
+      "url": null,
+      "publisher": null,
+      "edition": null,
+      "pages": null,
+      "localPath": ".local/reference/textbook_genetics_excerpt.pdf",
+      "status": "missing",
+      "visibility": "private_local_only",
+      "redistribution": "not_confirmed",
+      "aiUsePermission": "not_confirmed"
+    }
+  ]
+}
