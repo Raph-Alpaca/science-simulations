@@ -245,3 +245,26 @@ Git 작성자 이름은 기존 설정 Alpaca Teacher. 설정된 이메일은 Git
 `git push -u origin main`이 종료0으로 성공했다. 병합 커밋 `7b03bccb212372e3aa5c78abaea2365d1c2578c0`을 기존 원격 main에 정상 전진으로 반영했다. 이후 fetch·ls-remote로 로컬 main과 원격 main의 같은 전체 ID를 확인했고, 두 최초 커밋 `33e1a1a`와 `8dbba6d` 모두 원격 main의 조상인지 검사해 각각 종료0을 확인했다. 파일80개, 미커밋 변경0개였다. 강제 push·기존 이력 삭제·새 저장소 생성·전역 설정 변경은 하지 않았다.
 
 업로드 후 GitHub Settings → Pages를 새로고침해 비활성화 안내와 Branch=None이 유지됨을 다시 확인했다. Pages 활성화·배포 실행·05단계는 진행하지 않았다. 이 실제 결과를 기록하는 후속 문서 커밋도 동일한 승인 범위로 업로드한다. 최종 커밋 ID와 최종 원격 일치 결과는 자기 참조 없이 완료 보고와 로컬 증거 파일에 남긴다. 남은 미검증은 Linux Actions 실행, 실제 Pages 배포, 교육과정·교과서·자료 이용 범위 대조다.
+
+## 04 Actions 첫 실행 오류 수정 — 2026-09-13
+
+시작 시 main과 origin/main은 `404e8416f27fdf8122cce14bb362889a868b9ef0`, 미커밋 변경 없음이었다. fetch 및 최신 원격 조회에서 예상 밖 변경은 없었다. 실제 GitHub 실행 34754009619의 build 로그를 브라우저로 읽었다. Required catalog checks의 audit-upload.mjs가 `git symbolic-ref --short HEAD` 종료128로 실패했고 deploy는 skipped였다. 이전의 Linux 전체 미실행 기록은 이제 이 실제 실패 기록으로 갱신한다.
+
+원인은 github.sha 고정 checkout의 정상적인 detached HEAD를 보고서 생성 코드가 처리하지 못한 것이다. audit-upload.mjs의 보고서 부분만 수정했다. HEAD를 실제 commit으로 검증하고 전체 SHA를 commit 필드에 기록한다. symbolic-ref --quiet --short HEAD의 종료1만 브랜치 없음으로 처리해 branch=null, headState=detached를 기록한다. 정상 브랜치는 실제 이름과 headState=branch를 기록한다. 그 외 종료코드·신호·실행 오류는 다시 던져 실패로 유지한다. 비공개 경로·실환경값·비밀키 감사 규칙, github.sha checkout, 검사 단계, 배포 조건은 변경하지 않았다.
+
+tests/unit/upload-audit.test.mjs를 추가했다. .local/upload-audit-tests 아래 독립적인 임시 Git 저장소에서 실제 감사 스크립트를 실행하며 작업 저장소의 브랜치·커밋을 전환하지 않는다. 수정 전 신규 검사3개 중2개가 실패했다(일반 브랜치 상태 필드 누락, detached HEAD 동일 오류); Git 손상 실패 유지 검사는 통과했다. 수정 후3개 모두 통과했다. 일반 브랜치와 detached HEAD 각각 실제 SHA·상태 기록, .env·PDF·강제 추적한 .local 파일 차단, 합성 토큰 탐지 및 값 비출력을 확인했다. 손상된 Git HEAD는 성공 보고서 없이 실패했다. 임시 원본은 테스트 종료 시 해당 생성 폴더만 정리한다.
+
+| 이번 Windows 실제 검사 | 결과 |
+|---|---|
+| 신규 회귀 검사 | 3/3 통과 |
+| audit-upload | 문제0, 후보81개 |
+| npm.cmd run validate / typecheck | 모두 종료0; 승인 콘텐츠0 |
+| npm.cmd run test | 기존23+신규3=26/26 통과 |
+| npm.cmd run test:e2e | 기존 자료실9/9 통과 |
+| npm.cmd run test:genetics | 유전8/8 통과 |
+| npm.cmd run build:catalog / check-pages.mjs | 종료0; 산출물4개·공개카드0 |
+| verify-pages-browser.mjs | 종료0; 최종 산출물 하위 경로·빈 화면·새로고침·초안404 |
+
+빌드 SHA-256은 `cb3440667699e4c005a2c262adf925d63481023c06cd3072c1b09c843de35ad3`로 동일하다. GitHub Settings → Pages의 비활성화 안내·Branch=None을 다시 확인했다. 교육과정·교과서·이용 범위 미확인인 유전 초안은 배포에서 계속 제외한다.
+
+수정·로컬 검증 완료, 사용자의 새 Actions 실행 대기 상태다. 승인한 감사 코드·회귀 테스트·이 상태 문서만 커밋하여 기존 origin/main에 정상 push하며, 최종 SHA·원격 일치·작업트리 결과는 `.local/evidence/pages04/audit-fix-upload-result.json`과 완료 보고에 남긴다. 수정 버전의 Linux Actions는 미실행·미검증이다. 기존 실패 실행의 Re-run은 이전 SHA를 사용하므로 Actions → Verify and optionally deploy empty catalog → Run workflow에서 main을 선택하고 publish를 false(체크 해제)로 유지해 새 실행을 시작해야 한다. Codex는 Actions 실행·Pages 활성화·배포·05단계를 수행하지 않는다.

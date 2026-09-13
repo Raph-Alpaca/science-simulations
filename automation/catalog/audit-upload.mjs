@@ -25,10 +25,19 @@ for(const file of candidates) {
   }
   candidateManifest.push({path:file,hash:hash(bytes)});
 }
-const report={recordedAt:new Date().toISOString(),branch:git('symbolic-ref','--short','HEAD').trim(),commits:Number(git('rev-list','--all','--count').trim()),tracked:tracked.length,candidates,candidateManifest,ignored,problems,draftSourceCandidates:candidates.filter(p=>p.startsWith('content/simulations/mendel-inheritance/')),note:'후보는 업로드 승인이 아님. Patterns only; arbitrary encoded secrets/personal notes require human review. No values printed.'};
+const commit=git('rev-parse','--verify','HEAD^{commit}').trim();
+let branch=null;
+try {
+  branch=git('symbolic-ref','--quiet','--short','HEAD').trim();
+} catch(error) {
+  // --quiet returns 1 only for a non-symbolic (detached) HEAD; other failures stay fatal.
+  if(error.status!==1 || error.signal) throw error;
+}
+const headState=branch===null?'detached':'branch';
+const report={recordedAt:new Date().toISOString(),branch,headState,commit,commits:Number(git('rev-list','--all','--count').trim()),tracked:tracked.length,candidates,candidateManifest,ignored,problems,draftSourceCandidates:candidates.filter(p=>p.startsWith('content/simulations/mendel-inheritance/')),note:'후보는 업로드 승인이 아님. Patterns only; arbitrary encoded secrets/personal notes require human review. No values printed.'};
 const folder=path.join(ROOT,'.local/evidence/pages04');await fs.mkdir(folder,{recursive:true});
 await fs.writeFile(path.join(folder,'upload-audit.json'),JSON.stringify(report,null,2));
 await fs.writeFile(path.join(folder,'upload-candidates.txt'),candidates.join('\n')+'\n');
 await fs.writeFile(path.join(folder,'excluded-paths.txt'),ignored.join('\n')+'\n');
-console.log(JSON.stringify({branch:report.branch,commits:report.commits,tracked:report.tracked,candidates:candidates.length,ignored,problems,draftSourceCandidates:report.draftSourceCandidates},null,2));
+console.log(JSON.stringify({branch:report.branch,headState:report.headState,commit:report.commit,commits:report.commits,tracked:report.tracked,candidates:candidates.length,ignored,problems,draftSourceCandidates:report.draftSourceCandidates},null,2));
 if(problems.length)process.exitCode=1;
