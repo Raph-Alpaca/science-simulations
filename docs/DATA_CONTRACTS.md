@@ -134,3 +134,11 @@ DB 트랜잭션과 외부 dispatch는 원자적이지 않으므로 `dispatch_int
 ## 02 구현 연결
 
 실제 스키마는 packages/contracts/meta.schema.json, 공통 표기는 config/catalog.json, 경로·링크·해시 검사는 automation/catalog/content.mjs에 구현했다. 미확정 교육 값은 null을 허용하지만 공개 근거를 대신하지 않는다. 신뢰된 승인 발급원은 아직 없으므로 비어 있지 않은 로컬 승인 목록은 실패시킨다. 04에서 trusted main/승인 발급과 연결해야 한다. 실제 상한·지원 링크 범위·검사용 데이터 분리는 [구현 기록](CATALOG_IMPLEMENTATION.md)에 명시했다. 위 원래 계약과 공개 승인 요건은 유지한다.
+
+## 05 구현 연결 — 실제 연결 전
+
+apps/studio는 schemaVersion=1 요청 봉투, 서버 소유자 결정, 요청 UUID·payload hash 중복 방지, null 미확인 값과 상태 버전 계약을 사용한다. SQL은 supabase/proposals/studio_v1.sql의 미적용 검토안이다. 실제 DB의 RLS·GRANT·원자성·저장 복원은 미검증이다.
+
+05의 execution_mode=mock, policy_version=studio-mock-v1은 실제 제작과 별도다. 자료가 미확인인 상태에서 queued/running을 거치는 것은 모의 흐름 검사만 의미한다. 실제 자료 검토는 하지 않으며 최종 상태는 needs_input이다. 승인·published·release를 생성하지 않는다. 실제 제작용 근거 선행 조건과 공개 승인 계약은 변경하지 않았다. 상세 API·데이터 권한·실제 연결 후 검증표는 [제작실 준비](STUDIO_SETUP.md)에 기록했다.
+
+SQL 적용 전 검토에서 명령 UUID의 재사용은 job_events.command_type과 예상 state_version에도 결합했다. 같은 UUID의 다른 명령/버전은409다. 재시도도 원본의 예상 state_version을 확인하며 해당 버전을 요청 해시에 포함한다. 초기 접수 이벤트0을 포함한 저장 이벤트 상한은20개다. 서버 RPC와 SQL 인자·GRANT 시그니처를 함께 유지한다. 이 계약의 로컬 순수/정적 검사는 실제 DB 동시성 검증을 대신하지 않는다.

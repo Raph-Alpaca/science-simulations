@@ -3,8 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
-  "engines": { "node": ">=24 <25" },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "dev:catalog": "node automation/catalog/serve.mjs --build",
     "validate": "node automation/catalog/validate.mjs",
@@ -15,7 +20,12 @@
     "preview:catalog": "node automation/catalog/serve.mjs",
     "test:fixtures": "node tests/fixtures/serve.mjs",
     "dev:genetics": "node automation/catalog/preview-genetics.mjs",
-    "test:genetics": "playwright test --config playwright.genetics.config.mjs"
+    "test:genetics": "playwright test --config playwright.genetics.config.mjs",
+    "dev:studio": "npm run dev --workspace @science/studio",
+    "build:studio": "npm run build --workspace @science/studio",
+    "typecheck:studio": "npm run typecheck --workspace @science/studio",
+    "test:studio": "node --test --test-timeout=30000 tests/studio/*.test.mjs",
+    "test:studio:e2e": "playwright test --config playwright.studio.config.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
