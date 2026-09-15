@@ -683,3 +683,9 @@ B 앱 버튼 로그아웃은 미검증: B 비활성·허용 제외·세션0으�
 배포 연결은 실제 화면으로 추가 확인했다. 저장소 Settings → Webhooks에 등록된 webhook이 없고, Pages Source는 GitHub Actions다. 저장소 workflow는 pages.yml 하나이며 workflow_dispatch만 있고 push 트리거가 없다. GitHub Apps에 Vercel 설치는 있으나, 현재 로그인한 Vercel 대시보드의 전체 프로젝트 목록에는 다른 저장소 프로젝트만 있고 science-simulations 연결 프로젝트는 없다. Vercel 도구의 팀 목록은 빈 응답이어서 그것만으로 미연결을 단정하지 않고 실제 대시보드를 확인했다. 로컬 .vercel 연결 파일도 없다. 확인 가능한 설정에서 이번 push가 자동 배포를 시작할 경로는 발견하지 않았고 외부 설정은 수정하지 않았다. 이 기록 시점에는 선별 스테이징·커밋·push 결과는 아직 기록하지 않는다.
 
 B 앱 버튼 로그아웃, 자연 만료, reviews/approvals/releases 실재 행의 실제 사용자 토큰 조회는 그대로 미검증이다. A/B 설정·실제 환경파일·시스템 CA 방식·Supabase·기존 공개 사이트를 변경하지 않는다.
+
+### 실제 제작실 업로드 완료
+
+명시된40개 경로만 스테이징하고 인덱스의 파일 집합·내용 해시가 검토한 작업 트리와 일치함을 확인했다. 금지 파일/실제 환경값 비출력 재검사 및 staged diff 검사 후 `feat: add teacher studio auth and mock job management` 메시지로 **e869525820163a1901103ae8f7ab1c793823f0ed** 커밋을 생성했다(40파일). push 직전 fetch에서도 예상한 원격 HEAD가 유지됨을 확인하고 기존 origin/main에 일반 push했다. push 후 다시 fetch하여 로컬 main과 origin/main이 모두 해당 SHA와 일치했고 그 시점의 작업 트리는 깨끗했다. 기존 로컬 초기 커밋33e1a1a와 원격 초기 커밋8dbba6d도 조상으로 유지됐다. 이 구현 커밋에 대한 GitHub Actions 실행 수는 확인 시0개였다.
+
+이 문단은 위 push가 실제 성공한 뒤 추가한 결과 기록이다. STATUS.md만 후속 문서 커밋으로 반영하며 구현 파일은 다시 수정하지 않는다. 실제 .env.local/비공개 원문/검사 자료와 로그는 Git 제외 상태로 로컬에 남는다. Vercel 프로젝트 연결·환경값 등록·배포와 Pages 재배포는 실행하지 않았다. 다음에는 별도 요청으로 기존 저장소의 Vercel 연결 준비를 시작할 수 있으나 Deploy나 운영값 입력은 아직 진행하지 않는다. 남은 세 미검증 항목은 위 상태를 그대로 유지한다.
