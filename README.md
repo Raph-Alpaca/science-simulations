@@ -1,6 +1,8 @@
 # science-simulations — 과학 시뮬레이션 제작실
 
-02단계 공개 자료실과 03단계 유전 로컬 시제품을 구현했습니다. 승인된 교육 콘텐츠가 없어 정식 공개 목록은 비어 있습니다. 04단계 빈 자료실 게시와 05단계 제작실의 실제 Supabase 연결을 확인했습니다. 현재 06단계 Vercel 배포 전 준비만 진행했으며 제작실은 아직 배포하지 않았습니다.
+공개 자료실과 교사용 제작실을 배포했고, 실제 Supabase 연결을 확인했습니다. 2026-10-04 운영 DB 백업·격리 복원과 대화 관리 v2 DB 적용을 완료했습니다. 승인된 교육 콘텐츠가 없어 공개 목록은 비어 있으며, 자동 AI 제작·검토·게시 실행기는 연결 작업 중입니다.
+
+현재 목표는 **과제 입력 → 2D/3D 시뮬레이션 제작 → 검토·수정 → 승인·게시·확인**입니다. 사용자가 계속 진행하도록 요청했으며 OpenAI API 예산은 월 최대 10,000원, 월 약 10건입니다. 작업당 1,000원에 검토·수정을 포함하는 비용 예약 SQL을 로컬 검사했고, 유료 실행은 아직 꺼져 있습니다. 최신 실제 결과는 [진행 현황](docs/STATUS.md) 맨 위를 확인하세요. 아래 단계별 기록의 과거 대기 상태와 구분합니다.
 
 VS Code로 이 폴더를 열고 Codex에 입력하세요.
 > setup/00_environment.md를 읽고 현재 단계만 진행해 주세요.
@@ -12,7 +14,7 @@ VS Code로 이 폴더를 열고 Codex에 입력하세요.
 
 GitHub의 기존 저장소를 origin으로 연결했습니다. 초기 AI_EXECUTION_ENABLED=false, AUTO_PUBLISH=false입니다. 유료 호출과 학생용 사이트 공개는 별도 확인 후 진행합니다.
 
-## 현재 상태 — 2026-09-15
+## 공개 주소와 이력
 
 공개 자료실 주소는 https://raph-alpaca.github.io/science-simulations/ 입니다. 사용자가 04 build·deploy 성공을 보고했고, 실제 게시 화면·빈 목록·검색 복원·유전 초안 주소404를 직접 확인했습니다. 기존 Public 저장소의 이력을 유지하며 05 제작실 변경은 아직 로컬 미커밋 상태입니다. 실제 결과와 미검증 항목은 [docs/STATUS.md](docs/STATUS.md)에 기록합니다.
 
@@ -23,7 +25,7 @@ GitHub의 기존 저장소를 origin으로 연결했습니다. 초기 AI_EXECUTI
 - [운영 규칙](docs/OPERATIONS.md), [결정 기록](docs/DECISIONS.md), [도구 확인](docs/TOOLS.md)
 - [사용자 입력·학년별 검증표](docs/OWNER_INPUT.md)와 [역할 지침](automation/roles/README.md)
 
-학년도·교육과정·교과서·비용은 미확인으로 유지합니다. 유전 초안은 공개 Git 소스에 포함되지만 정식 사이트 배포에서는 제외합니다. 05·06 변경은 미커밋이며 커밋·push·Vercel 연결·배포는 별도 승인 후 진행합니다. [Vercel 배포 준비](docs/VERCEL_PREPARATION.md)와 [업로드 후보](docs/STUDIO_UPLOAD_REVIEW.md)를 확인하세요.
+교사용 제작실은 https://science-simulations-studio.vercel.app/ 입니다. 교육과정·교과서 원문 대조는 미확인입니다. 유전 초안은 공개 Git 소스에 포함되지만 정식 사이트 배포에서는 제외합니다. [Vercel 배포 준비](docs/VERCEL_PREPARATION.md)와 [업로드 후보](docs/STUDIO_UPLOAD_REVIEW.md)는 당시 준비 기록입니다.
 
 ## 05 교사용 제작실 — 실제 연결된 로컬 모의 실행
 

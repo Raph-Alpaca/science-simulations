@@ -1,0 +1,111 @@
+name: Studio separate candidate retrieval verification and reporting
+on:
+  workflow_call:
+    inputs:
+      job_id:
+        required: true
+        type: string
+      attempt:
+        required: true
+        type: number
+    secrets:
+      STUDIO_TRANSFER_KEY:
+        required: true
+permissions: {}
+env:
+  STUDIO_JOB_ID: ${{ inputs.job_id }}
+  STUDIO_ATTEMPT: ${{ inputs.attempt }}
+jobs:
+  fetch:
+    if: github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1 && vars.STUDIO_WORKER_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      ready: ${{ steps.packet.outputs.ready }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Read approved packet and seal it before writing a file
+        id: packet
+        env:
+          STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+        run: node automation/runner/report-cli.mjs fetch
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: steps.packet.outputs.ready == 'true'
+        with:
+          name: studio-candidate-${{ github.run_id }}-${{ inputs.attempt }}
+          path: ${{ runner.temp }}/studio-packet-${{ inputs.attempt }}/candidate.sealed.json
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 0
+  verify:
+    needs: fetch
+    if: needs.fetch.outputs.ready == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - id: image
+        run: node automation/runner/container/build.mjs
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: studio-candidate-${{ github.run_id }}-${{ inputs.attempt }}
+          path: ${{ runner.temp }}/studio-packet-${{ inputs.attempt }}
+      - name: Run candidate inside bounded offline container
+        env:
+          STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+          STUDIO_CHECKER_IMAGE: ${{ steps.image.outputs.image }}
+        run: node automation/runner/report-cli.mjs verify
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: studio-report-${{ github.run_id }}-${{ inputs.attempt }}
+          path: ${{ runner.temp }}/studio-packet-${{ inputs.attempt }}/report.sealed.json
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 0
+  report:
+    needs: [fetch, verify]
+    if: needs.fetch.outputs.ready == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: studio-report-${{ github.run_id }}-${{ inputs.attempt }}
+          path: ${{ runner.temp }}/studio-packet-${{ inputs.attempt }}
+      - name: Recheck current version then submit observed report once
+        env:
+          STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+        run: node automation/runner/report-cli.mjs report

@@ -1,5 +1,326 @@
 # 구현 현황
 
+## 2026-10-05 재개 — 같은 콘텐츠의 후속 수정 연결
+
+사용자가 재개를 지시했고 사용량 중단 기준을 **남은 약20%**로 변경했다. 약25%에서 새 큰 단계를 시작하지 않고 정리하여20% 전에 멈춘다. 재개 시100%, 구현 중 최근93%가 남았으며 초기화권을 사용하지 않았다. 아래21%/15% 중단 문단은 이전 작업 이력이다.
+
+수정 의견→정확한 기존 후보·누적 과제 확인→새 사용 범위/비용 동의→동일 콘텐츠ID의 후속 접수→새5역할/실행 검토→결과 조회를 로컬에 연결했다. 기존 작업·후보·검토·예산은 보존하며 결과 화면에서 수정 전 작업을 열 수 있다. 같은 요청/응답 유실은 같은 접수를 반환하고, 오래된 부모 분기·동일 의견 재소비·권한 철회·만료·예산 차단을 DB에서 거부한다. 후보 없이 종료된 작업만 새 의견/동의를 받아 원래 후보에서 재시도할 수 있다. [구현·상한·권한 경계](FOLLOWUP_REVISION.md).
+
+실제 실행한 검사:
+
+- 제작실 전체151/151 PASS/exit0,85.64초. 새8개 수정 서비스/DB 검사, 수정 파이프라인, 서명HTTP→PGlite→합성 모델5회→별도 보고자→새 후보/후속 수정 준비 왕복 포함. API 모델·보고값은 합성이며 유료/원격 실행은0회다.
+- Next production build/TypeScript PASS/exit0. Chrome 기존17개 통과, 새 수정2개는 최초 알림 선택자 실패를 수정한 별도 실행에서2/2 PASS/exit0,16.6초.390/1440px·axe0·가로 넘침 없음·새 동의·중복 클릭·준비/접수 응답 유실·재접속 복원·후보 비실행을 확인했다.19개 모두의 통과 증거가 있으며 “한 번의 전체19/19 실행”을 뜻하지 않는다.
+- PostgreSQL17 실제 물리 연결29개/10개 SQL PASS/exit0. `.local/worker-pg17-revision-6a3bfd5997b7498787b3a5261e51c55d/result.json`, UTC04:49:02~04:49:43. 새 수정 경쟁8개, 서로 다른 non-superuser PID와 Lock 확인, stopped=true·PID/임시암호 없음·보호 ACL 확인.
+- 컨테이너 복사/import4/4 포함. Windows 샌드박스의 상위 경로 읽기 제한 때문에 실패한 초기 구성 검사는 경로 검사를 유지한 채 정상 사용자 문맥에서 통과했다. 실제 Docker/Linux/Actions는 아직 미검증이다.
+
+새 화면 첫2개는 Next의 숨은 route announcer까지 알림으로 선택해 실패했다. 표시된 오류 알림만 정확히 선택하도록 바꾸고 기존 검사/assertion을 유지했다. 실패 trace는 `.local/evidence/worker/browser-revision-initial-003ec477e57c40a9863076fd527299d1/`에 보존했다. 원격 왕복 검사도 의견 저장 전 스냅샷을 기준으로 삼은 테스트 오류를 고쳐 전체 원본 불변성 비교를 통과했다.
+
+운영 DB/앱/키/원격 Git 변경은 없다. 새 SQL은 제안, `STUDIO_REVISION_ENABLED=false`이며 다른 기능도 기본 비활성이다. 기존40개 스테이징(2261추가/44삭제)을 보존했고 새 작업은 미스테이징이다. 실제 Linux 격리/Actions/OIDC·제한된 유료 첫 제작·신뢰된 원문 검토 발급·격리된 조작 미리보기·배포물 승인/게시/게시 확인은 미완료다. 다음 운영 연결 전에 구체적 공개 변경 범위와 준비된 자격증명을 확인해야 한다.
+
+## 2026-10-05 사용량 보호를 위한 중단·재개 준비
+
+남은 계정 사용량 약21%(사용79%)를 확인하고 새 구현을 멈췄다. 사용자가 요청한15%를 보호하기 위한 여유다. [재개 인계](RESUME_HANDOFF.md)에 목표·완료/미완료·검사/원본 경로·Git 스테이징 보존·대기 중 질문·다음 단계와 주의점을 정리했다. 초기화권은 사용하지 않았고 전체 목표는 아직 미완료다.
+
+실제 코드/SQL을 읽어 [후속 수정 연결 설계안](FOLLOWUP_REVISION_PLAN.md)을 작성했다. 같은 콘텐츠ID의 부모/자식 버전,50KB 승인입력·150KB 모델입력·2MB 후보 상한, 새 비용동의·예산·중복접수·취소 경쟁을 다룬다. 이 API/SQL/화면은 아직 구현하지 않았다. 결과 화면에 남아 있던 “학년도 미확인” 문구는 현재의 학년도 제거 결정과 일치하도록 “적용 교육과정 기준 미확인”으로 수정했다. 마지막 `npm.cmd run typecheck:studio` PASS/exit0. 문구만 변경해 별도 새 테스트와 전체 브라우저 재실행은 하지 않았다.
+
+마지막 확인에서3000/3001/4177 수신 서버와postgres 프로세스 없음. 대기 중 검사 세션·유료 AI/원격 dispatch 없음. 기존40개 스테이징(2261추가/44삭제)은 보존하고 추가 작업은 미스테이징이다. 비공개 자료/키/원본은 Git 제외, 원격 Git/배포/운영 DB는 그대로다. 공개 업로드는 자동 승인 검토의 구체적 대상/범위 동의 요구로 보류 중이며 이미 보낸 승인 질문과 API 키 준비 질문을 반복하지 않는다.
+
+## 2026-10-05 공식 교육과정 부분 대조·멘델 활동 보완
+
+교육부2022-33호 공식 HWP와 제공 PDF의 생식과 유전 단원17개 문단을 실제 읽고 대조했다. 인쇄59쪽/PDF65쪽의 단원 텍스트 순서는 공백·문장부호 제외 후 일치했다. 전체 문서·모든 수정 고시·선정 교과서 대조 완료가 아니다. [확인한 범위·원본 해시·남은 항목](CURRICULUM_MENDEL_REVIEW.md), [출처 검토 기록](../references/reviews/curriculum-2022-mendel.json).
+
+시제품에 멘델 교배 실험의 의의와 공개 완두 자료 조사·모둠별 표본 비교·근거에 따른 설명 수정 안내를 추가했다. ID/주소와 계산 모형은 유지했다. 독립의 법칙의 필수/보충/심화 위치는 추가 확인이 필요하다. 새 후보는 주 에이전트가 보완했으며 과거 후보의 독립 검토를 승계하지 않는다. 출처 검토 기록도 게시 승인 패킷이 아니다.
+
+자료실 단위30/30 PASS(exit0,11.81초), 실제 Chrome 시제품8/8 PASS(exit0,29.4초).390/768/1440px·키보드·axe 위반0·가로 넘침 없음과 기존 조작을 확인했다. 현재 후보 해시 `50d3016ddf9bf1b2098f6d01d6c4dda22291392c859ea49b6be02da80601346f`, 공개 승인 카드0. 서버 종료 뒤3000/3001/4177 수신 서버 없음 확인. 앱/SQL 변경이 없어 앞선 제작실141개/브라우저17개/실제PG17 경쟁21개의 증거를 유지하며 다시 실행하지 않았다.
+
+원문·추출 문단·비교 스크립트는 `.local/reference/curriculum-2022-review-378fe2ab-86f6-4655-8eaa-5932df634425/`에 보존한다. 이전 시제품 증거는 별도 복사했고 최신 브라우저 보고서의 내장 결과도8개 통과로 확인했다. 보고서 추출의 첫 시도는 이전 HTML 형식을 가정해 실패했으며 현재 template 형식을 읽어 해결했다. 기존9월 manifest를 최신 결과로 덮어쓰지 않았다.
+
+운영 DB/앱/키·원격 Git 변경과 유료 호출 없음. 기존40개 스테이징(2261추가/44삭제)을 보존했다. 최신 사용량 스냅샷은 사용77%/남음23%이며15% 보호를 위한 정리 여유를 유지한다. [재개 인계](RESUME_HANDOFF.md)에 현재 단계와 다음 작업을 기록한다. 공개 업로드의 구체적 승인과 API 키 준비 응답은 계속 대기다.
+
+## 2026-10-05 교육과정 기준·원문 근거 게시 규격 정합성
+
+학년도 입력 제거라는 기존 사용자 결정을 유지했다. 새 제작 입력에는 내부2022 개정 기준과unverified 상태를 함께 넣고 화면에도 원문 대조 미확인을 표시한다. 과거 입력/해시/콘텐츠는 변경하지 않았다. 새 게시 승인v2는 연도를 임의로 넣는 대신 정확한 콘텐츠·후보·입력·학년·단원·revision에 결합한 원문 검토 묶음과educationHash를 요구한다. v1 승인 호환은 유지한다. [규격·권한 경계·한계](EDUCATION_EVIDENCE.md).
+
+원문 문서 해시·쪽/절·실제 검토 범위·검토자/시각·방법·판정·AI/요약 이용 허용이 빠지거나 원문 기록이 달라지면 새 규격은 거절한다. 이는 형식/버전 검사이며 실제 원문 수집·검토자 인증·승인 발급 서비스는 미연결이다. 생산 자료실은 계속 승인 카드0, 결과 화면의 게시 적격도false다. 실제 교육과정/교과서 대조를 통과로 기록하지 않았다.
+
+최종 자료실30/30, 제작실141/141, 변경된 컨테이너 의존성 검사4/4, production build/TypeScript·자료실typecheck/validate PASS. Chrome 전체17/17 PASS/exit0(1.1분), 학년도 입력 없음·2022 개정과 원문 미확인 동시 표시·390/1440px·기존 결과/접수 흐름을 확인하고 검사 서버를 종료했다. 실제 Docker는 실행하지 않았다. SQL 변경이 없어 직전 실제PostgreSQL21개/9SQL 해시 증거를 유지하고 반복하지 않았다.
+
+초기 자료실 검사는 build 중dist/catalog를 읽는 다른 파일과 경쟁해 rename EPERM 및 이후 ENOENT로 두 차례 실패했다. 기존 모든 assertion을 유지하고 검사 파일의 실행 순서를 직렬로 고정한 뒤30개 전체가 통과했다. 새 네이티브 번들러/기존realpath 검사도 Windows sandbox의 상위 경로 조회 제한으로 실패했으며, 보호 검사를 완화하지 않고 일반 사용자 문맥에서 동일 검사를 통과했다. 최종 컨테이너 복사본의 import 그래프도 확인했다.
+
+최종 업로드 후보228개 문제0. 기존 스테이징40개/2261추가/44삭제를 유지했다. 유료 호출·원격 Git/키/운영 DB/앱 변경 없음. 최신 사용량은 사용69%/남음31%로, 약20%부터 정리하는 사용자 중단 조건을 [재개 인계](RESUME_HANDOFF.md)에 유지한다. 공개 업로드의 구체적 승인과 API 키 준비 응답은 계속 대기다.
+
+## 2026-10-05 제작 결과·실패 이력·버전별 수정 의견
+
+실제 작업의 결과 조회, 생성 파일을 실행하지 않는 코드 보기, 후보 버전에 결합한 메모·수정 요청 저장을 구현했다. 입력/증거/후보/검사/독립 검토의 해시와 순서를 서버에서 다시 확인하고, AI 의견과 실제 실행 검사 및 미확인 원문 근거를 구분한다. 수정 요청 저장은 추가 유료 실행이나 게시 승인이 아니다. [구현·한계](RESULT_REVIEW.md), [다음 작업 인계](RESUME_HANDOFF.md).
+
+전체 제작실141/141, 추가 상한 검사를 포함한 결과 검토5/5, production build/TypeScript PASS. 실제 Chrome 전체17/17 PASS/exit0(1.1분), 새3개는390/1440px·실패 후 수정 이력·코드/모델 문자열 비실행·응답 유실 후 중복 저장 방지·원문 브라우저 저장 없음·axe 위반0·가로 넘침 없음을 확인했다. 원격 모델/실행 보고는 합성 fixture이며 실제 AI·과학 원문 검토가 아니다.
+
+새 PostgreSQL17 물리 연결 경쟁21개 PASS/exit0, 00:52:42~00:53:19 KST. `.local/worker-pg17-input-dd9b68b0629e41b0be517f1fa49bfd1b/result.json`: 현재9개 SQL 해시 일치, 실제 Lock/차단 PID, stopped=true, PID·임시 평문 암호 없음, 현재 사용자/SYSTEM 보호 ACL 확인. 새3개는 의견 중복·서로 다른 내용의 같은 요청 ID·대화 삭제와 저장 경쟁이다.
+
+초기 브라우저3개는 숨은 Next 알림까지 선택한 locator와 option disabled 판정 때문에 실패했다. 대상/DOM 속성을 정확히 검사하도록 고쳐 최종 통과했으며 실패 추적을 보존했다. 첫 실제 PostgreSQL 실행은21개 동작 통과 뒤 정리 관찰 제한으로 exit1이었다. 원래 보고서를 유지하고 같은 서버의 종료를 별도로 확인한 다음, 정리 관찰을 보완한 새 실행 전체가 정상 종료했다. [실패 기록 경로](RESULT_REVIEW.md).
+
+유료 AI 호출·실제 GitHub dispatch0회, 운영 SQL/앱/키/원격 Git 변경 없음. 결과 검토도 기본 비활성이다. 원문 검증, 후속 수정 실행, 조작 가능한 격리 미리보기, 정확한 배포물 승인·게시·게시 확인이 남았다. 기존 공개 대상/40개 범위 동의와 API 키 준비 응답을 기다린다. 기존 스테이징40개(2261추가/44삭제)는 보존하고 추가 구현은 미스테이징이다.
+
+사용자 지시에 따라 사용량을 확인하며 **남은 약20%부터 새 단계 착수를 멈추고 정리하여15%를 보호**한다. 최신 확인은 사용67%/남음33%였다. 실제 중단 전 최신 상태·검사·프로세스·다음 단계를 RESUME_HANDOFF에 갱신하며 초기화권은 사용하지 않는다.
+
+## 2026-10-05 확인한 과제 → 영구 접수 → GitHub 제작 실행 연결
+
+입력 확인 뒤 제작 시작·접수 상태 조회·실제 중단을 연결했다. 서버는 고정 저장소/main의 검토된 SHA를 확인하고 작업 UUID만 GitHub에 전달하며, 반환된 실행번호·워크플로·저장소·SHA·attempt1을 재검증한 뒤 worker와 연결한다. GitHub App 토큰은 해당 저장소 Actions write/Contents read로 제한하고 생성 코드에 주지 않는다. [구현·한계·공식 문서](DISPATCH.md).
+
+신규 DB 제안은 입력 사용·작업·접수·예산을 원자적으로 결합한다. 영구 claim으로 중복 클릭·응답 유실·시간 만료 뒤에도 재전송하지 않는다. POST 전 실패만 미사용 금액을 닫고, POST 후 불확실 응답은 예약을 유지한다. 취소와 늦은 응답이 겹치면 취소가 우선하며 미연결 worker는 과제·AI 권한을 얻지 못한다. 실제 작업 화면에서 모의 명령을 숨기고 서버도 거부한다.
+
+최종 전체 제작실136/136, production build/TypeScript PASS. 실제 Chrome 전체14개 PASS/exit0(45.3초), 새 제작 접수3개에서390/1440px·불확실 응답·중복 클릭1회·새로고침 복원·중단·axe 위반0·가로 넘침 없음을 검사했다. API는 로컬 서비스/PGlite에 연결하고 Auth/GitHub는 합성 응답이다. 초기 정적 계약 검사는 새 취소 RPC 누락으로 실패해 범위 보완 후 전체 재통과했다. 첫 브라우저5개는 동작 통과 뒤 서버 teardown180초 실패였으며 해당 서버를 검증해 종료한 뒤 전체14개와 정상 종료를 재확인했다. 실패를 삭제하지 않았다.
+
+새 PostgreSQL17 물리 연결 경쟁18개 PASS/exit0, 00:33:09~00:33:46 KST. `.local/worker-pg17-input-e885c87fc32842219aa2099c7673d942/result.json`: 8개 SQL, 모든 사례의 실제 Lock/차단 PID, stopped=true, PID·임시 평문 암호 없음, 현재 사용자/SYSTEM 보호 ACL 확인. 새4개는 접수 경쟁·취소 전후 실행 결합·같은 결과 중복 저장이다. 별도 검사 DB로 기존 불확실 비용과 월10건 한도를 보존했다.
+
+운영 SQL/앱/환경/키/원격 Git은 변경하지 않았고 실제 GitHub dispatch·유료 AI 호출0회다. 기본 비활성 설정을 유지한다. 실제 App 자격증명·Actions OIDC·Linux 컨테이너 rehearsal, API 키 연결, 출처 원문 검토, 결과 검토·게시·게시 확인이 남았다. OpenAI 키 준비와 자동 승인 검토가 요구한 기존 공개 대상/범위 동의는 답변 대기다. 기존 스테이징40개(2261추가/44삭제)는 보존하고 이번 구현은 미스테이징이다.
+
+최종 증거 `.local/evidence/worker/dispatch-system-b68907d5b44147b3bf011c2d13ee71d1.json`에 실패 이력·최종 통과·DB 해시·검사 서버 종료를 함께 보존했다.390px 접수/1440px 불확실 화면 캡처를 직접 확인했다. 업로드 후보217개 문제0, staged/unstaged 공백 검사 통과. 환경/암호/DB/캡처/원본 자료는 계속 Git 제외다.
+
+## 2026-10-05 제작 과제·출처 입력 확인 UI/API와 DB 결합
+
+2D/3D 과제와 공개 참고 링크·직접 작성한 요약을 준비하고 정확한 전달 내용을 확인하는 화면/API를 구현했다. 입력 사용 범위·비용 조건은 해당 본문 해시에 결합하고, 수정 시 다시 확인한다. 브라우저에는 식별자/요청 해시만 보존한다. 준비/확인만으로 AI 호출·작업 예산을 예약하지 않는다. 새 DB 트리거는 실제 승인 기록 없이 임의 UUID를 넘기는 worker 접수를 차단하고 본문/동의 변경, 중복 작업과 다른 사용자 결합을 거부한다. [구현·제한·검증 상세](INPUT_REVIEW.md).
+
+전체 제작실125/125, production build·내장 TypeScript 성공. 최종 DB 제약 보완 후 관련6개 재통과. 실제 Chrome 새 화면2개(390/1440px)와 기존 화면9개 통과, axe 위반0·가로 넘침 없음·중복 클릭1회·새로고침 복원·수정 시 재확인을 확인했다. 새 화면은 합성 입력과 로컬 PGlite SQL을 연결했으며 운영 Auth/API·실제 과학 원문 검증이 아니다.
+
+최종 PostgreSQL17 물리 연결 경쟁14개 PASS(exit0), 00:17:41~00:18:08 KST. `.local/worker-pg17-input-5bd929149b0b4122816e769c2025247b/result.json`: 최신6개 SQL 해시 일치, stopped=true, PID/임시 평문 암호 없음, 현재 사용자/SYSTEM 전용 ACL 확인. 기존11개와 새 입력 확인/중복 접수/삭제 경합3개 모두 실제 Lock·차단 PID 관찰. 추가 그룹은 별도 검사 DB에서 실행해 월10건 한도와 앞선 불확실 비용 상태를 보존했다.
+
+운영 SQL·앱·Git 원격·실제 키 변경 없음, 유료 호출0회. 기능은 기본 비활성이고 실제 dispatch·제작 시작·게시 버튼은 아직 연결하지 않았다. 링크와 교사 요약을 원문 검토 완료로 표시하지 않는다. OpenAI 키 준비 여부와 자동 승인 검토가 요구한 공개 대상/범위 동의는 답변 대기다. 기존40개 스테이징(2261추가/44삭제)은 그대로, 이번 변경은 미스테이징이다.
+
+최종 업로드 후보209개 문제0, staged/unstaged 공백 검사 통과. 인증 정보 URL을 거부하는 합성 테스트 문자열의 감사 지적을 수정했고 거부 assertion은 유지했다. 원본 자료·환경 파일·검사 캡처·암호/DB 파일은 제외 상태다.
+
+## 2026-10-04 GitHub 제작·검사·보고 워크플로와 컨테이너 래퍼
+
+고정 main/SHA의 `studio-worker`, `studio-generate`, `studio-report` 워크플로3개를 작성했다. 기본 rehearsal, 실제 제작은 별도 설정과 키 없는 Linux2D/3D/실패 감지 rehearsal 성공 뒤에만 시작하도록 했다. 제작·후보 수신·컨테이너 실행·OIDC 보고를 별도 job으로 나누고 후보/보고는 같은 실행의 암호화 산출물로만 전달한다. 서버 dispatch의 고정 mode=generate도 맞췄으며 운영 연결은 아직이다. [상세 구현·검증·남은 범위](WORKER_WORKFLOWS.md).
+
+컨테이너는 공식 Playwright 이미지 digest와 seccomp 커밋/해시를 고정하고 허용 목록으로만 빌드한다. 비관리자·읽기 전용·네트워크 없음·호스트 마운트 없음·권한 제거·메모리2GiB/CPU2/프로세스128·실행65초를 설정하고 실제 Docker 설정 확인 뒤 입력을 전달한다. 삭제를 확인하지 못하면 결과를 통과로 반환하지 않는다. Windows에 Docker가 없어 실제 이미지 빌드/OS 격리·Linux Chromium sandbox 동작은 미검증이다. 키·Docker 권한을 풀어 통과시키지 않는다.
+
+제작실 전체117/117 PASS. 새 컨테이너/전달6개와 기존 통합 테스트의 실제 fetch→암호문 파일→모의 격리 검사→별도 서명 보고→PGlite 저장을 확인했다. Docker·모델·관찰 보고는 이 단위 통합에서 모의 값이다. actionlint1.7.12 공식 릴리스 SHA-256 확인 후 YAML3개 문법/재사용 호출 검사 PASS(exit0); shellcheck·pyflakes는 실행하지 않았다. 이후 dispatch mode 수정 관련4개도 별도 확인했다.
+
+실제 Chrome8사례 재검증 PASS(exit0), 23:55:45 KST, `.local/evidence/worker/runtime-browser-57651b87-ea5f-410c-b177-ffb25192d5a5.json`. 정상2D/3D·고장 감지·별도 프로세스 실패→모의 수정→실제 재검사 성공. 검사 예제는 자체 합성 메타데이터를 사용해 콘텐츠 원본 의존성을 제거했다. 실제 모델/과학/원격 검증 성공으로 확대하지 않는다.
+
+유료 호출0회. 운영 DB/앱·게시·Git 원격·실제 비밀 등록 변경 없음. 기존 공개 승인 질문40개 스테이징(2261추가/44삭제)을 보존하고 새 작업은 미스테이징으로 남겼다. OpenAI 키 준비와 자동 승인 검토가 요구한 공개 대상/범위 동의는 답변 대기다. 입력 승인 UI/API·실제 dispatch/실행번호 결합·OIDC·격리 rehearsal·승인 버전 게시/게시 확인은 계속 구현/검증해야 한다.
+
+최종 업로드 후보201개 검사 문제0, staged/unstaged 공백 검사 통과, 기존40개 스테이징 유지. 비공개 원문·환경파일·.local·생성 결과 제외 확인. `.local/evidence/worker/workflows-6260fb83-d1ce-4adc-9d89-b17d5c819068.json`에 워크플로/컨테이너/dispatch 주요 파일 해시와 검사 범위를 기록했다. 브라우저 요약7개와 수정 과정의 세부2개를 각각 읽어 총9회 실행의 browserStopped=true를 확인했다. 단순 요약 구조를 세부 보고로 읽은 첫 증거 집계 오류는 형식별로 확인하도록 바로잡았으며 브라우저 실패 assertion을 제거하지 않았다.
+
+## 2026-10-04 원격 제작 API 연결·후보 전달 암호화 로컬 검증
+
+원격 제작 진입점과 OIDC/API 클라이언트, 서버 승인 입력/예산/증거/별도 검사 대기/종료 연결을 구현했다. 제작 역할은 실행 결과를 직접 작성하지 않고 보고자가 저장한 같은 버전의 결과만 읽는다. 토큰5초/API20초·응답2.3MB·전체200요청·작업20분·종료 정리30초·시도당40회 검사 대기를 강제한다. 요청 유실의 자동 재전송은 없다. 기본 비활성 진입점은 WORKER_SETUP_REQUIRED로 요청 전에 거부됐다.
+
+보고 역할의 verification API에 준비/대기/종료 응답을 추가했고, 종료 시 원문을 반환하지 않는다. 승인 전 후보의 공개 artifact 평문 노출을 방지하기 위한 AES-GCM/HKDF 전송 모듈을 구현했다. 작업/실행/버전/용도를 인증 데이터로 묶고 인증 완료 후에만 복호화한다. 검사 키만 메모리에서 사용했으며 운영 키 등록·artifact 업로드·워크플로·원격 컨테이너는 아직이다. [상세 범위와 한계](REMOTE_WORKER.md)에 기록했다.
+
+최종 제작실111/111, production build·내장 TypeScript 검사 성공. 합성 RSA+HTTP 처리기+PGlite 실제 SQL로 모의5역할→예산 정산→후보 준비 조회→암호화 전달→별도 보고→사람 승인 대기까지 연결했다. 점유 응답 유실 시1회 전송, 생성 뒤 취소 비용 정산, 응답 유실의 불확실 비용/슬롯 유지, 토큰/본문 읽기 취소, 원문2.2MB 암호화 왕복·변조/다른 작업 거부를 확인했다. 실제 유료 호출0회, 실제 모델/과학/원격 GitHub 검토 성공은 아니다.
+
+인증 SQL의 보고 읽기 범위 변경 후 새 PostgreSQL17 물리 연결 경쟁11개 PASS(exit0), 23:35:37~23:35:57 KST. `.local/worker-pg17-fb497742f56f4e2bbf980c1e49d26e7a/result.json`의5개 SQL 해시 일치·서버 종료·PID/임시 평문 암호 없음·루트 ACL 현재 사용자/SYSTEM 전용 확인. 기존 증거를 보존했다. 새 endpoint 준비/종료 분기는 HTTP/PGlite에서 검사했으며 실제 Actions 검증은 미완료다.
+
+운영 DB/앱·게시·Git 원격·실제 키 변경 없음. 기존 공개 승인 요청40개 스테이징은 그대로이며 이번 구현은 미스테이징이다. OpenAI API 키 준비 여부와 자동 승인 검토가 요구한 공개 대상/범위 동의는 답변 대기다.
+
+후보 패킷의 허용되지 않은 추가 필드도 거부하도록 마무리한 뒤 관련11개를 다시 통과했다. 최종 업로드 후보184개 검사 문제0, staged/unstaged 공백 검사 통과, 기존 스테이징40개/2261추가/44삭제 유지. 비공개 원문·환경파일·.local·검사 결과의 Git 제외를 확인했다.
+
+## 2026-10-04 실제 2D·3D 브라우저 검사와 실패→수정 연결
+
+후보 소스 검사·별도 프로세스·Chrome 조작 검사·보고 스키마를 구현했다. 과제의 2D/3D 종류와 입력/후보/기준 코드 해시를 결합하며 제작기에 고정 조작/관찰 계약을 전달한다. 변수 조작·결과/화면 변화·초기화·카메라·대체 설명을 측정하고 보고 API에 버전과 관찰 기록을 보존한다. 기존 콘텐츠나 공개 주소를 변경하지 않았다. [구현과 한계](WORKER_RUNTIME.md)에 OS 격리 미검증·모의 조건과 실제 실행을 구분했다.
+
+Chrome154.0.8037.93 실제 검사8개 기대 결과 일치(exit0). 2D·WebGL3D 정상 예제는 통과, 초기화 고장·정지된 그림·외부 fetch·가짜 PASS·무한 루프는 실패로 잡았으며 브라우저 종료를 확인했다. 별도 프로세스 통합 사례에서 초기화 실패 후보→모의 수정 응답→실제 재검사 통과→모의 독립 검토→사람 검토 후보까지7회 역할 호출로 연결했다. 첫 실패와 후보 버전은 보존하고 승인/게시를 생성하지 않았다. 모델/과학 검토는 모의이며 유료 호출0회다.
+
+23:18:13 KST 증거 `.local/evidence/worker/runtime-browser-77bb9dcd-d54d-4150-b96b-1f77aa5a524e.json`, 앞선6사례도 보존했다. 기준 SHA는 합성 값이고 WebGL 불가는 모의 조건이다. 실제 GitHub 토큰·Actions·원격 격리·생성 교육 콘텐츠·교과 정확성 검증으로 확대하지 않는다. 실제 후보는 폐기 가능한 별도 원격 job과 OS 자원/네트워크 제한을 검증한 뒤 실행해야 한다.
+
+제작실 단위/SQL/HTTP97개 통과, production build와 내장 TypeScript 검사 성공. 관찰 없는 통과 보고·다른 입력 해시 거부, 소스 실패로 브라우저 미실행일 때의 수정과 진짜 미실행 보류를 검사했다. SQL 변경이 없어 앞선 실제 PostgreSQL11개 결과는 보존하고 반복하지 않았다. 기본 활성화 차단·운영 SQL 미적용·API 키/공개40개 승인 대기는 유지한다. 이번 구현은 기존40개 스테이징에 추가하지 않았다.
+
+최종 업로드 후보174개 검사 문제0, Git diff 공백 검사 통과, 기존 스테이징40개/2261추가/44삭제 유지. 비공개 폴더·환경파일·원본 PDF·생성 결과 제외를 확인했다.
+
+## 2026-10-04 작업자 인증·HTTP API 로컬 연결 검증
+
+GitHub OIDC 서명 검증과 DB의 일회용 토큰 영수증, 작업/실행/코드 버전 결합, 제작·검사 보고 역할 분리, 예산/증거 저장 HTTP API를 추가했다. jose6.2.12를 정확히 고정했다. 실제 저장소 API에서 숫자 ID와 immutable OIDC subject 설정을 확인했으며 이름만 있는 과거 형식을 사용하지 않았다. 서명 검사는 합성 RSA 키로 수행했다. 실제 GitHub 발급 토큰이나 신규 Actions 워크플로는 아직 실행하지 않았다. 자세한 구현·제한·근거는 [WORKER_AUTH](WORKER_AUTH.md)에 기록했다.
+
+최종 제작실 검사92/92, 기존 자료실 검사26/26, 타입 검사·production build 성공. 초기 빌드는 로컬 파일 도구의 import.meta.dirname 의존성으로 실패해 파일 읽기가 없는 공통 경로/해시 모듈을 분리했다. 이후 자료실 fixture의 새 파일 누락을 수정했고 sandbox realpath 거절은 일반 사용자 문맥에서 동일 검사를 수행해 해소했다. 실패 검사나 경로 보호를 제거하지 않았다. 빌드한 실제 로컬 서버에서도 worker 비활성 POST503/GET405/no-store를 확인하고 서버를 종료했다.
+
+23:02:23~23:02:38 KST 새 loopback PostgreSQL17에서 독립 물리 연결 경쟁11개 PASS(exit0). 이전9개에 토큰 ID 재사용 PT409, 다른 코드 SHA 접근 PT403을 추가했다. 각 사례에서 실제 Lock/차단 PID를 확인했다. `.local/worker-pg17-e231d8812e5f4ccf91e7418b9f321525/result.json`의 5개 SQL 해시 일치, 서버 종료·PID/임시 평문 암호 없음·사용자/SYSTEM 전용 루트 ACL 확인. 이전 실행 증거도 보존했다.
+
+worker API/예산 gate는 기본 차단, 예산/worker/auth SQL은 운영 미적용이다. 실제 생성 코드 브라우저 검사, AI·과학/교육과정 검토, GitHub 작업, 승인·게시·게시 확인은 미완료이며 유료 호출0회다. 운영 앱과 공개 콘텐츠를 변경하지 않았다. 공개 반영 승인 요청의 기존40개 스테이징(2261추가/44삭제)은 유지하고 이번 추가 구현은 미스테이징으로 보존했다. API 키 준비 여부와 자동 승인 검토가 요구한 공개 범위 동의는 여전히 답변 대기다.
+
+최종 업로드 후보164개 패턴 검사 문제0, staged/unstaged diff 공백 검사 통과. .local·환경파일·원본 PDF·빌드 결과의 Git 제외를 유지했다. 이는 공개 권한이나 모든 형태의 비밀값 부재를 증명하는 검사는 아니다.
+
+## 2026-10-04 실제 작업 저장소 로컬 연결·PostgreSQL 두 연결 검증
+
+앞선 목표 진행 턴은 실행기 구현·67검사 통과로 실제 진전이 있었다. 이번에는 worker DB 검토 SQL과 저장소 어댑터를 추가했다. 검토된 입력/실행번호/예산을 결합한 원자적 접수, 중복 점유 거부, 비공개 증거 기록, 취소, 버전이 일치하는 사람 승인 대기 상태까지 연결했다. 기본 실행 gate=false, 운영 SQL 미적용이며 실제 생성 코드 검사기와 OIDC·게시 기능은 아직 연결하지 않았다. 자세한 범위와 미검증 사항은 [WORKER_STORE](WORKER_STORE.md)에 기록했다.
+
+최종 `npm.cmd run test:studio` 76/76, exit0. 새9개 검사에는 기존 mock 작업 행 불변/기존 RPC 동작과 PGlite 실제 SQL→모의 API 다섯 역할→예산 정산→증거8개→awaiting_approval 통합 사례가 포함된다. 취소·완료 경합에서 취소가 우선하며 후보/검사/검토의 순서·시도·해시가 다르면 승인 대기로 넘어가지 않도록 보완했다. 실제 AI/과학 검토는 실행하지 않았다.
+
+새 로컬 PostgreSQL17의 독립 물리2연결로 최종9사례 경쟁검사 PASS(exit0). 21:53:42~21:53:57 KST, 127.0.0.1:55443. 선행 트랜잭션을 열린 상태로 두고 후행의 실제 Lock/차단 PID를 확인한 뒤 해제했다. 접수/점유 중복, 취소의 두 순서, 완료 직전 취소, API 예약과 취소, 정산과 종료, 과금 불확실 종료 뒤 늦은 정산 거부를 확인했다. 최종 증거 `.local/worker-pg17-fd182d18647049a1b0eabb5aad1b20ef/result.json`과 현재4개 SQL 해시 일치. 앞선8사례 결과도 보존했다.
+
+검사 서버 정상 종료·postmaster.pid 없음·임시 평문 암호 제거·검사 루트 ACL 상속차단/현재 사용자와SYSTEM 전용을 확인했다. 운영 암호·환경파일·DB를 사용하지 않은 가상 데이터 검사였다. 전역 설치·서비스·네트워크 설정 변경 없음. 운영 앱, 유료 호출0회, 공개 저장소 상태는 이전과 같다. 승인 요청한40개 파일의 스테이징은 보존하고 새 파일/문서 추가는 로컬 미스테이징 상태로 남겼다. 자동 승인 검토의 공개 범위 동의 요청과 API 키 준비 여부는 답변 대기다.
+
+추가 업로드 후보 검사153개에서 문제0을 확인했다. 비공개 폴더·환경파일·원본 교육과정 PDF의 제외 유지. Git 스테이징은 여전히40개/2261추가/44삭제이며 이번 저장소 구현을 포함하지 않는다. 공개 업로드·운영 적용 승인이나 실제 게시 성공을 뜻하지 않는다.
+
+## 2026-10-04 비용 제한 실행기 로컬 구현·공개 업로드 승인 대기
+
+사용자 확정 예산 월10,000원/월약10건에 맞춰 Responses API 비용 예약·정산 어댑터, Supabase 예산 RPC 연결, 생성 파일 범위/해시 검사, 역할별 별도 문맥→검토→최대2회 수정 파이프라인을 로컬 구현했다. 2D/3D 입력을 구분하고 3D는 우선 브라우저 WebGL/직접 작성 자산 범위다. [실행기 구현과 한계](BOUNDED_RUNNER.md)에 고정 모델·공식 가격 출처·입력24,000/개발출력16,384/검토출력4,096토큰·9회/20분 한도와 미연결 경계를 기록했다.
+
+새 실행기 검사25개를 포함한 `npm.cmd run test:studio` 67/67, exit0. API 전송은 모두 모의 응답, 실제 SQL 연결은 PGlite 가상 DB였다. 최초 연결 검사는 기존 DB에 없는 needs_review 상태를 사용하여 실패했고 실제 허용 상태 needs_input으로 수정해 다시 통과했다. 예산 예약/정산·중복 거부, 생성 후 취소 비용 처리, 시스템 경로 거부, 후보 버전 검토 결합, 최대2회 수정과 실패 기록 유지, 미실행 검사 보류를 확인했다. 실제 AI 제작·독립 검토·과학/교육과정 검증·3D 실행·게시 검증 성공으로 해석하지 않는다. 유료 호출0회, 예산 SQL 운영 미적용, 운영 앱은 아직 모의 실행이다.
+
+기존 공개 저장소 대상 커밋·push·PR 생성 요청은 자동 승인 검토에서 차단됐다. 사유는 일반적인 게시 요청만으로는 공개 대상과 넓은 코드/문서 범위의 명시적 동의가 충분하지 않고 프로젝트 정보가 노출될 수 있다는 것이었다. 로컬 브랜치 codex/studio-v2-budget의 검토한40개 파일을 구체적으로 설명하고 PR→main→기존 Vercel 제작실 재배포 승인을 요청했다. 실제 커밋·push·PR·재배포는 아직 실행하지 않았다. 비공개 검토안은 `.local/studio-v2-release-review.md`다.
+
+그 후 작성한 실행기4개·검사4개·이 문서의 최신 추가분과 BOUNDED_RUNNER는 로컬 미스테이징으로 분리했다. 승인 요청한40개 파일의 기존 스테이징 내용은 바꾸지 않았다. OpenAI API 키 준비 여부와 공개 반영 승인이 답변 대기다. 키·DB 암호·비공개 원문을 채팅이나 공개 파일로 요청하지 않았다.
+
+최신 업로드 후보 검사147개에서 문제0, `.local`·환경파일·원본 교육과정 PDF·생성물·CLI 임시 파일의 제외를 확인했다. 패턴 검사 결과이며 임의 인코딩 비밀값이나 자료의 공개 권한 전체를 입증하지 않는다. 새 실행기 파일9개는 현재 공개 반영 요청 범위에 자동으로 추가하지 않았다.
+
+## 2026-10-04 운영 v2 적용 완료·비용 제한 SQL 로컬 검증
+
+공식 Supabase CLI2.119.0 Windows 배포본을 `.local/tools`에만 준비하고 공식 checksums.txt의 SHA256 `db4a6ec26d182408ca605efc0d0d938720bd2d8d39541e79c7d69043897affb9`와 대조했다. 전역 설치/PATH 변경 없음. CLI migration new로 `20261004111955_studio_v1_baseline.sql`, `20261004111958_studio_v2_conversations.sql`을 생성했고 기존 검토 SQL의 바이트 해시를 보존했다.
+
+운영 백업을 복원한 로컬 DB와 빈 DB에 실행한 기준선을 대조했다. 최초 함수 본문 CRLF/LF 차이로 실패해 원인을 확인했고, 문자열 상수의 의미를 바꾸지 않는 해당 검토 함수의 줄바꿈만 비교 시 정규화했다. 두 번째 실패는 로컬 auth 대체 스키마의 postgres USAGE 누락이었고 해당 로컬 의존 권한만 보완했다. 실패 기록2개는 보호 폴더에 보존했다. 최종 기준선 구조/권한 일치, v2 적용, 기존 데이터 보존, 삭제 gate=false와 서버 정상 종료를 확인했다. 운영 보안 설정을 완화하거나 실패 조건을 삭제하지 않았다.
+
+20:24:37~20:24:42 KST `apply-conversation-v2.mjs ... apply` exit0/PASS. 직전 읽기 전용 fingerprint가 백업 시점과 일치함을 확인한 뒤 CLI migration repair로 **v1 이력만 기록**했다(v1 재실행 없음). db push --dry-run에서 v2 하나만 대기함을 확인하고 --skip-vault로 적용했다. 운영 기존 8개 테이블의 v1 열 데이터 해시 불변, 로컬 v2 구조/권한 지문 일치, 두 migration 이력 및 삭제 잠금 유지 확인. 별도 실제 Data API에서 capabilities=2, deleteEnabled=false, 오류null을 확인했다. 새 대화·작업 검사용 운영 데이터는 만들지 않았다.
+
+예산 요구를 `config/execution-budget.json`에 저장했다. 월10,000원/10접수, 작업1,000원, 동시1, 수정최대2, 작업20분/호출90초·최대9회. 내부 환산 2,000원/USD는 환율 시세가 아니라 보수적 예산 계산값이며 공급사 최종 청구의 원화 하드캡을 보장하지 않는다. 별도 유료3D 자산·음성 서비스는 포함하지 않는다. 실패·취소 접수도 월 건수에 포함하는 보수적 구현이다.
+
+`studio_budget_v1.sql`은 **아직 운영 미적용**이다. DB의 단일 정책 행 잠금으로 프로젝트 전체 작업 예약, 호출 전 비용 예약, 중복 호출 ID 충돌/재전송 금지, 정산·과금 불확실 유지, 월 경계·만료 처리, 과금 초과 탐지 시 비활성화를 구현했다. 브라우저/anon 권한 없음, 기본 enabled=false. PGlite 실제 SQL 검사7/7 통과: 기본 차단·권한, 소유자/real 모드, 중복·프로젝트 동시 슬롯, 호출/작업/월 금액·월10건, 취소, 불확실 과금·초과, 월 경계. 단일 연결 엔진의 검사이며 다중 연결 경쟁과 실제 API 비용 검증을 대신하지 않는다. 실행기/API/OIDC 연결은 미완료, 유료 호출0회.
+
+이번 적용 후 제작실 기존 단위·SQL 검사35/35, 타입 검사, production build 성공. 새 예산7개는 별도로 통과했다. 제작실 브라우저 검사9/9(exit0), 공개 업로드 후보 검사 문제0을 확인했다. CLI가 만든 supabase/.temp는 Git 제외했다. Vercel get_project는 성공했지만 팀 범위 list_deployments는403으로 현재 커넥터의 범위 부족을 확인했다. 운영 앱은 아직 기존 배포 화면이며 새 앱 업로드·배포 확인은 진행 중이다.
+
+## 2026-10-04 운영 studio 백업·격리 복원 완료, 자동 제작 연결 재개
+
+사용자가 과제 입력→시뮬레이션 제작→검토·수정→게시까지 계속 진행하도록 요청했다. 월 OpenAI API 예산 10,000원, 월 약 10건과 구체적·3D 시뮬레이션 지원 요구를 확정했다. 과거 단계별 대기 기록은 당시 범위이며 현재 재개 지시와 구분한다. 아직 유료 AI 호출은 0회다.
+
+앞선 TLS 판정의 과도한 조건을 바로잡았다. [Supabase 공식 백업 안내](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)는 Session pooler를 기본 경로로 안내한다. PC→pooler의 CA/호스트 verify-full을 필수로 유지하고 DB backend의 pg_stat_ssl은 별도 구간 관찰로 보존한다. Session에서는 DB 측 false를 기록하면서 백업을 허용하고, Direct에서는 계속 DB 측 true도 요구한다. 대상 DB·읽기 전용·studio·PG17·알 수 없는 관찰값 차단은 유지했다. 새 판정/비공개 필드 제거 검사 7/7 통과. 과거 FAIL 원본과 실제 false 관찰은 수정하지 않았다. Direct DNS는 이번에도 조회 불가였으며 Direct DB 접속은 하지 않았다.
+
+실제 실행은 `automation/studio/backup-and-restore.mjs`, 20:15:39~20:16:08 KST, exit0/PASS다. 원격은 읽기 전용 snapshot 세션과 해당 snapshot을 사용하는 pg_dump 2연결로 제한했다. 연결10초, SQL30초, dump/restore 각120초, 본 작업300초와 종료 정리30초 상한. pg_dump17.11 custom studio 백업 45,476bytes, SHA256 `a7241059d3e5628fdc4702ed05f1d2bae045b4e817f4a020258a42167357ac9f`. 원격 데이터·계정·권한·A 세션 변경 없음.
+
+새 로컬 PostgreSQL17.11의 127.0.0.1:55442/빈 studio_restore에만 복원했다. 8개 테이블 데이터 해시와 스키마·테이블·열·함수 소유자/ACL, 제약·인덱스·RLS/policy 지문 일치. 복원 DB에서 authenticated 타인 행0, 직접 UPDATE 거부, service_role 생성 RPC 성공 후 ROLLBACK과 최종 데이터 해시 불변을 확인했다. 실제 Auth 데이터는 복사하지 않았으며 studio 내부 FK UUID와 auth.uid 대체 함수만 로컬 의존물로 준비했다. 전체 Supabase/Auth/Storage 복구 검사가 아니다.
+
+비공개 증거는 `.local/studio-v1-backup-20260916/run-20261004-28b03e0c9e134fd2951eb4f948849979`에 보존한다. DPAPI 암호·백업·DB·로그 전부 Git 제외, 모든 자식 ACL 현재 사용자/SYSTEM만, 임시 평문 초기 암호 파일 제거를 확인했다. localServerStopped=true 및 postmaster.pid 없음. 서버는 SCRAM 전용·loopback으로 실행했고 앱에는 연결하지 않았다.
+
+실제 GitHub CLI 인증은 일반 사용자 문맥에서 정상이며 저장소 권한 조회 성공(repository_id 1368255570). sandbox 안의 keyring 접근 실패를 토큰 만료로 오판하지 않았다. 저장소 Actions Secret 목록은 비어 있고 로컬 앱 환경에도 OpenAI API/GitHub App 변수가 없다(값을 읽어 출력하지 않음). Supabase 연결은 ACTIVE_HEALTHY/PG17로 확인했다. 다음은 v1 기준선 이력과 v2 호환 변경, 예산 강제 및 실제 실행기 연결이다. 운영 v2/runner/삭제 활성화·유료 호출·새 배포는 아직 하지 않았다.
+
+## 2026-10-04 추가 진단1회 완료 — DB 측 TLS=false 확인
+
+사용자가 추가 읽기 전용 진단1회를 승인한 뒤 준비된 단일 실행 도우미를 실행했다. 2026-10-04 20:04:12 KST 종료, preflightRuns1/exit1, REMOTE_TARGET_OR_TLS_CHECK_FAILED다. 이번 재개 작업에서 원격 접속은 최초1회+별도 승인된 진단1회 총2회이며 추가 반복은 없다. 실패 표식과 원본 안전 결과를 .local 보호 폴더에 각각 보존했다.
+
+| 실제 반환 항목 | 결과 |
+|---|---|
+| queryCompleted / clientVerifyFull | true / true |
+| database_ok / read_only / studio_exists | 모두 true |
+| server_major | 17 |
+| DB 측 pg_stat_ssl.ssl / version | false / null |
+
+현재 암호로 DB 인증과 확인 SQL이 성공했고, 대상 DB·읽기 전용·studio 스키마·PostgreSQL17도 확인됐다. PC→공식 Session pooler는 기존 CA와 verify-full로 접속했으므로 해당 구간의 TLS/호스트 검증은 성공이다. 실패 원인은 기존 판정에서 요구하는 DB 측 tls=true가 충족되지 않은 것이다. 비밀번호 재입력이나 재설정은 현재 실패의 해결 조치가 아니다.
+
+PostgreSQL17 공식 문서에서 pg_stat_ssl은 해당 backend 연결의 SSL 사용 여부를 나타내고, SSL 미사용이면 version이null임을 확인했다. Supabase 공식 문서의 pooler 중간 연결 구조를 함께 보면 이번 false는 DB가 관찰하는 중계 서버 쪽 연결에 대한 결과이며 PC→pooler 검증 결과와 분리해서 해석해야 한다. 전체 전송 경로가 암호화됐다고 확대하지 않으며 Supabase의 모든 프로젝트·내부 연결 기본값으로 일반화하지 않는다. 근거: [PostgreSQL pg_stat_ssl](https://www.postgresql.org/docs/17/monitoring-stats.html#MONITORING-PG-STAT-SSL-VIEW), [Supabase 연결 구조](https://supabase.com/docs/guides/troubleshooting/monitor-supavisor-postgres-connections), [verify-full 안내](https://supabase.com/docs/guides/database/connecting-to-postgres#ssl).
+
+현재 **DB 인증과 읽기 전용 연결은 확인, 기존 전체 검사 결과는 FAIL 유지**다. 실패 조건을 삭제하거나 TLS 검증을 완화하지 않았다. 후속으로 DB까지 직접 TLS를 검증하는 Direct 연결 경로의 사용 가능성을 확인할 수 있으며, 과거 Direct DNS 실패는 아직 해소 확인이 없다. 이번에는 Direct 접속을 추가하지 않았다.
+
+운영 백업/복원·DB/계정/권한/환경값 변경·v2/runner·커밋·push·배포는 하지 않았다. 이번 추가 진단에서는 검사 코드를 수정하지 않고 실제 결과만 문서에 반영했다.
+
+## 2026-10-04 DB 인증 성공·확인 SQL 실행 — 최종 항목 검사 실패
+
+사용자 재입력 후 실제 입력 표식 SAVED, DPAPI 왕복·ACL 확인 true와 암호 파일 갱신을 확인했다. 승인된 Session pooler에서 기존 backup-preflight.mjs를 **1회** 실행했다. 결과는 REMOTE_TARGET_OR_TLS_CHECK_FAILED, preflightRuns1, exit1이다. 완료 시각은 2026-10-04 19:58:21 KST다. 원본 안전 결과와 단일 실행 표식은 .local 보호 폴더에 보존했다.
+
+이 오류는 psql이 정상 종료하고 확인용 SELECT의 JSON 파싱까지 끝난 뒤에만 발생하는 코드 경로다. 따라서 이번 실행에서 DB 비밀번호 인증·확인 SQL 실행 및 PC→공식 Session pooler 구간의 verify-full 연결은 성공했다. 기존 DATABASE_PASSWORD_AUTHENTICATION_FAILED와 구분한다. 다만 database_ok/read_only/tls/server_major/studio_exists 중 적어도 한 항목이 기존 조건을 통과하지 못했다. 기존 검사기가 실패 시 개별 반환값을 버려 어느 항목인지와 실제 TLS 버전은 이번 결과로 확정할 수 없다. 전체 접속 검증 완료로 처리하지 않는다.
+
+추가 접속 없이 실패 진단 출력을 보완했다. backup-checks.mjs는 고정된 확인 필드의 boolean/null·허용 TLS 버전·제한된 숫자만 반환하고, backup-preflight.mjs가 SQL 완료 후 실패할 때 해당 필드를 남긴다. 성공/실패 기준, TLS 검증, SQL, 시간 제한은 바꾸지 않았다. 로컬 구문 검사와 tests/studio/backup-checks.test.mjs 4/4가 통과했다. 이는 비공개 필드 제외·실패/미확인 값 보존 검사이며 운영 연결 재검사가 아니다.
+
+공식 Supabase 문서의 pooler 중간 연결 구조와 PostgreSQL17 pg_stat_ssl 설명을 확인했다. PC→pooler 연결과 pg_stat_ssl이 관찰하는 DB 측 연결은 구분해야 하며, 이 구조가 이번 실패 원인이라는 판단은 아직 가설이다. 근거: https://supabase.com/docs/guides/troubleshooting/monitor-supavisor-postgres-connections 및 https://www.postgresql.org/docs/17/monitoring-stats.html#MONITORING-PG-STAT-SSL-VIEW .
+
+기존 승인 계획의 접속1회 상한을 사용했으므로 재접속하지 않았다. 기존 실패 기록을 보존한 별도 단일 실행 진단 도우미를 준비했으며, 추가 읽기 전용 조회1회는 사용자 승인 대기다. 비밀번호 재입력은 필요하지 않다. 운영 백업/복원·DB/권한/계정/환경값 변경·v2/runner·커밋·push·배포 없음.
+
+## 2026-10-04 숨김 입력 후 파일 교체 오류 수정 — 재입력 대기
+
+사용자가 다른 작업 폴더의 VS Code PowerShell에서 절대 경로로 입력 도우미를 실행했고, 두 번 입력 후 LOCAL_INPUT_FAILED가 표시됐다고 보고했다. 완료 표식의 실패 단계는 replace였고 실제 암호 파일 수정 시각은 여전히 2026-09-16이었다. 입력 일치·DPAPI 왕복·후보 파일 ACL 확인 이후 기존 파일 교체에서 실패했으며 DB 접속 표식은 없었다. 도우미가 절대 경로를 사용하므로 터미널의 현재 폴더가 원인은 아니다.
+
+실제 암호를 사용하지 않는 더미 파일로 재현했다. PowerShell에서 File.Replace의 세 번째 string 인자에 $null을 전달하면 빈 문자열로 변환되어 ArgumentException(path)이 발생했고 원본은 보존됐다. [NullString]::Value로 명시적 .NET null을 전달한 동일 더미 교체는 성공했다. 보호 폴더의 기존 password-input-20261004-b7c93d.ps1 한 줄을 수정하고 실패 안내에 단계 표시를 추가했다. ACL·실행 정책·운영 설정은 변경하지 않았다.
+
+수정된 도우미의 전체 암호화·파일 교체·복호화 경로를 별도 더미 파일과 합성 입력으로 검사했다. PowerShell7 및 WindowsPowerShell5 모두 exit0/SAVED, DPAPI 왕복·저장값 일치·ACL 확인·임시 파일 제거 성공이었다. 비대화형 자체 검사에서만 숨김 입력을 합성 입력으로 대체했으며 사용자 실제 입력 성공이나 DB 인증 성공으로 취급하지 않는다. 실제 암호 파일은 검사 전후 동일 수정 시각을 유지했고 실제 접속0회다.
+
+실패한 입력의 후보 파일은 도우미가 정리했으므로 현재 비밀번호 재입력이 필요하다. 같은 절대 경로 명령을 다시 실행해 암호화 저장 완료를 확인한 뒤 기존 승인 범위의 읽기 전용 접속 1회를 진행한다. 사용자 비밀번호·연결 문자열·원문 오류는 출력하지 않았다. 운영 백업/복원·DB 변경·v2/runner·커밋·push·배포 없음.
+
+## 2026-10-04 백업 접속 재개 — 사용자 숨김 입력 대기
+
+사용자가 현재 DB 비밀번호 준비와 접속 확인 계획 실행을 요청했다. 이번 범위는 로컬 DPAPI 암호 갱신과 기존 Session pooler의 읽기 전용 접속 1회 확인까지이며 운영 백업·복원은 후속 단계다.
+
+기존 보호 폴더와 connection.json/db-password.dpapi/server-ca.crt의 ACL을 읽기 전용으로 확인했다. 폴더 상속 차단, 허용 주체가 현재 Windows 사용자/SYSTEM뿐임, reparse point 없음과 Git 제외를 확인했다. 암호 파일 수정 시각은 아직 2026-09-16이다. 더미 문자열의 DPAPI 암호화·복호화 자체 검사와 입력/접속 도우미 구문 검사는 성공했다. 실제 비밀번호를 이 자체 검사에 사용하지 않았다.
+
+별도 PowerShell 입력 창 실행은 입력 단계 LOCAL_INPUT_FAILED로 종료됐고 사용자가 창이 보이지 않는다고 보고했다. 기존 암호 파일은 바뀌지 않았으며 DB 접속은 없었다. 사용자 본인이 연 PowerShell에서 두 번의 숨김 입력을 대조하고 DPAPI 왕복 검증 후 암호화 파일을 교체하는 대체 도우미를 .local 보호 폴더에 준비했다. 입력 완료 안내를 요청한 상태이며 아직 저장 성공으로 처리하지 않는다.
+
+접속 도우미는 입력 성공 기록·ACL·승인된 Session pooler 대상 확인 후 기존 backup-preflight.mjs를 1회만 호출하도록 준비했다. verify-full/기존 CA, 연결 제한10초·검사 타이머20초, 읽기 전용 SQL과 단일 실행 표식을 유지한다. 원문 암호·연결 문자열·psql 오류를 출력하지 않고 허용된 결과 필드만 기록한다. 현재 실제 접속0회, 인증/TLS/대상 DB 확인 미실행이다.
+
+현재 사용자 숨김 입력 대기. 운영 DB/계정/권한/환경값 변경·백업/복원·v2/runner 적용·커밋·push·배포 없음. 기존 앱 코드와 미커밋 변경을 보존했다.
+
+## 갱신한 백업 암호 재확인 — 인증 거절 유지
+
+사용자가 숨김 입력으로 로컬 DPAPI 암호 파일을 갱신했다고 알린 뒤, 공식 Session pooler에 verify-full/기존 CA/읽기 전용 조건으로 인증을 **1회** 확인했다. 결과는 다시 DATABASE_PASSWORD_AUTHENTICATION_FAILED, 검사 프로세스 exit1이다. 암호 저장 완료는 실제 DB 인증 성공을 뜻하지 않으며 비밀번호가 잘못됐다고 원인을 확정하지 않는다. 같은 접속을 반복하지 않았다.
+
+운영 백업·로컬 복원은 미실행, dump 없음. 운영 SQL·비밀번호·계정·권한·환경값·원격 이력 변경, v2/runner 적용, 커밋·push·배포 없음. 인증정보는 출력하지 않았다. 연결 대상·인증 경로 원인 추가 확인 전 대기한다.
+
+## 2026-09-16 Session pooler 진단 — DB 인증 단계 실패
+
+사용자가 공식 Connect → Session pooler 파라미터를 대조한 뒤 재검사했다. 비공개 connection.json의 호스트 형식(공식 서울 리전 pooler), 프로젝트별 사용자, 5432 포트, postgres DB가 모두 일치했다. 호스트에 프로토콜/경로/포트/자리표시자/공백 없음. connectionMode만 빈칸이어서 검증된 host/user 조합으로 메모리에서 session을 판별하도록 사전 검사기를 보완했다. 입력 파일과 기존 암호는 변경하지 않았다.
+
+일반 Windows 사용자 실행 문맥에서 **Windows 기본 이름 조회 3개 성공, Node dns.lookup 3개 성공**. Node resolve4/resolve6은 각각 ECONNREFUSED였으나 직접 DNS 질의 경로의 실패이며 OS/psql 실패로 일반화하지 않았다. PC DNS/hosts/방화벽/VPN/보안 설정, 외부 DNS/강제 IP를 사용하거나 변경하지 않았다.
+
+PostgreSQL17 psql 실제 1회 접속: verify-full, 기존 CA 파일, 연결 제한10초/전체20초, 읽기 전용 옵션을 유지했다. 결과 **DATABASE_PASSWORD_AUTHENTICATION_FAILED**(`password authentication failed`로 분류, psql exit2 / 래퍼 exit1). 연결된 서버의 인증 거절까지 도달하여 DNS/TCP 및 verify-full TLS/호스트 검사 경로를 통과한 근거가 된다. 현재 CA가 pooler에 유효하다는 판단은 이 실제 접속 결과에 근거하며 Direct 인증서를 무조건 호환한다고 가정하지 않았다. 인증 성공 후 실행할 SELECT/pg_stat_ssl 조회는 실행되지 않아 TLS 버전·DB 내부 대상 조회는 미검증이다. 원문 오류/사용자/암호는 출력하지 않았다. 서버가 SQLSTATE 숫자를 제공한 것으로 기록하지 않는다.
+
+**도달 단계: DNS 성공 → TCP/TLS/호스트 검사 이후 DB 인증 거절 → 백업 미실행.** 운영 studio 데이터/구조 백업·로컬 복원 모두 미실행, dump 생성 없음. 운영 SQL·데이터·계정·비밀번호·권한·A 세션·원격 이력 변경 없음. 로컬 복원 서버 시작 없음. 같은 실패 접속을 반복하지 않았다.
+
+다음 필요 사항은 사용자 측에서 저장한 DB 비밀번호가 science-studio의 PostgreSQL 비밀번호인지 확인하는 것이다. Auth 교사 비밀번호/API Secret이 아니며 채팅으로 보내지 않는다. 이번 작업에서 재설정·교체하지 않는다. 인증 문제가 해소되기 전에는 v2/runner·삭제 활성화·커밋·push·배포로 진행하지 않는다.
+
+## 2026-09-16 운영 v1 백업 접속 확인 — DNS 단계 실패
+
+사용자 입력 완료 후 비공개 파일을 프로그램 내부에서만 로드했다. 폴더 ACL 보호·허용 주체 확인. `automation/studio/backup-preflight.mjs`로 검증. 필수 연결값 일치, 빈 connectionMode는 정확한 승인 대상 Direct host/user 조합에서 메모리로만 판별(connection.json 미수정). 인증서 중복 확장자 server-ca.crt.crt를 확인하여 X509 CA/유효기간 검사 후 원본 보존·server-ca.crt 복사. DPAPI 암호 로드 성공, 인증값 출력 없음.
+
+verify-full/공식 CA/읽기 전용 연결 시도는 **DNS_RESOLUTION_FAILED**로 실패했다. 후속 DNS 진단은 Windows OS lookup ENOTFOUND, A/AAAA 별도 조회 ECONNREFUSED. DNS 서버 조회 거부이며 DB 포트 거부로 간주하지 않는다. 실제 TLS/호스트 검증 및 DB 비밀번호 인증에는 도달하지 못해 **미검증**이다. 인증서 파일의 구조 통과와 실제 TLS 성공을 구분한다. 원인이 IPv6 부재인지 보안/DNS 경로인지 아직 확정하지 않았다.
+
+**운영 studio 백업·로컬 복원 모두 미실행**, dump 산출물 없음. 운영 DB 연결 성립 전 실패, 원격 SQL/데이터/계정/권한/세션/이력 변경 없음. 로컬 복원 서버 시작 없음. SSL 검증 완화·네트워크 설정 변경·비밀번호 변경·유료 옵션·v2/runner·커밋·push·배포 없음.
+
+상세 실패 지점과 다음 조치는 [STUDIO_V1_BACKUP.md](STUDIO_V1_BACKUP.md)에 기록. PC의 Direct 호스트 이름 조회 경로 확인을 기다린다. 입력 파일/키/비밀번호/백업 본문을 대화·보고서에 출력하지 않았다. 기존 미검증 항목은 유지한다.
+
+## 2026-09-16 운영 studio v1 백업 — 연결 입력 대기
+
+사용자가 운영 studio 스키마/데이터의 비공개 로컬 백업과 새 로컬 격리 DB 복원을 승인했다. 기존 성공한 두 연결/가상 백업 검사를 반복하지 않았다. 기존 Git 미커밋 작업을 보존했다.
+
+프로젝트 목록 읽기 도구로 science-studio/ACTIVE_HEALTHY/PostgreSQL17 대상 확인. pg_dump용 승인된 직접 DB 접속 설정·암호·CA는 발견하지 못했다(환경변수와 기본 libpq 파일의 존재 여부만 확인). Supabase 도구의 SQL 권한/API Secret은 pg_dump DB 인증을 대신하지 않는다. 운영 데이터를 SQL 도구로 우회 추출하지 않았다.
+
+기존 공식 배포 경로 기록 재확인, ZIP SHA256 기존값 일치, pg_dump17.11 실행 확인. 공식 서명/체크섬 대조 미확인은 유지한다. `.local/studio-v1-backup-20260916`을 새로 만들고 ACL 상속 차단·현재 Windows 사용자/SYSTEM만 접근하도록 실제 확인했다. 빈 연결 입력 파일 connection.json을 준비했고 Git 제외 확인. 실제 비밀번호/CA/백업은 아직 없다. 앱 .env.local/Vercel 환경값 변경 없음.
+
+**운영 백업: 미실행. 로컬 복원: 미실행. 실제 TLS/호스트 검증: 미검증.** 입력 대기이며 실패 파일이나 성공 백업으로 기록할 산출물은 없다. 운영 DB/계정/권한/세션을 변경하지 않았고 로컬 복원 서버도 시작하지 않았다.
+
+[STUDIO_V1_BACKUP.md](STUDIO_V1_BACKUP.md)에 Supabase Connect·인증서 메뉴, VS Code 입력 파일, DB 비밀번호를 표시하지 않고 DPAPI로 저장하는 직접 입력 절차를 기록했다. 사용자는 연결 파라미터·공식 CA·DB 비밀번호를 로컬에 준비한 뒤 알려주면 된다. 채팅으로 인증정보를 요구하지 않는다. 전체 프로젝트 백업이 아닌 studio 범위 한정 백업이며, 실제 v2 적용 직전에 새 데이터가 생겼으면 갱신해야 한다.
+
+운영 SQL 적용·v2/runner·삭제 활성화·원격 migration 이력·커밋·push·배포 없음. 기존 미검증 항목은 유지한다.
+
+## 2026-09-16 후속 — PostgreSQL 17 실제 두 연결·백업 복원 완료
+
+사용자 승인 범위 안에서 공식 PostgreSQL Windows 페이지→EDB Windows x64 ZIP 17.11-3을 받아 프로젝트 .local 아래에만 준비했다. postgres/pg_dump/pg_restore 17.11 확인. 별도 공식 ZIP 체크섬은 확인되지 않았고 핵심 실행파일 Authenticode는 NotSigned였으므로 서명 검증 성공으로 기록하지 않는다. 배포 경로·로컬 해시·정확한 위치와 재시작/종료 명령은 [POSTGRES17_REHEARSAL.md](POSTGRES17_REHEARSAL.md)에 기록했다.
+
+- 실제 실행: `node tests/studio/postgres17-rehearsal.mjs <새 검사 루트> <도구 루트>` 최종 exit0. 기존 미커밋 코드·SQL 보존. studio_runner_v1.sql 미적용.
+- 빈 PostgreSQL DB에 가상 auth 함수/역할을 준비한 뒤 v1→v2 실제 적용 성공. Supabase Auth/Data API 자체 검사가 아님.
+- 독립된 두 psql 연결(service_role, 비슈퍼유저)의 삭제↔접수, 삭제↔재시도, 중복 삭제(연결 순서 교체), 이름 수정↔삭제 **8/8 성공**. 서로 다른 backend PID와 후행 Lock/transactionid 및 선행 blocker PID, 트랜잭션/대기 시각 기록. 선행 COMMIT을 잠금 관찰 뒤에 보내 실제 중첩 증명. 삭제 우선 PT404, 접수/재시도 우선 삭제 PT423. 대화 부활·잘못된 소유자 연결 없음, 제작 명세·이벤트·검토·승인·배포 가상 이력 전후 동일.
+- 네이티브 pg_dump custom 파일→별도 template0 빈 DB에 pg_restore --exit-on-error --single-transaction **성공**. 데이터·함수·제약·인덱스·RLS/policy·테이블/열 ACL 지문 일치. 복원 후 대표 RPC·authenticated 조회와 직접 쓰기/서버 RPC 차단 성공. 클러스터 역할은 별도 사전 준비된 의존 항목이다. 운영 Supabase 백업 확보/복원 완료는 아님.
+- 삭제 gate는 로컬 검사 DB에서만 시험 중 true, 끝나면 false로 복구. 원본 SQL 및 운영 gate 변경 없음. v1 SHA256 `6f55bd60c3af35a25564929623e585bc2e026d217de0848aa892cceab8273c67`, v2 `9b79f5824dc8c3de3a8b4f2902175b8cffc997c68372646fb5160e880df0fcdb` 검사 전후 동일.
+- 서버: 127.0.0.1:55432만 listen, SCRAM-SHA-256 암호 인증, trust 없음. 암호 보존은 .local의 DPAPI 암호화 파일만, 임시 평문 제거. 실행 파일·DB·백업·로그의 Git 제외 확인. 서비스/자동시작/PATH/방화벽/관리자 설치/추가 런타임 없음.
+- 준비 실패: 제한된 sandbox의 DPAPI/프로세스 토큰 오류, 부분 ZIP 해제, 검사 래퍼의 자식 파이프 대기·inet 주소 표기 비교 문제. 일반 사용자 실행 문맥·새 해제 위치·래퍼 수정으로 해결. 실패 폴더 보존, SQL/권한 완화 없음.
+- 최종 서버 **정상 종료**: pg_ctl stop 성공, 로그 shutdown, pg_ctl status exit3, 포트 ECONNREFUSED 확인. 기존 UI 서버는 유지했다.
+- 추가 읽기 점검으로 복원 전후 스키마 ACL/소유자 일치, 실제 HBA SCRAM 전용, authenticated 비슈퍼유저·BYPASSRLS=false와 service_role 비슈퍼유저·BYPASSRLS=true도 확인했다(supplement.json). 추가 시작 래퍼의 자식 프로세스 대기는 별도 읽기 프로세스로 분리해 해소했고, 해당 서버도 정상 종료했다.
+
+실제 성공 자료는 `.local/pg17-ad1839ec7ba749b4b13fbecf799f1e55/run-7fe0052a53f64d91ad068e90206cc13f`의 db/backups/logs에 보존했다. 앞선 PGlite 결과와 당시 환경 부족 기록은 과거 사실로 유지하며, 로컬 두 연결/네이티브 복원은 이번 실행으로 완료했다.
+
+남은 운영 준비는 실제 Supabase 백업·복구 확인, v1 수동 기준선 이력 관리 승인, 적용 시간·호환 앱/복구 버전 확보다. 기존 B 앱 버튼 로그아웃·자연 만료·reviews/approvals/releases 실제 사용자 토큰 실재 행 검사는 미검증 유지. 운영 접속·SQL/원격 이력 변경·커밋·push·배포·유료 AI 실행 없음. 적용 직전 대기.
+
+## 最新 확인 — 2026-09-16 격리 DB 재현·파일 복원 실제 시험
+
+직전 검토에서 독립 2연결 경쟁 검사와 백업 파일 복원은 실행하지 않았다. 빈 PGlite→v1→v2는 기존 `npm.cmd run test:studio`의 v2-db.test.mjs 두 번째 검사에서 이미 통과했다. 이번에는 전체 UI/호환 검사를 반복하지 않고 백업 복원을 위해 필요한 새 빈 DB 구성만 재현했다.
+
+- 실행: 프로젝트 루트에서 `node tests/studio/backup-rehearsal.mjs`, exit0 PASS. 기존 설치된 @electric-sql/pglite 0.5.8만 사용. 운영 환경파일·네트워크·A/B 데이터 사용 없음.
+- 빈 격리 DB의 studio 스키마 부재 확인 → 가상 auth 역할/스키마 준비 → v1 → 합성 검사 기록 → 현재 v2 순서로 실제 실행 성공. 삭제 gate=false 유지, runner 미적용 확인.
+- `dumpDataDir('gzip')`로 실제 파일 생성 → 원본 인스턴스 종료 → 파일을 다시 읽어 별도 새 PGlite 인스턴스의 `loadDataDir`로 복원 성공. 이전 데이터가 없는 새 인스턴스에 데이터 디렉터리 백업을 로드한 시험이며, 일반 PostgreSQL의 pg_dump/pg_restore 또는 Supabase 운영 백업 복구 검사가 아니다. 공식 API: https://pglite.dev/docs/api#dumpdatadir
+- 복원 전후 studio 전체 행·테이블 RLS/ACL·정책·함수 본문/ACL 지문 일치. 복원 후 새 대화 RPC 성공, authenticated 직접 UPDATE 거부 확인. 실제 대화/승인/배포 데이터를 복제하지 않았다.
+- 백업과 결과: `.local/db-rehearsal/0fad3c77-49e8-46db-b244-c20b702db829/synthetic-pglite.tar.gz`, 같은 폴더 `result.json`. `git check-ignore`로 제외 확인. 백업 SHA256: eee6f46506c23fab265dc83079ea1a35dc509f24aec7e74e6447cda6ea1f9b88.
+- 검사 SQL SHA256: v1=`6f55bd60c3af35a25564929623e585bc2e026d217de0848aa892cceab8273c67`; v2=`9b79f5824dc8c3de3a8b4f2902175b8cffc997c68372646fb5160e880df0fcdb`. 검사 전후 파일 해시 일치. 이번 SQL 수정 없음. 현재 v2는 직전 검토에서 추가한 기본 false 삭제 gate 포함 버전이다.
+- 독립 2연결 경쟁: **환경 부족으로 미실행**, 실패/통과로 기록하지 않는다. PGlite는 단일 연결 엔진. Get-Command psql,pg_dump,pg_restore,postgres,initdb,docker,supabase 조회와 기본 Program Files 위치 확인에서 사용 가능한 도구를 찾지 못했다. 별도 PGlite 인스턴스 두 개는 같은 DB의 경쟁 검사를 대신하지 않는다.
+- 다음 필요한 승인 한 가지: 이 PC에 격리 시험용 PostgreSQL 17 서버와 클라이언트 도구를 설치하는 승인. 아직 설치하지 않았으며 설치 방식·범위 확인 후 진행해야 한다. 이후 같은 DB의 독립 연결 두 개와 일반 PostgreSQL 파일 복원 검사를 수행할 수 있다.
+
+이번 검사 실패 없음. 2연결 검사는 미실행. 운영 SQL/원격 migration 이력/계정/권한 변경·삭제 활성화·runner 적용·커밋·push·배포·AI 실행 없음. 기존 B 앱 버튼 로그아웃·자연 만료·세 테이블 실재 행의 사용자 토큰 검사는 계속 미검증이다.
+
 | 단계 | 현재 상태 | 실제 증거 |
 |---|---|---|
 | 00 환경 | 확인됨 / Git 설정 필요·일부 미검증 | 2026-09-13 이전 대화의 실제 읽기 전용 명령·검색·Chrome·하위 에이전트 결과. 아래 기록 참조 |
@@ -689,3 +1010,134 @@ B 앱 버튼 로그아웃, 자연 만료, reviews/approvals/releases 실재 행�
 명시된40개 경로만 스테이징하고 인덱스의 파일 집합·내용 해시가 검토한 작업 트리와 일치함을 확인했다. 금지 파일/실제 환경값 비출력 재검사 및 staged diff 검사 후 `feat: add teacher studio auth and mock job management` 메시지로 **e869525820163a1901103ae8f7ab1c793823f0ed** 커밋을 생성했다(40파일). push 직전 fetch에서도 예상한 원격 HEAD가 유지됨을 확인하고 기존 origin/main에 일반 push했다. push 후 다시 fetch하여 로컬 main과 origin/main이 모두 해당 SHA와 일치했고 그 시점의 작업 트리는 깨끗했다. 기존 로컬 초기 커밋33e1a1a와 원격 초기 커밋8dbba6d도 조상으로 유지됐다. 이 구현 커밋에 대한 GitHub Actions 실행 수는 확인 시0개였다.
 
 이 문단은 위 push가 실제 성공한 뒤 추가한 결과 기록이다. STATUS.md만 후속 문서 커밋으로 반영하며 구현 파일은 다시 수정하지 않는다. 실제 .env.local/비공개 원문/검사 자료와 로그는 Git 제외 상태로 로컬에 남는다. Vercel 프로젝트 연결·환경값 등록·배포와 Pages 재배포는 실행하지 않았다. 다음에는 별도 요청으로 기존 저장소의 Vercel 연결 준비를 시작할 수 있으나 Deploy나 운영값 입력은 아직 진행하지 않는다. 남은 세 미검증 항목은 위 상태를 그대로 유지한다.
+
+## 06 Production 배포 후 점검 — 최초 점검과 후속 확인, 2026-09-15
+
+사용자가 Production 재배포 및 A 로그인·새로고침 유지·기존 대화/작업 복원을 직접 확인했다고 보고했다. 이번 대상은 **https://science-simulations-studio.vercel.app/**이며 localhost 검사를 반복하지 않는다. 시작 시 로컬 Git 작업 트리는 깨끗하고 HEAD는4931c7e0445b2d227bac9c6ecfa29fcff62b5607였다. 이번에는 STATUS 기록만 수정하고 코드/커밋/push/재배포는 하지 않는다.
+
+### 실제 배포·접근 확인
+
+Vercel 전용 도구의 배포 조회는 접근 오류여서 성공으로 취급하지 않았다. 대신 사용자가 로그인한 실제 Vercel 대시보드를 읽기 전용으로 새로고침하여 Production Deployment、Ready、기존 저장소 main/apps/studio、Source commit **4931c7e0445b2d227bac9c6ecfa29fcff62b5607**와 위 운영 도메인을 확인했다. 배포 식별자는66sbaeCgSHAhEreVYwkbGwUKdSwN이며 공유/우회 링크는 만들지 않았다.
+
+프로세스 한정 `node --use-system-ca`의 쿠키/키 없는 HTTPS 요청에서 운영 루트200, session/대화 목록/실재 A 대화 상세/실재 A 작업 상세는 모두401 LOGIN_REQUIRED와 기록 없음이었다. 다른 Origin `https://example.invalid`에서 대화 API에 빈 객체 POST는403 INVALID_ORIGIN, 같은 Production Origin의 동일 무인증 POST는401 LOGIN_REQUIRED였다. 따라서 미로그인 차단과 출처 차단을 별도 응답으로 확인했고 실제 대화/작업을 생성하지 않았다. 이 응답들의 Cache-Control은 private,no-store、Vary:Cookie、x-vercel-cache:MISS이며 공개 CORS 허용 헤더는 없었다.
+
+현재 Production A 탭에서 기존 대화2개·작업3개의 식별자를 확인한 뒤 사용자가 승인한 앱 로그아웃 버튼1회를 눌렀다. ‘이 브라우저에서 로그아웃했습니다’와 로그인 화면, 새 대화/작업 접수 비활성을 확인했다. 새로고침 후에도 로그인 필요 안내와 보호 작업 비활성이 유지됐다. Vercel Production 로그 화면에서 해당 POST /api/studio/logout HTTP200을 확인했다. 코드의 범위는 scope=local이며 다른 A 브라우저/기기·로컬 세션은 조작하지 않았다. 사용자에게 같은 보이는 Production 탭에서 A 재로그인을 요청했고, **재로그인 후 복원 재확인은 현재 대기**다. 이번 전용 로그아웃 이후의 사용자 재로그인을 처음 보고한 로그인과 혼동하지 않는다.
+
+### 환경변수 범위 문제 — 변경하지 않음
+
+실제 프로젝트 Settings → Environment Variables의 All Environments 목록에서 아래5개가 **Production and Preview**로 표시됐다: SUPABASE_URL、SUPABASE_PUBLISHABLE_KEY、SUPABASE_SECRET_KEY、STUDIO_ORIGIN、ALLOWED_USER_IDS. STUDIO_DB_READY는Production만 표시됐다. 실제 값/편집/Reveal/Download는 열지 않았다. Shared 탭에는 **No shared variables linked**가 표시됐다. 이는 이 프로젝트의 연결 상태이며 팀 전체의 모든 변수에 대한 감사가 아니다.
+
+운영 서버 Secret을 Preview에 제공하지 않는 승인된 준비 규칙과 다르므로 **07 제작 실행기 연결 준비 전에 수정해야 할 문제**로 사용자에게 먼저 보고했다. 수정안: Project → Settings → Environment Variables에서 해당 운영 변수의 Preview 적용을 제거하고 Production은 유지한다. Preview는 운영키 없이 설정 누락으로 차단하고 STUDIO_DB_READY=false 원칙을 유지한다. 기존 Preview 배포/빌드에 운영값이 제공됐는지도 확인해야 하며, 범위 변경만으로 과거 배포의 환경 스냅샷이 자동 정리됐다고 가정하지 않는다. 실제 노출/신뢰하지 않은 실행이 확인되면 별도 승인된 회수·교체 조치를 검토한다. 이번에는 설정·키·계정·접근 보호·배포를 수정하지 않았다.
+
+### 쿠키·캐시·노출 검사 한계
+
+배포된 커밋의 서버 코드에서 cookieOptions는 HTTPS이면 Secure、HttpOnly=true、SameSite=Lax、Path=/이며 Domain 지정이 없어 발급 호스트에 한정되는 설계다. **실제 브라우저 발급 쿠키의 속성은 미검증**이다. 허용된 브라우저 도구에는 쿠키 메타데이터 전용 조회가 없고 거부된 디버거 연결을 재시도/우회하지 않았다. 후속 확인은 Production 로그인 후 Chrome F12 → Application → Storage → Cookies → 운영 주소에서 Secure/HttpOnly 체크、SameSite=Lax、Domain=운영 호스트、Path=/만 확인한다. 값 복사·HAR 저장·스크린샷 공유는 하지 않는다. 인증된 개인 응답의 실제 캐시 헤더도 현재 도구로 세션을 추출하지 않고 수집하지 못했으므로, 이번 HTTP 결과는 **미로그인 응답**이고 인증된 응답은 동일 공통 응답 코드의 검토 결과로 구분한다. 후속 Chrome Network → Fetch/XHR → 기존 대화 조회 → Headers에서 응답 Cache-Control private,no-store와 Vary:Cookie만 확인한다. Request Headers의 Cookie/Authorization은 복사하지 않는다.
+
+Production HTML이 참조한 실제 공개 JS/CSS8파일을 키 없는 HTTPS로 읽어 서버 Secret/JWT/개인키/OpenAI키 문자열 패턴을 검사했고 발견0이었다. Vercel 실행 로그 전용 도구도 접근 제한 응답이어서 대신 대시보드 Logs의 최근30분 Production 필터(표시30행、Preview0)를 읽었다. 화면에 표시된 로그에서 서버 Secret/JWT/개인키 패턴은 없었고 auth 진단은 고정 stage/code/status 형태였다. 로그 전체 내보내기나 개별 요청의 인증 헤더 열람은 하지 않았다. 이 결과는 해당 시간대·표시 행/공개 파일 범위이며 과거 모든 로그·파일 또는 탐지되지 않는 임의 형식의 비밀정보 부재를 보증하지 않는다.
+
+기존 미검증인 B 앱 버튼 로그아웃、자연 만료、reviews/approvals/releases 실재 행의 실제 사용자 토큰 조회는 그대로 유지한다. B 로그인/새 세션、작업 생성/중단、원격 SQL/권한 변경、실제 AI、커밋/push/재배포、07 진행을 하지 않았다.
+
+### 후속 확인 — A 재로그인·Production 전용 범위 확인
+
+사용자가 A 재로그인과 환경변수의 Production 전용 변경을 보고한 뒤 실제 화면을 다시 확인했다. Production 앱을 새로고침한 새 요청에서 로그인 상태와 기존 대화2개가 복원됐고, 기존 대화를 선택하여 이전 작업3개(d28587a7 / 01f25748 / e909a852)의 식별자가 그대로 표시됨을 확인했다. 추가 로그아웃이나 작업 생성·변경은 하지 않았다. 앞서 대기였던 A 앱 로그아웃 → 새로고침 후 차단 → 직접 재로그인 → 기존 대화/작업 복원은 이제 실제 화면 확인 완료다.
+
+Vercel Environment Variables 페이지를 새로고침한 All Environments 목록에서 SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY, STUDIO_ORIGIN, ALLOWED_USER_IDS, STUDIO_DB_READY의6개 모두 **Production만** 표시됐다. 실제 값은 열지 않았다. 따라서 앞서 발견한 현재 변수의 Preview 중복 적용 문제는 사용자 수정 후 해소된 것으로 확인한다. 앞선 Shared 연결 없음 확인과 별개로, 과거 Preview 배포에 제공됐던 환경 스냅샷의 잔존 여부는 이번에 확인하지 못했다. 현재 범위 수정만으로 과거 노출까지 없었다고 기록하지 않는다.
+
+대시보드에는 새 배포 **FKPC9E44CpVJmJNJB7wWEsBFtg4F**가 Ready / Production / Current Domains(운영 주소)로 표시됐다. Source는 동일한 **4931c7e0445b2d227bac9c6ecfa29fcff62b5607**이다. 도구로 배포를 실행한 것이 아니라 사용자 작업 이후의 실제 상태를 읽은 결과다. 이전 HTTP·공개 파일·로그 검사는 앞서 기재한 배포와 시간대의 증거이며 새 배포에서 전체 반복한 것으로 처리하지 않는다.
+
+현재 범위의 설정 문제는 해소됐고 새 코드 결함은 발견하지 않았다. 다만 실제 HTTPS 인증 쿠키 속성, 인증된 개인 응답의 캐시 헤더, 과거 Preview 배포의 운영값 제공 여부는 남아 있다. 위 메뉴 안내에 따라 값 없이 속성만 확인하고, 과거 Preview 배포/빌드 존재 여부를 Vercel Deployments에서 확인한 뒤 실제 제작 실행기 연결 전에 보안 점검을 마무리한다. 기존 B 버튼 로그아웃·자연 만료·세 테이블 실재 행의 실제 사용자 토큰 검사는 여전히 미검증이다. 이번 로컬 변경은 이 상태 문서뿐이며 커밋·push·재배포·07단계는 진행하지 않았다.
+
+### 06 남은 세 항목의 한정 점검 — 2026-09-15
+
+**과거 Preview:** 연결 도구 list_deployments는 해당 팀 접근 권한403으로 실패했다(isError=false 외형을 성공으로 취급하지 않음). 로그인된 Vercel 대시보드의 프로젝트 Deployments에서 날짜/브랜치/작성자/상태 제한 없는 목록을 읽고 끝까지 스크롤했다. 표시3건이며 추가 페이지/Load more가 보이지 않았다. 상단 Author/Environment/Status 버튼은 추천 필터이며 실제 선택 시 URL 쿼리가 생기는 것을 구분했다. Environment=Preview만 지정한 별도 조회는 No Results였다. Recently Deleted Deployments도 No recently deleted deployments were found였다.
+
+각 상세 화면의 Environment는 모두 Production, Source는 main / 4931c7e0445b2d227bac9c6ecfa29fcff62b5607이었다. URL 모양으로 판정하지 않았다. 표시된 가장 오래된 배포 EufoivZTQu8UkVSR97h1j2BKd4E4, 다음66sbaeCgSHAhEreVYwkbGwUKdSwN, 현재FKPC9E44CpVJmJNJB7wWEsBFtg4F 순이다. 상세 Duration 영역의 절대 시각은 각각2026-09-15 22:24:31, 22:43:46, 23:04:17 GMT+9였고, Created는 각각 상대 시각으로 표시됐다. 이 절대 시각을 정확한 생성 시각이라고 대체하지 않는다.
+
+판정: **대시보드에서 조회 가능한 전체3건과 최근 삭제 범위에서 그 기간에 생성된 Preview 없음**. 따라서 운영값이 제공됐을 의심 Preview 대상은 발견하지 못했고 현재 증거만으로 삭제나 키 교체를 요구할 근거는 없다. 단, API 전체 이력/페이지 메타데이터는 접근 불가이고 영구 삭제 이력 및 프로젝트 생성부터의 감사 기록까지 확인하지 못했으므로, ‘첫 배포부터 절대 누락 없음’과 과거 운영값 제공 가능성0을 완전히 증명한 것은 아니다. 최근 삭제 목록도 영구 삭제 전체의 증거가 아니다. 비밀값 조회/복호화/다운로드, Preview로 A 인증 전송, 삭제/설정 변경은 하지 않았다.
+
+**실제 인증 쿠키:** 허용된 브라우저 도구에 값과 분리된 쿠키 속성 전용 조회 기능이 없어 미검증을 유지한다. A 세션은 건드리지 않았고 개발자 도구/디버거로 값을 추출하지 않았다. 사용자 확인 위치: Production 탭 F12 → Application → Storage → Cookies → https://science-simulations-studio.vercel.app/. 인증 쿠키 행의 Secure, HttpOnly, SameSite, Domain, Path 열만 확인한다. 기대값은 체크/체크/Lax/science-simulations-studio.vercel.app(호스트 한정)/이다. Value 열 복사, 전체 화면 캡처, HAR, Copy as cURL은 하지 않는다. 코드 설정만으로 실배포 통과 처리하지 않는다.
+
+**개인 응답 캐시:** 실제 A 인증 요청의 응답 헤더를 안전하게 조회하는 기능도 없어 미검증이다. 로컬의 배포 커밋 코드에서 API 공통 응답과 next.config.mjs 모두 Cache-Control private,no-store, API Vary:Cookie이며 이를 공유 캐시 허용으로 덮어쓰는 프로젝트 파일은 발견하지 않았다. Vercel CDN의 별도 원격 규칙은 이번에 검증하지 못했다. 사용자 확인 위치: F12 → Network → Fetch/XHR → 기존 대화/작업 읽기 요청 → Headers → Response Headers. Cache-Control(no-store와 private 또는 동등한 공유 캐시 차단), CDN-Cache-Control, Vercel-CDN-Cache-Control, Age, Vary, x-vercel-cache를 확인한다. 본문/Request Cookie/Authorization은 공유하지 않는다. MISS만으로 통과 판정하지 않는다.
+
+동일 Production의 별도 무인증 Node 프로세스에서 대화 목록 및 기존 작업 상세 GET을 이번에 실제 실행했다. 둘 모두401 LOGIN_REQUIRED, 기록 반환 없음, Cache-Control private,no-store, Vary Cookie, Age0, x-vercel-cache MISS, CDN-Cache-Control/Vercel-CDN-Cache-Control 응답 헤더 없음이었다. 이는 **무인증 응답과 접근 차단만 통과**이며 A의200 응답 캐시 검사를 대체하지 않는다. 환경파일·키·쿠키는 로드하지 않았고 프로세스 한정 --use-system-ca를 사용했다.
+
+07 준비 전 발견된 새로운 결함은 없으나 실제 인증 쿠키/개인 응답 헤더 확인은 남아 있다. 배포 이력의 절대 완전성이 필요하면 팀 권한이 있는 배포 이력 API/감사 기록으로 누락 범위를 보완해야 한다. 기존 B 앱 버튼 로그아웃, 자연 만료, reviews/approvals/releases 실재 행의 실제 사용자 토큰 조회는 그대로 미검증이다. 이번에는 STATUS만 갱신하고 코드/데이터/원격 설정/커밋/push/배포/07단계는 변경·실행하지 않았다.
+
+## 06 현재 범위 완료 — Production 최종 사용자 확인, 2026-09-15
+
+**현재 범위의06단계 Production 검증은 완료로 정리한다. 07단계는 미착수·대기다.** 위의 쿠키/개인 응답 헤더 미검증 기록은 당시 상태이며, 아래 사용자 직접 확인으로 해당 항목을 갱신한다. 도구가 직접 검사한 결과와 사용자 보고를 구분한다.
+
+대상은 https://science-simulations-studio.vercel.app/, Production·Ready, 커밋4931c7e0445b2d227bac9c6ecfa29fcff62b5607이다. 사용자가 실제 Production에서 인증 쿠키의 Secure=true, HttpOnly=true, SameSite=Lax, Path=/, 제작실 Production 호스트 범위를 직접 확인했다. 서버 중심 인증 설계와 일치하며 **사용자 실제 확인으로 통과**다. 쿠키 값·토큰은 수집하거나 기록하지 않았다.
+
+사용자가 로그인된 개인 데이터 조회의 실제 응답에서 Cache-Control: private, no-store 및 x-vercel-cache: MISS를 직접 확인했다. 개인 응답의 캐시 방지 헤더는 **사용자 실제 확인으로 통과**이며, MISS 하나만으로 판정한 것이 아니다. 별도 CDN 헤더/원격 CDN 규칙 전체를 새로 검증했다고 확대 해석하지 않는다.
+
+기존 실제 증거인 A 로그인·새로고침 유지·기존 기록 복원, 앱 로그아웃 후 보호 접근 차단과 재로그인 복원, 무인증 API401·기록 미반환, 잘못된 Origin403, 환경변수6개 Production 전용, 조회 가능한 배포 이력의 Preview 없음, 한정된 공개 파일/로그 점검과 함께 완료 근거로 삼는다. 앞서 기록한 API 권한 제약·영구 삭제 포함 배포 이력의 완전성 한계·파일/로그 검사 범위는 그대로 보존하며 미실행 검사를 통과로 바꾸지 않는다. 현재 A 전용 모의 제작실 범위에서 새 차단 결함은 발견하지 않았다. 실제 AI·자동 승인·공개 제작 실행에 대한 승인을 뜻하지 않는다.
+
+### 후속 미검증 — 완료로 처리하지 않음
+
+- **B 비활성 사용자의 앱 버튼 로그아웃:** B 비활성·허용 목록 제외·잔여 세션0을 유지한다. 향후 권한 없는 사용자 지원 경로 검증 시 별도 승인된 실제 보이는 검사 세션에서 앱 버튼 경로를 확인한다. SDK 전체 세션 종료 성공과 구분한다.
+- **정상 서명 토큰의 자연 만료:** 정상 수명의 세션을 기다려 만료 후 갱신/재로그인 안내와 기록 보존을 확인한다. 장시간 정식 운영 검증에서 수행하며 기존 실제 갱신 성공·모의 실패 검사로 대체하지 않는다.
+- **reviews/approvals/releases 실재 행의 실제 사용자 토큰 기반 격리:** 해당 기능의 실제 사용 또는 다중 사용자 운영 전에 승인된 비운영 환경에서 실재 본인/타인 행을 실제 사용자 토큰으로 검사한다. 기존 DB 역할 기반 RLS 검사를 같은 검사로 취급하지 않는다.
+
+이번 작업은 기존 미커밋 변경을 보존한 docs/STATUS.md 갱신뿐이다. 코드 수정, 계정/데이터/환경 설정 변경, 커밋, push, 재배포 및07단계 진행은 하지 않았다.
+
+## 07-1 대화·요청 UI와 실행기 구조 준비 — 로컬 구현, 2026-09-16
+
+06 완료까지의 미커밋 STATUS 기록을 보존하고 사용자 승인 범위의07-1을 구현했다. 현재 main HEAD4931c7e는 그대로이며 stage/commit/push는 없다. 운영 A/B·Production 환경변수·Supabase·Vercel·Pages는 조작하지 않았다. 기존 studio_v1.sql과 Pages workflow도 변경하지 않았다.
+
+### UI·요청 규격 변경
+
+새 대화 이름 입력/취소/생성, 대화별 이름 수정/삭제 메뉴, 120자·빈값 검증, 즉시 중복 클릭 잠금·생성 요청 UUID를 구현했다. 서버는 기존 Auth·허용 목록·active 교사·소유자 검사와 POST Origin 검사를 유지한다. SQL capability가 없는 기존 DB에서는 새 기능을 `DB 변경 적용 필요`로 표시·차단한다. 기존 조회/모의 진행/v1 재시도는 유지한다.
+
+삭제 확인창에 웹앱 보존과 제작 명세 별도 보존을 명시했다. SQL은 메시지를 실제 삭제하고 제목을 제거하며 FK용 tombstone을 남긴다. jobs의 불변 요청 스냅샷에는 기존 requirements 등 제작 명세가 남으며 이를 전체 원문 삭제라고 주장하지 않는다. jobs/events/reviews/approvals/releases와 콘텐츠 ID·카드·파일·공개 주소는 보존한다. 삭제/접수는 같은 teacher→conversation 잠금 순서로 원자화하며 진행/중단 처리 중 삭제를 거부한다. 삭제된 대화와 UI 작업 상세/API/접수/재시도는 차단한다.
+
+학년도 입력·상태·안내·신규 전송을 제거했다. v2는 schoolYear를 허용하지 않고 SQL의 기존 school_year 열에는null을 저장한다. v1 스냅샷/값/해시는 보존하고 과거 재시도·중복 방지 규칙은 유지한다. 새 명세의2022 개정 기본은 별도 내부 설정이며 실제 원문·성취기준 검토는 미확인이다. 기존 콘텐츠에는 소급하지 않는다. 자유 입력창에 고정 안내·접이식 작성 예시·비강제 안내를 추가했고 예시는 자동 입력되지 않는다.
+
+### 실행기 연결 준비
+
+Dispatcher의 Store.claim/finish 계약, MockAdapter, GitHubActionsAdapter의 고정 대상·설정 검증·job_id만 전송하는 요청 구성·응답/오류 분류·불확실 전송 자동 재시도 방지를 코드와 테스트로 구현했다. 기본 HTTP transport가 없고 제품 API에도 연결하지 않아 실제 GitHub 호출은0이다. mock 작업은 real로 전환하지 않는다. 실제 실행기 연결 필요를 화면에 표시한다.
+
+독립 명세 추출과 선택적 dispatch_intents SQL 저장 구조는 준비했으나 운영 Store/토큰 발급/OIDC/공개 가능 근거 발급/실행 한도/취소·timeout 제어/worker 자체는 후속 구현이다. 동시1·수정2 목표를 실제 비용/일일 한도 강제 완료로 기록하지 않는다. 예산과 실제 호출 승인도 미확인이다. 역할별 실행·최소 GitHub App 권한·생성 코드 격리·PR까지의 초기 경로는 STUDIO_07_1에 명시했다.
+
+### 실제 로컬 검사와 한계
+
+| 검사 | 결과와 실제 범위 |
+|---|---|
+| npm.cmd run test:studio | 최종28/28 성공. 기존 인증/로그아웃/모의 도메인·SQL 계약과 신규 v1/v2/Dispatcher/SQL 실행 검사 |
+| 격리 PostgreSQL SQL 실행 | @electric-sql/pglite0.5.8 메모리 DB에 v1→v2→선택 outbox안을 적용. 실제 SQL 소유자 거부·공백 이름 거부·중복 생성/접수·수정·진행 중 삭제 거부·삭제 후 접수 거부·메시지 삭제·jobs/events/reviews/approvals/releases 보존·인증 역할 직접 수정 거부·재실행 실패 후 롤백을 확인 |
+| 과거 데이터 호환 | v1 적용 상태에서 만든 fixture를 v2로 변경한 뒤 기존 school_year2024/snapshot/hash 보존, legacy 재시도 연결·중복 재전송을 실제 로컬 SQL로 확인 |
+| 삭제/접수 동시 요청 | 로컬 단일 연결 엔진의 Promise 동시 호출에서 삭제 우선 후 접수 거부 확인. 반대 순서는 진행 중 삭제 거부로 확인. 다중 연결 잠금 대기/경쟁 타이밍은 미검증 |
+| npm.cmd run build:studio | 최종 Next 프로덕션 빌드·포함 TypeScript 성공. Vercel 배포 성공을 뜻하지 않음 |
+| npm.cmd run test:studio:e2e | 최종9/9, exit0. 390/1440px 실제 UI의 이름 입력·취소·중복 클릭·수정/복원·삭제/빈 상태·학년도 없음·예시 열기/입력 보존·키보드·기존 인증 안내 회귀. API는 테스트 fixture로 대체하며 실제 로그인/운영 DB 검사가 아님 |
+| 기존 자료실 | npm.cmd run validate, typecheck, test26/26, build:catalog, check-pages 성공. 승인 카드0·유전 초안 제외 유지 |
+| 공개 후보 감사 | audit-upload: tracked113/candidates121, 문제0. .env.local/.local/원문PDF/빌드·검사 산출물 제외 확인. 알려진 패턴 감사 범위이며 모든 비밀 형태 부재 보증은 아님 |
+| 로컬 직접 화면 | http://127.0.0.1:3002/에서 격리 검사 배너·학년도 없는 요청 화면·이름 dialog/입력 초점·취소를 실제 브라우저로 확인. 운영 계정 로그인 없음 |
+
+개발 중 기존 SQL 정적 테스트가 v1의RPC3개만 가정하여 실패했다. v2 RPC 시그니처와 증분 SQL을 대조하도록 갱신해 통과시켰고 검사를 삭제하지 않았다. PowerShell의 기본 파이프 인코딩으로 새 문구가 손상된 부분을 UTF-8로 교정한 뒤 최종 빌드·화면 검사를 통과했다. npm 기본 캐시의 권한 오류는 프로젝트 .local 캐시 사용으로 해결했고 PGlite 하나만 devDependency로 고정 설치·잠금 파일 반영했다. 초기 자료실 검사의 sandbox realpath EPERM은 동일 검사에 허용된 실행 권한으로 재실행해 통과했다. 최초 브라우저9개는 통과했으나 sandbox 서버 정리가 완료되지 않아 중단(exit1)했고, 허용된 권한으로 같은 검사를 재실행하여 최종 exit0을 확인했다.
+
+### 파일·로컬 확인·다음 단계
+
+UI/서버/domain/dispatcher, 증분 SQL2개, SQL·단위·브라우저 검사, 별도 tests/fixtures/studio07/serve.mjs, package/lock, DATA_CONTRACTS/IMPLEMENTATION_PLAN/STUDIO_07_1/STATUS를 변경·추가했다. 환경값 예시/실제값 파일은 변경하지 않았다. 실제 운영 SQL은 미적용이다.
+
+정확한 확인 주소는 **http://127.0.0.1:3002/**. 별도 로컬 UI fixture 서버를 실행해 두었다(내부 Next3003). 메모리 검사 기록만 사용하며 실제 로그인/권한/SQL 검증을 대신하지 않는다. 재시작은 프로젝트 루트 C:\Users\user\Desktop\science-simulations에서 `npm.cmd run build:studio` 후 `node tests/fixtures/studio07/serve.mjs`다. 기존3000 서버나 Production 세션은 종료하지 않았다. 이 연습 서버의 재시도 버튼은 지원하지 않으며 실제 재시도 검증은 기존 모의 UI 검사와 별도 SQL 검사 결과를 따른다.
+
+다음 사용자 작업은 해당 로컬 화면에서 이름/예시/삭제·보존 안내를 검토하는 것이다. 그 후 별도 승인으로 studio_v2.sql 적용 전 검토를 진행할 수 있다. studio_runner_v1.sql은 독립 선택안이며 실제 실행을 활성화하지 않는다. 운영 SQL 적용 후 Auth/Data API/다중 연결 동시성, 실제 외부 실행기·한도·OIDC·토큰 발급 검사는 아직 미검증이다.
+
+기존 **B 비활성 사용자 앱 버튼 로그아웃, 정상 서명 토큰 자연 만료, reviews/approvals/releases 실재 행의 실제 사용자 토큰 기반 격리**는 후속 미검증으로 유지한다. 이번 로컬 fixture 역할 검사를 그 항목의 완료로 처리하지 않는다. 커밋·push·Vercel/Pages 재배포·원격 SQL/권한 변경·GitHub App 생성·유료 AI 제작 실행은 하지 않았으며07-1 이후 단계는 대기한다.
+# 2026-09-16 — 07 대화 관리·v2 DB 적용 전 검토 (운영 미적용)
+
+사용자 UI 확인: 격리 검사 화면에서 대화 이름 생성·취소·수정·삭제 정상, 적용 학년도 제거 확인, 작성 안내와 접이식 예시 만족. 사용자 확인으로 기록하며 운영 DB 검사로 취급하지 않는다. 기존 UI를 재설계하거나 통과한 화면 검사를 반복하지 않았다.
+
+Supabase 승인 연결 도구로 science-studio의 현재 메타데이터를 읽기 전용 조회했다. 8개 테이블 RLS 활성, service_role BYPASSRLS, v1 함수 3개·권한·FK·정책 확인. 함수 본문 공백 제거 MD5가 로컬 v1과 모두 일치했다. 사용자 정의 트리거 없음. v2 열/RPC와 runner 테이블은 아직 없으며 migration 목록은 비어 있고 이력 테이블 자체가 없다. 기존 수동 v1 적용이 존재하므로 재실행하면 안 된다. 전체 DB 동일성·백업 복원 가능 여부는 이 조회로 증명하지 않았다.
+
+구버전 4931c7e 서버는 deleted_at 필터 없이 service_role로 조회하여, 삭제 후 구버전으로 복구하면 표식이 노출되는 문제를 발견했다. 로컬 v2 SQL에 기본 false인 삭제 gate와 PT412 차단을 추가하고 앱에 별도 활성화 안내를 추가했다. 운영 삭제 활성화는 호환 앱·복구 버전 검증 후 별도 승인할 변경이다. 삭제 후 4931c7e로 되돌리는 방식은 안전하지 않다.
+
+적용 후보는 supabase/proposals/studio_v2.sql 하나이며 studio_runner_v1.sql은 분리 보류한다. 별도 의존 없이 v2 단독 적용을 격리 DB에서 확인했다. 기존 미커밋 파일을 보존했고 환경값/원격 DB/계정/권한은 변경하지 않았다.
+
+실제 검사: npm.cmd run test:studio 28/28 성공(격리 PGlite SQL 2개 포함), npm.cmd run typecheck:studio 성공, npm.cmd run build:studio 성공. 기존 v1 snapshot/hash/school_year 보존과 재시도·중복 접수, 변경 후 구버전 대화 생성, v2 접수, 소유자·삭제·보존 검사, 기본 삭제 잠금과 서비스 역할의 잠금 함수 변경 거부를 확인했다. 구버전 조회가 삭제 표식을 읽는 위험도 격리 SQL로 재현했다. 이는 실제 Production에 SQL 적용 후 검사한 결과가 아니다.
+
+다중 연결 동시성은 미검증: 기존 PGlite는 단일 연결이며 Promise 병렬 호출도 큐 처리다. psql/postgres/docker/supabase CLI가 없어 신규 설치나 외부 프로젝트 생성은 하지 않았다. 격리 PostgreSQL 두 연결의 경쟁·잠금 검사와 백업 복원 확인을 운영 적용 전에 준비해야 한다. 로컬 프로덕션 빌드 성공은 배포 성공을 뜻하지 않는다. 새 차단 안내의 실제 브라우저 표시는 이번에 재검사하지 않았다.
+
+정식 migration 기준선 기록(수동 v1 재실행 금지), v2 생성·적용 순서, 잠금 영향·실패/재실행·백업/전진 복구 계획은 docs/STUDIO_V2_DB_REVIEW.md에 기록했다. 적용 전 격리 DB 준비·기준선 이력 관리·백업·작업 시간 승인이 필요하다. 실제 적용 직전 대기한다.
+
+기존 B 비활성 사용자 앱 버튼 로그아웃, 정상 서명 토큰 자연 만료, reviews/approvals/releases 실재 행의 실제 사용자 토큰 기반 격리는 계속 미검증이다. 3002 화면의 운영 연결, 운영 데이터 삭제, SQL 적용, 커밋·push·재배포·실제 AI 실행은 하지 않았다.

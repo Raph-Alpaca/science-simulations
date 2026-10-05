@@ -1,0 +1,106 @@
+name: Studio bounded generation and isolated checks
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Rehearsal runs reviewed fixtures only, with no provider call
+        type: choice
+        options: [rehearsal, generate]
+        default: rehearsal
+        required: true
+      job_id:
+        description: Server-approved Studio job UUID (generate mode only)
+        type: string
+        default: ''
+        required: false
+permissions: {}
+concurrency:
+  group: studio-worker
+  cancel-in-progress: false
+jobs:
+  configuration:
+    if: github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.run_attempt == 1 && inputs.mode == 'generate' && vars.STUDIO_WORKER_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Validate required configuration before paid work
+        env:
+          STUDIO_JOB_ID: ${{ inputs.job_id }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+        run: |
+          node --input-type=module -e '
+          const e=process.env, key=e.STUDIO_TRANSFER_KEY;
+          const ok=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(e.STUDIO_JOB_ID)
+            && typeof e.OPENAI_API_KEY==="string" && e.OPENAI_API_KEY.startsWith("sk-")
+            && typeof key==="string" && Buffer.from(key,"base64").length===32 && Buffer.from(key,"base64").toString("base64")===key;
+          if(!ok){console.error("STUDIO_CONFIGURATION_REQUIRED");process.exit(1);}'
+  rehearsal:
+    if: github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build allowlisted checker image
+        id: image
+        run: node automation/runner/container/build.mjs
+      - name: Verify isolation and reviewed 2D/3D fixtures
+        env:
+          STUDIO_CHECKER_IMAGE: ${{ steps.image.outputs.image }}
+        run: node automation/runner/container/rehearsal.mjs
+  generate:
+    needs: [configuration, rehearsal]
+    if: inputs.mode == 'generate' && vars.STUDIO_WORKER_ENABLED == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/studio-generate.yml
+    with:
+      job_id: ${{ inputs.job_id }}
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  verify_0:
+    needs: [configuration, rehearsal]
+    if: inputs.mode == 'generate' && vars.STUDIO_WORKER_ENABLED == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/studio-report.yml
+    with:
+      job_id: ${{ inputs.job_id }}
+      attempt: 0
+    secrets:
+      STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+  verify_1:
+    needs: verify_0
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/studio-report.yml
+    with:
+      job_id: ${{ inputs.job_id }}
+      attempt: 1
+    secrets:
+      STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+  verify_2:
+    needs: verify_1
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/studio-report.yml
+    with:
+      job_id: ${{ inputs.job_id }}
+      attempt: 2
+    secrets:
+      STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}

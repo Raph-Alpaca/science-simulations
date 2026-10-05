@@ -18,10 +18,12 @@ async function repository(t) {
   for (const file of ['audit-upload.mjs', 'content.mjs']) {
     await fs.copyFile(path.join(ROOT, 'automation/catalog', file), path.join(dir, 'automation/catalog', file));
   }
+  await fs.mkdir(path.join(dir, 'packages/contracts'), { recursive: true });
+  await fs.copyFile(path.join(ROOT, 'packages/contracts/content-source.js'), path.join(dir, 'packages/contracts/content-source.js'));
   await fs.writeFile(path.join(dir, '.gitignore'), '.local/\n');
   const git = (...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: 'pipe' }).trim();
   git('init', '--initial-branch=audit-fixture');
-  git('add', '--', '.gitignore', 'automation/catalog/audit-upload.mjs', 'automation/catalog/content.mjs');
+  git('add', '--', '.gitignore', 'automation/catalog/audit-upload.mjs', 'automation/catalog/content.mjs', 'packages/contracts/content-source.js');
   git('-c', 'user.name=Audit Test', '-c', 'user.email=audit@example.invalid', '-c', 'commit.gpgSign=false', 'commit', '-m', 'test fixture');
   const commit = git('rev-parse', 'HEAD');
   const run = () => spawnSync(process.execPath, ['automation/catalog/audit-upload.mjs'], { cwd: dir, encoding: 'utf8', timeout: 15000 });

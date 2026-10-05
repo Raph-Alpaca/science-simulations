@@ -23,6 +23,7 @@ node_modules/
 **/.next/
 .vercel/
 **/.vercel/
+supabase/.temp/
 dist/
 coverage/
 playwright-report/

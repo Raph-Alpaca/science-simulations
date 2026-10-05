@@ -14,7 +14,7 @@
     "dev:catalog": "node automation/catalog/serve.mjs --build",
     "validate": "node automation/catalog/validate.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --test-timeout=30000 tests/unit/*.test.mjs",
+    "test": "node --test --test-concurrency=1 --test-timeout=30000 tests/unit/*.test.mjs",
     "test:e2e": "playwright test",
     "build:catalog": "node automation/catalog/build.mjs",
     "preview:catalog": "node automation/catalog/serve.mjs",
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
+    "@electric-sql/pglite": "0.5.8",
     "@playwright/test": "1.63.0",
     "esbuild": "0.28.2",
     "parse5": "8.0.1",
