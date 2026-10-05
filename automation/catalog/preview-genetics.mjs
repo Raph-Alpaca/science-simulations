@@ -15,7 +15,7 @@ export async function buildGeneticsPreview() {
   await bundleCatalog(output, input.config, [toCard(draft, input.config.basePath)]);
   const index = path.join(output, 'index.html');
   const html = await fs.readFile(index, 'utf8');
-  await fs.writeFile(index, html.replace('<body>', '<body><aside class="fixture-banner">미승인 로컬 초안 · 교육과정·교과서 미대조 · 공개 배포 제외</aside>'));
+  await fs.writeFile(index, html.replace('<body>', '<body><aside class="fixture-banner">미승인 로컬 초안 · 교육과정·교과서 대조 미완료 · 공개 배포 제외</aside>'));
   for (const file of draft.manifest) {
     const target = path.join(output, 'simulations', draft.meta.id, file.path);
     await assertNoLinks(target);

@@ -3,10 +3,17 @@ import { createHash, randomUUID } from 'node:crypto';
 import { authClient, database } from './supabase';
 import { studioConfig } from './config';
 import { loginFailure, loginDiagnostic } from './login-error.mjs';
-import { StudioError, teacher, owner, id, fields, requestEnvelope, mockNext, retryAllowed, checkReceipt } from './domain.mjs';
+import { StudioError, teacher, owner, id, fields, requestEnvelope, mockNext, retryAllowed, checkReceipt, conversationTitle } from './domain.mjs';
+import { createInputReviewService } from './input-review.mjs';
+import { createDispatchService } from './dispatch-service.mjs';
+import { createResultReviewService } from './result-review.mjs';
+import { createRevisionService } from './revision.mjs';
 
 function dbError(error: { code?: string } | null) {
   if (!error) return;
+  if(error.code==='PT412') throw new StudioError('DELETE_ROLLOUT_REQUIRED',409);
+  if (['PGRST202','42703','42883'].includes(error.code || '')) throw new StudioError('DB_CHANGE_REQUIRED',503);
+  if(error.code==='PT423') throw new StudioError('CONVERSATION_BUSY',409);
   if (error.code === 'PT409' || error.code === '23505') throw new StudioError('STATE_CONFLICT', 409);
   if (error.code === 'PT404') throw new StudioError('NOT_FOUND', 404);
   if (error.code === 'PT403') throw new StudioError('TEACHER_NOT_ALLOWED', 403);
@@ -46,20 +53,29 @@ export async function login(body: unknown) {
   return { authenticated: true };
 }
 type Session = Awaited<ReturnType<typeof session>>;
+const inputReviews=(s:Session)=>createInputReviewService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_INPUT_REVIEW_ENABLED==='true'});
+const dispatchService=(s:Session)=>createDispatchService({db:s.db,ownerId:s.userId,env:process.env});
+const resultReviews=(s:Session)=>createResultReviewService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_RESULT_REVIEW_ENABLED==='true'});
+const revisions=(s:Session)=>createRevisionService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_REVISION_ENABLED==='true'&&process.env.STUDIO_INPUT_REVIEW_ENABLED==='true'&&process.env.STUDIO_RESULT_REVIEW_ENABLED==='true'});
 async function conversation(s: Session, conversationId: string) {
   id(conversationId);
   const { data, error } = await s.db.from('conversations').select('*').eq('id', conversationId).eq('owner_id', s.userId).maybeSingle();
-  dbError(error); return owner(data, s.userId);
+  dbError(error); const row=owner(data,s.userId); if(row.deleted_at) throw new StudioError('NOT_FOUND',404); return row;
 }
 async function job(s: Session, jobId: string) {
   id(jobId);
   const { data, error } = await s.db.from('jobs').select('*').eq('id', jobId).eq('owner_id', s.userId).maybeSingle();
-  dbError(error); return owner(data, s.userId);
+  dbError(error); const row=owner(data,s.userId); await conversation(s,row.conversation_id); return row;
 }
 export async function read(s: Session, parts: string[]) {
+  if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='result')return resultReviews(s).read(parts[1]);
+  if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='dispatch')return dispatchService(s).read(parts[1]);
+  if(parts.length===2&&parts[0]==='input-reviews')return inputReviews(s).read(parts[1]);
   if (parts.length === 1 && parts[0] === 'conversations') {
-    const { data, error } = await s.db.from('conversations').select('id,title,created_at').eq('owner_id', s.userId).order('created_at', { ascending: false }).limit(100);
-    dbError(error); return { conversations: data };
+    let query=s.db.from('conversations').select('*').eq('owner_id',s.userId);
+    if((await capabilities(s)).conversationEditing) query=query.is('deleted_at',null);
+    const {data,error}=await query.order('created_at',{ascending:false}).limit(100);
+    dbError(error); return { conversations: (data || []).filter(row=>!row.deleted_at).map(({id,title,created_at})=>({id,title,created_at})) };
   }
   if (parts.length === 2 && parts[0] === 'conversations') {
     const item = await conversation(s, parts[1]);
@@ -78,16 +94,28 @@ export async function read(s: Session, parts: string[]) {
   throw new StudioError('NOT_FOUND', 404);
 }
 export async function write(s: Session, parts: string[], body: unknown) {
+  if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='revision-input')return revisions(s).prepare(parts[1],body);
+  if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='result-file')return resultReviews(s).file(parts[1],body);
+  if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='feedback')return resultReviews(s).feedback(parts[1],body);
+  if(parts.length===3&&parts[0]==='input-reviews'&&parts[2]==='start')return dispatchService(s).start(parts[1],body);
+  if(parts.length===1&&parts[0]==='input-reviews')return inputReviews(s).prepare(body);
+  if(parts.length===3&&parts[0]==='input-reviews'&&parts[2]==='approve')return inputReviews(s).approve(parts[1],body);
   if (parts.length === 1 && parts[0] === 'conversations') {
-    fields(body, ['title']);
-    const title = (body as {title: string}).title;
-    if (typeof title !== 'string' || !title.trim() || title.length > 120) throw new StudioError('INVALID_REQUEST');
-    const { data, error } = await s.db.rpc('new_conversation', { p_owner: s.userId, p_title: title.trim() });
-    dbError(error); return { conversation: data };
+    fields(body,['title','clientRequestId']);
+    const input=body as {title:string;clientRequestId:string};
+    const title=conversationTitle(input.title); id(input.clientRequestId);
+    const {data,error}=await s.db.rpc('new_conversation_v2',{p_owner:s.userId,p_title:title,p_request:input.clientRequestId});
+    dbError(error); return {conversation:data};
+  }
+  if(parts.length===3 && parts[0]==='conversations' && ['rename','delete'].includes(parts[2])) {
+    await conversation(s,parts[1]); fields(body,parts[2]==='rename'?['title']:[]);
+    const {data,error}=await s.db.rpc('edit_conversation_v2',{p_owner:s.userId,p_conversation:parts[1],p_action:parts[2],p_title:parts[2]==='rename'?conversationTitle((body as {title:string}).title):null});
+    dbError(error); return {conversation:data};
   }
   if (parts.length === 1 && parts[0] === 'jobs') {
     const envelope = requestEnvelope(body);
     await conversation(s, envelope.conversationId);
+    if(envelope.schemaVersion!==2) throw new StudioError('INVALID_REQUEST');
     return submit(s, envelope, null);
   }
   if (parts.length === 3 && parts[0] === 'jobs' && parts[2] === 'commands') {
@@ -96,6 +124,11 @@ export async function write(s: Session, parts: string[], body: unknown) {
     id(input.clientRequestId);
     if (!Number.isInteger(input.expectedStateVersion) || input.expectedStateVersion < 0) throw new StudioError('INVALID_REQUEST');
     const item = await job(s, parts[1]);
+    if(item.execution_mode==='real') {
+      if(input.command!=='cancel')throw new StudioError('REAL_COMMAND_NOT_ALLOWED',409);
+      const {data,error}=await s.db.rpc('cancel_worker_job',{p_owner:s.userId,p_job:item.id,p_expected:input.expectedStateVersion,p_command:input.clientRequestId}).abortSignal(AbortSignal.timeout(10000));
+      dbError(error);return {job:data};
+    }
     if (input.command === 'retry') {
       retryAllowed(item, input.expectedStateVersion);
       // Same request ID retrieves the same successor through submit_job's unique constraint.
@@ -115,9 +148,17 @@ export async function write(s: Session, parts: string[], body: unknown) {
 }
 async function submit(s: Session, envelope: ReturnType<typeof requestEnvelope>, retryOf: string | null, retryExpected: number | null = null) {
   const hash = createHash('sha256').update(JSON.stringify({ operation: envelope.operation, payload: envelope.payload, retryOf, retryExpected })).digest('hex');
-  const { data, error } = await s.db.rpc('submit_job', {
+  const { data, error } = await s.db.rpc(envelope.schemaVersion===2?'submit_job_v2':'submit_job', {
     p_owner: s.userId, p_conversation: envelope.conversationId, p_client_request: envelope.clientRequestId,
     p_hash: hash, p_snapshot: envelope, p_job: randomUUID(), p_idempotency: randomUUID(), p_retry_of: retryOf, p_retry_expected: retryExpected,
   });
   dbError(error); return { job: data };
+}
+
+export async function capabilities(s: Session) {
+  const {data,error}=await s.db.rpc('studio_capabilities_v2');
+  if(error?.code==='PGRST202')return {conversationEditing:false,requestV2:false,inputReviews:false,realExecution:false,resultReview:false,revisions:false};
+  dbError(error);
+  const inputReady=data===2&&await inputReviews(s).capability(),resultReady=data===2&&await resultReviews(s).capability();
+  return {conversationEditing:data===2,requestV2:data===2,inputReviews:inputReady,realExecution:inputReady&&await dispatchService(s).capability(),resultReview:resultReady,revisions:inputReady&&resultReady&&await revisions(s).capability()};
 }

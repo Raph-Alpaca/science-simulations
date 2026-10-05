@@ -1,0 +1,20 @@
+{
+  "policyVersion": "studio-budget-2026-10-04",
+  "currency": "KRW",
+  "monthlyLimitKrw": 10000,
+  "monthlyJobLimit": 10,
+  "dailyJobLimit": 10,
+  "jobLimitKrw": 1000,
+  "budgetKrwPerUsd": 2000,
+  "monthlyLimitUsdMicros": 5000000,
+  "jobLimitUsdMicros": 500000,
+  "maxConcurrentJobs": 1,
+  "maxRepairAttempts": 2,
+  "maxCallsPerJob": 9,
+  "maxJobSeconds": 1200,
+  "maxCallSeconds": 90,
+  "timezone": "Asia/Seoul",
+  "generationKinds": ["interactive_2d", "interactive_3d"],
+  "invoiceHardCapGuaranteed": false,
+  "note": "Internal conservative conversion, not a live exchange rate or a provider invoice cap. All reviews and repairs share the job budget. Paid 3D assets and voice services are disabled."
+}

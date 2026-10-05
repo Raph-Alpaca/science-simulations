@@ -19,7 +19,7 @@ test('UI-only selected failed job and its guidance survive reload',async({page})
   const conversation={id:cid,title:'검사용 실패 안내',created_at:'2026-01-01T00:00:00Z'};
   await page.route('**/api/studio/**',async route=>{
     const path=new URL(route.request().url()).pathname.replace('/api/studio/','');
-    const data=path==='session'?{authenticated:true,executionMode:'mock'}:path==='conversations'?{conversations:[conversation]}:path==='conversations/'+cid?{conversation,messages:[],jobs:[latest,failed]}:path.startsWith('jobs/')?{job:path.endsWith(failed.id)?failed:latest,events:[]}:null;
+    const data=path==='session'?{authenticated:true,executionMode:'mock',capabilities:{requestV2:true,conversationEditing:true}}:path==='conversations'?{conversations:[conversation]}:path==='conversations/'+cid?{conversation,messages:[],jobs:[latest,failed]}:path.startsWith('jobs/')?{job:path.endsWith(failed.id)?failed:latest,events:[]}:null;
     await route.fulfill({status:data?200:404,json:data||{error:'NOT_FOUND'}});
   });
   await page.goto('/');await page.getByRole('button',{name:/검사용 실패 안내/}).click();
@@ -78,7 +78,7 @@ test('UI-only fixture: request, lost-response resend, restore, mock steps, cance
   await page.route('**/api/studio/**',async route=>{
     const url=new URL(route.request().url()).pathname.replace('/api/studio/','');
     const body=route.request().postDataJSON();let data;
-    if(url==='session')data={authenticated:true,executionMode:'mock'};
+    if(url==='session')data={authenticated:true,executionMode:'mock',capabilities:{requestV2:true,conversationEditing:true}};
     else if(url==='conversations')data={conversations:[conversation]};
     else if(url==='conversations/'+cid)data={conversation,messages,jobs};
     else if(url==='jobs'&&body){

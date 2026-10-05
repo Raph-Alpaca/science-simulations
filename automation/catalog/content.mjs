@@ -1,23 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { parse } from 'parse5';
 import { assertMetadata, assertPublicationEvidence } from '@science/contracts';
+import {LIMITS,hash,relativeFile} from '../../packages/contracts/content-source.js';
+export {LIMITS,hash,relativeFile};
 
 export const ROOT = path.resolve(import.meta.dirname, '../..');
-export const LIMITS = Object.freeze({ packages: 200, files: 100, bytes: 10 * 1024 * 1024, fileBytes: 2 * 1024 * 1024, depth: 6 });
 const extensions = new Set(['.html','.css','.js','.json','.svg','.png','.jpg','.jpeg','.webp','.woff2']);
-export const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 export async function exists(file) { try { await fs.lstat(file); return true; } catch (e) { if (e.code === 'ENOENT') return false; throw e; } }
 export async function readJSON(file) { return JSON.parse(await fs.readFile(file, 'utf8')); }
-
-export function relativeFile(value) {
-  if (typeof value !== 'string' || !value || value.includes('\\') || /[%:#?\x00-\x1f]/.test(value) || path.posix.isAbsolute(value) ||
-      value.split('/').some(part => !part || part === '.' || part === '..' || part.startsWith('.') || /[<>"|*]/.test(part) || part.endsWith(' ') || part.endsWith('.'))) {
-    throw new Error('UNSAFE_PATH');
-  }
-  return value;
-}
 
 export async function assertNoLinks(target) {
   const absolute = path.resolve(target);
@@ -132,7 +123,7 @@ export function selectApproved(packages, approvals, evidence) {
     if (!approval) return false;
     assertPublicationEvidence(p.meta, approval);
     if (p.candidateHash !== approval.candidateHash) throw new Error('CANDIDATE_HASH_MISMATCH');
-    for (const key of ['sourceSnapshotHash','checksHash','lockHash','policyVersion']) {
+    for (const key of ['sourceSnapshotHash','checksHash','lockHash','policyVersion',...(approval.schemaVersion===2?['educationHash']:[])]) {
       if (approval.evidenceVersion[key] !== evidence[key]) throw new Error('EVIDENCE_VERSION_MISMATCH');
     }
     return true;

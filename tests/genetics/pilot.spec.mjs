@@ -4,7 +4,7 @@ const entry='simulations/mendel-inheritance/index.html';
 
 test('local metadata card navigates to draft and survives direct refresh',async({page,request})=>{
   await page.goto('./');
-  await expect(page.getByText('미승인 로컬 초안 · 교육과정·교과서 미대조 · 공개 배포 제외')).toBeVisible();
+  await expect(page.getByText('미승인 로컬 초안 · 교육과정·교과서 대조 미완료 · 공개 배포 제외')).toBeVisible();
   await expect(page.locator('.card')).toHaveCount(1);
   await page.getByLabel('중3',{exact:true}).check();
   await page.getByRole('searchbox').fill('유전');

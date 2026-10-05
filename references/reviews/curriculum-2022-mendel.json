@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "reviewKind": "source_scope_review",
+  "status": "partial_review_not_release_approval",
+  "reviewedOn": "2026-10-05",
+  "timeZone": "Asia/Seoul",
+  "reviewerKind": "codex_primary_agent",
+  "contentId": "mendel-inheritance",
+  "candidateHash": "50d3016ddf9bf1b2098f6d01d6c4dda22291392c859ea49b6be02da80601346f",
+  "curriculumRevision": "2022",
+  "sourceId": "curriculum-required",
+  "officialNotice": "교육부 고시 제2022-33호 별책9",
+  "officialUrl": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458&lev=0",
+  "officialDownloadUrl": "https://www.moe.go.kr/boardCnts/fileDown.do?fileSeq=1512facbda6c234a1641ac7e9c156ca2&m=&s=moe",
+  "officialArchiveSha256": "b37a372a90d6d00bb3985888bbb41caae7a35f28877dc243a6f4b28861c53146",
+  "documentHash": "d049caa5b3e7420a0505345dc70ca325faf65a18468ba393eec103b44b78c790",
+  "providedPdfSha256": "0cf53427691d54366d6805767c428a15b0e817580807b4354947de7e3b58b738",
+  "locator": "(21) 생식과 유전; 인쇄59쪽 / 제공 PDF65쪽",
+  "checkedScope": [
+    "9과21-01~05와 해당 탐구 활동·성취기준 해설·적용 고려 사항",
+    "멘델 원리와 현상 조사·협력적 설명, 유전 모의 활동의 연결",
+    "사람의 형질을 모두 단일 유전자 모형으로 일반화하지 않는 제한",
+    "학생·가족의 질병이나 가족 관계 조사를 피하는 활동 안내"
+  ],
+  "comparison": {
+    "method": "공식 HWP에서 읽은 단원 17개 문단과 제공 PDF65쪽의 전체 단원 텍스트 순서를 공백·문장부호 제외 후 비교",
+    "unitParagraphCount": 17,
+    "allUnitParagraphsMatch": true,
+    "unitSequenceEqual": true,
+    "visualInspection": "제공 PDF65·66쪽 렌더링 확인; 66쪽은 다음 단원",
+    "limits": "바이너리 동일성·전체292쪽 대조·모든 개정 고시의 최신성 확인을 뜻하지 않음"
+  },
+  "contentAssessment": {
+    "science": "OpenStax12.1의 교배 실험 의의와12.3의 분리·독립·연관 제한을 개념 범위에서 확인",
+    "learningDesign": "완두 공개 자료 조사와 모둠별 표본 비교·근거를 들어 설명 수정하는 안내를 추가; 실제 학습 효과 미검증",
+    "runtime": "변경 후 자료실 단위30개와 실제 Chrome 시제품8개 통과; 독립 검토자의 재검사는 아님"
+  },
+  "remaining": [
+    "선정 교과서 출판사·판본·쪽과 실제 원문 대조",
+    "독립의 법칙의 필수·보충·심화 위치 및 수업 깊이",
+    "사용자의 중3 배치와 수업 계획의 적합성; 이 부분 대조로 특정 학년 배치를 확정하지 않음",
+    "자료별 외부 AI 처리·요약 공개·원문 재배포 허용 범위",
+    "현재 후보의 별도 독립 검토와 사람의 게시 승인",
+    "신뢰 검토 저장소와 교육 근거 승인 발급 서비스 연결"
+  ],
+  "aiUseAllowed": null,
+  "summaryPublicAllowed": null,
+  "redistributionAllowed": null,
+  "publicationApproved": false,
+  "note": "공개용 자체 요약과 출처 메타데이터만 기록한다. 원문·추출 문단은 비공개 보존한다. 과거 후보의 독립 검토를 현재 후보에 승계하지 않으며 이 기록은 educationEvidence 승인 패킷이 아니다."
+}

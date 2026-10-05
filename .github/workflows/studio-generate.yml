@@ -1,0 +1,35 @@
+name: Studio trusted generator
+on:
+  workflow_call:
+    inputs:
+      job_id:
+        required: true
+        type: string
+    secrets:
+      OPENAI_API_KEY:
+        required: true
+permissions: {}
+jobs:
+  generate:
+    if: github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1 && vars.STUDIO_WORKER_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Bounded generation; never execute candidate source
+        env:
+          STUDIO_JOB_ID: ${{ inputs.job_id }}
+          STUDIO_GENERATION_ENABLED: 'true'
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: node automation/runner/generate-worker.mjs

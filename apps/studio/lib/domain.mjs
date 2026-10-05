@@ -18,17 +18,17 @@ export function owner(record, userId) {
 }
 export function requestEnvelope(value) {
   fields(value, ['schemaVersion', 'conversationId', 'clientRequestId', 'operation', 'payload']);
-  if (value.schemaVersion !== 1 || value.operation !== 'create_simulation') throw new StudioError('INVALID_REQUEST');
+  if (![1, 2].includes(value.schemaVersion) || value.operation !== 'create_simulation') throw new StudioError('INVALID_REQUEST');
   id(value.conversationId); id(value.clientRequestId);
-  fields(value.payload, ['topic', 'grade', 'unit', 'requirements', 'schoolYear', 'targetContentId', 'expectedVersion']);
+  fields(value.payload, ['topic', 'grade', 'unit', 'requirements', 'targetContentId', 'expectedVersion', ...(value.schemaVersion === 1 ? ['schoolYear'] : [])]);
   const p = value.payload;
   const text = (v, max) => { if (typeof v !== 'string' || !v.trim() || v.length > max) throw new StudioError('INVALID_REQUEST'); return v.trim(); };
   if (![1, 2, 3].includes(p.grade)) throw new StudioError('INVALID_REQUEST');
-  if (p.schoolYear !== null && (!Number.isInteger(p.schoolYear) || p.schoolYear < 1900 || p.schoolYear > 2200)) throw new StudioError('INVALID_REQUEST');
+  if (value.schemaVersion === 1 && p.schoolYear !== null && (!Number.isInteger(p.schoolYear) || p.schoolYear < 1900 || p.schoolYear > 2200)) throw new StudioError('INVALID_REQUEST');
   if (p.targetContentId !== null && (typeof p.targetContentId !== 'string' || !/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/.test(p.targetContentId))) throw new StudioError('INVALID_REQUEST');
   if (p.expectedVersion !== null && (typeof p.expectedVersion !== 'string' || !/^[a-f0-9]{64}$/.test(p.expectedVersion))) throw new StudioError('INVALID_REQUEST');
-  return { schemaVersion: 1, conversationId: value.conversationId, clientRequestId: value.clientRequestId, operation: value.operation,
-    payload: { topic: text(p.topic, 120), grade: p.grade, unit: text(p.unit, 120), requirements: text(p.requirements, 4000), schoolYear: p.schoolYear, targetContentId: p.targetContentId, expectedVersion: p.expectedVersion } };
+  return { schemaVersion: value.schemaVersion, conversationId: value.conversationId, clientRequestId: value.clientRequestId, operation: value.operation,
+    payload: { topic: text(p.topic, 120), grade: p.grade, unit: text(p.unit, 120), requirements: text(p.requirements, 4000), ...(value.schemaVersion === 1 ? {schoolYear:p.schoolYear} : {}), targetContentId: p.targetContentId, expectedVersion: p.expectedVersion } };
 }
 export const PHASES = ['source_review', 'learning_design', 'development', 'independent_review', 'testing', 'policy_check'];
 export function mockNext(job, command, expectedVersion) {
@@ -54,3 +54,5 @@ export function retryAllowed(job, expectedVersion = job.state_version) {
 export function checkReceipt(receipt, command, expectedVersion) {
   if (receipt.command_type !== command || receipt.state_version !== expectedVersion + 1) throw new StudioError('STATE_CONFLICT', 409);
 }
+
+export function conversationTitle(value) { if(typeof value !== 'string' || !value.trim() || value.length>120) throw new StudioError('INVALID_REQUEST'); return value.trim(); }

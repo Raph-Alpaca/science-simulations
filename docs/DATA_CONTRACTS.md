@@ -1,5 +1,7 @@
 # 파일·데이터 계약 — 01단계 설계
 
+최신 구현 보충(2026-10-05): 신규v2 요청은 사용자가 제거한 학년도를 받지 않는다.2022 개정 기준 선택과 원문 검증 상태를 구분한다. 새 게시 승인v2는 연도를 추정하는 대신 정확한 후보·입력·학년·단원·revision에 결합한 별도 원문 검토 묶음/educationHash를 요구한다. 실제 발급 서비스는 아직 미연결이다. 기존v1/과거 콘텐츠는 보존한다. [규격·검증·한계](EDUCATION_EVIDENCE.md). 아래01단계 원안은 당시 이력이다.
+
 2026-09-13. 아래는 구현 예정 규격이며 JSON Schema, API, SQL은 아직 작성하지 않았다. 기존 `templates/*.example.json`과 `references/source_index.json`을 입력 예시로 보존한다. 예시 파일은 실행·승인·공개 결과가 아니다.
 
 ## 공통 규칙
@@ -142,3 +144,11 @@ apps/studio는 schemaVersion=1 요청 봉투, 서버 소유자 결정, 요청 UU
 05의 execution_mode=mock, policy_version=studio-mock-v1은 실제 제작과 별도다. 자료가 미확인인 상태에서 queued/running을 거치는 것은 모의 흐름 검사만 의미한다. 실제 자료 검토는 하지 않으며 최종 상태는 needs_input이다. 승인·published·release를 생성하지 않는다. 실제 제작용 근거 선행 조건과 공개 승인 계약은 변경하지 않았다. 상세 API·데이터 권한·실제 연결 후 검증표는 [제작실 준비](STUDIO_SETUP.md)에 기록했다.
 
 SQL 적용 전 검토에서 명령 UUID의 재사용은 job_events.command_type과 예상 state_version에도 결합했다. 같은 UUID의 다른 명령/버전은409다. 재시도도 원본의 예상 state_version을 확인하며 해당 버전을 요청 해시에 포함한다. 초기 접수 이벤트0을 포함한 저장 이벤트 상한은20개다. 서버 RPC와 SQL 인자·GRANT 시그니처를 함께 유지한다. 이 계약의 로컬 순수/정적 검사는 실제 DB 동시성 검증을 대신하지 않는다.
+
+## 07-1 변경 계약 — 로컬 구현, 운영 미적용
+
+새 접수는 schemaVersion=2로 schoolYear를 제거하고 추가 필드로 보내도 거부한다. 과거 v1 스냅샷/해시/school_year는 보존하며 v1 재시도는 기존 규칙을 따른다. 새 교육과정 기본은 별도 내부 설정2022 개정·대조 미확인이다. 기존 콘텐츠에 소급하지 않는다.
+
+대화 생성은 title와 clientRequestId를 받는다. rename/delete는 서버가 소유자를 결정하고 활성/허용 교사만 실행한다. 삭제는 메시지 실제 삭제·제목 제거·FK용 tombstone과 불변 제작 명세 보존이며 웹앱/카드/검토/승인/배포를 삭제하지 않는다. 삭제/접수는 같은 teacher/conversation 잠금 순서를 따른다. SQL capability가 없는 DB에서는 새 기능을 DB_CHANGE_REQUIRED로 차단한다.
+
+상세 보존 범위·버전 호환·실행기 계약·후속 권한 계획은 [07-1 구현 안내](STUDIO_07_1.md)에 기록했다. 실제 실행 Dispatcher는 제품 API에 미연결이며 mock 승격·외부 dispatch는 없다.
