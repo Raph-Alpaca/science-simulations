@@ -55,14 +55,15 @@ export function assertContainerConfiguration(value,{image,profile,probe=false}){
 export async function runRuntimeContainer(packet,{image,signal,command=dockerCommand,seccomp,probe=false}={}){
  const bundle=probe?null:prepareRuntimeBundle(packet);seccomp??=await checkedSeccomp();
  const profile=JSON.parse(await readFile(seccomp,'utf8'));
- const name='studio-verify-'+randomUUID();let started=false,result,failure;
+ const name='studio-verify-'+randomUUID();let started=false,result,failure,stage='configuration',cleanup='not_needed';
  try{
-  need(!signal?.aborted,'RUNTIME_CANCELLED');started=true;
+  need(!signal?.aborted,'RUNTIME_CANCELLED');started=true;stage='create';cleanup='unconfirmed';
   const id=(await command(containerCreateArgs({name,image,seccomp,probe}),{signal})).trim();
   need(/^[a-f0-9]{64}$/.test(id),'CONTAINER_ID_INVALID');
-  const state=JSON.parse(await command(['inspect',id],{signal}));
+  stage='inspect';const state=JSON.parse(await command(['inspect',id],{signal}));
   need(assertContainerConfiguration(state,{image,profile,probe})===id,'CONTAINER_ID_INVALID');
-  const raw=await command(['start','--attach','--interactive',id],{input:probe?'':JSON.stringify(packet),signal,timeout:CONTAINER_LIMITS.seconds*1000});
+  stage='execute';const raw=await command(['start','--attach','--interactive',id],{input:probe?'':JSON.stringify(packet),signal,timeout:CONTAINER_LIMITS.seconds*1000});
+  stage='report';
   if(probe){result=JSON.parse(raw);need(JSON.stringify(result)==='{"isolated":true}','CONTAINER_ISOLATION_REJECTED');}
   else{
    result=assertRuntimeReport(JSON.parse(raw),bundle.generationKind);
@@ -73,7 +74,7 @@ export async function runRuntimeContainer(packet,{image,signal,command=dockerCom
  finally{
   // Cleanup is bounded and independent of an aborted candidate. Failure to
   // confirm removal invalidates even an otherwise passing browser report.
-  if(started)try{await command(['rm','--force',name],{timeout:10000});}catch{failure=new RuntimeCheckError('CONTAINER_CLEANUP_UNCONFIRMED');}
+  if(started)try{await command(['rm','--force',name],{timeout:10000});cleanup='confirmed';}catch{stage='cleanup';failure=new RuntimeCheckError('CONTAINER_CLEANUP_UNCONFIRMED');}
  }
- if(failure)throw failure;return result;
+ if(failure){failure.containerStage=stage;failure.cleanup=cleanup;throw failure;}return result;
 }

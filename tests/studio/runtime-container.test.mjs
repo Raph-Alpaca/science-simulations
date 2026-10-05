@@ -42,6 +42,22 @@ test('timeout, wrong candidate and cleanup failure never become a passing observ
  const controller=new AbortController();controller.abort();const docker=mock();
  await assert.rejects(runRuntimeContainer(packet,{image,command:docker.command,signal:controller.signal}),/RUNTIME_CANCELLED/);assert.equal(docker.calls.length,0);
 });
+test('failed container stages report whether cleanup succeeded without retaining raw errors',async()=>{
+ for(const [options,stage,cleanup] of [
+  [{create:()=>{throw Error('private create response');}},'create','confirmed'],
+  [{change:c=>{c.HostConfig.NetworkMode='host';}},'inspect','confirmed'],
+  [{start:()=>{throw Error('private runtime output');}},'execute','confirmed'],
+  [{start:()=>'{private invalid JSON'},'report','confirmed'],
+  [{remove:()=>{throw Error('private daemon response');}},'cleanup','unconfirmed'],
+ ]){
+  const docker=mock(options);
+  await assert.rejects(runRuntimeContainer(packet,{image,command:docker.command}),error=>{
+   assert.equal(error.containerStage,stage);assert.equal(error.cleanup,cleanup);
+   assert.equal(JSON.stringify(error).includes('private'),false);return true;
+  });
+  assert.equal(docker.calls.at(-1).args[0],'rm');
+ }
+});
 test('fresh Docker context contains only trusted allowlisted files and no candidate or environment data',async()=>{
  const base=fileURLToPath(new URL('../../.local/container-context-tests/',import.meta.url));await mkdir(base,{recursive:true});
  const parent=await mkdtemp(path.join(base,'context-'));
