@@ -4,6 +4,12 @@
 
 ## 현재 지점 — 2026-10-05 재개 후
 
+**최신 14:36 KST:** 사용자 승인한 진단7개를 새 PR #2로 공개·병합했다. branch codex/studio-rehearsal-diagnostics, HEAD `ae2231f40f1e331eeab2f625180b1da8d977d808`, origin/main과Production은 `c5f781a00eae78f9da14cff6c95eac750917ba42` / `dpl_CosqyoN7AHDvErGSXSHLaZMTKEiK` READY. HEAD와 main 파일 트리는 같다. 홈200·session401·worker POST503/WORKER_SETUP_REQUIRED 확인. 앞선 진단7개 공개/병합 승인은 해결됐으므로 다시 묻지 않는다.
+
+추가 승인1회 run37268245456은 failure 종료. 기록은 isolation / CONTAINER_COMMAND_FAILED / execute / cleanup confirmed다. 컨테이너 생성·설정 확인은 지났고 격리 확인용 프로세스가 실패했으며 삭제는 확인됐다. 2D/3D는 미실행, 생성/검토 job은 skipped. 기존 run37267554755와 별도로 `.local/studio-worker-review-20261005/rehearsal-37268245456.{json,log}` 보존. 원격 검사는 총2회이며 다음1회는 미승인 상태다.
+
+새 로컬 보완5개: Dockerfile의 허용 소스 COPY --chmod=0555 및 USER pwuser 이후 node --check3개, 컨테이너 README와 진행 문서3개. 호스트 빌드문맥의0700 하위 폴더가 기본 root 소유로 이미지에 복사되는 접근 문제를 다룬다. 공식 Docker COPY 메타데이터 문서와 코드로 발견했지만 실제 실패의 OS 원인은 아직 추정이다. 로컬9/9 PASS(654ms), 실제 수정 이미지 빌드/검사는 미실행이다. 전체5개를 새 검토 목록/해시로 고정한 뒤 공개/병합·추가 검사1회 승인 응답을 확인한다. 검사를 자동 재시도하거나 sandbox/권한 제한을 풀지 않는다. 사용량78% 남음. 아래 이전 승인 대기는 모두 이력이다.
+
 **최신 14:28 KST:** 사용자 명시 승인 후 PR #1 병합 완료. main/Production은 `8d9a87657a0341d478bf6706e404657e31ee9e28`, Vercel `dpl_GjajT37AeTqm2gaDBWQ1BHuLyJNm` READY다. 홈200·미로그인 session401·worker POST503/WORKER_SETUP_REQUIRED 확인. 실제 로그인 후 UI는 미검증, runtime 로그 도구는403이다. 앞선 병합 승인 질문/거부는 해결됐으므로 다시 묻지 않는다.
 
 승인된 원격 rehearsal1회 `37267554755`를 실행했고 이미지 빌드는 성공, 격리/2D/3D 검사 단계는 일반 오류만 남기고 failure 종료했다. 2D 성공 로그가 없어 probe와 첫2D 내부 중 정확한 실패 위치는 미확정이다. 전체 로그/상태를 `.local/studio-worker-review-20261005/rehearsal-37267554755.{log,json}`에 저장했다. 원격 재실행·DB 변경·유료 AI·학생용 게시0회, 감시 프로세스는 exit1로 종료했다.
