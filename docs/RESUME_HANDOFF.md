@@ -4,11 +4,27 @@
 
 ## 현재 지점 — 2026-10-05 재개 후
 
+**최신 14:28 KST:** 사용자 명시 승인 후 PR #1 병합 완료. main/Production은 `8d9a87657a0341d478bf6706e404657e31ee9e28`, Vercel `dpl_GjajT37AeTqm2gaDBWQ1BHuLyJNm` READY다. 홈200·미로그인 session401·worker POST503/WORKER_SETUP_REQUIRED 확인. 실제 로그인 후 UI는 미검증, runtime 로그 도구는403이다. 앞선 병합 승인 질문/거부는 해결됐으므로 다시 묻지 않는다.
+
+승인된 원격 rehearsal1회 `37267554755`를 실행했고 이미지 빌드는 성공, 격리/2D/3D 검사 단계는 일반 오류만 남기고 failure 종료했다. 2D 성공 로그가 없어 probe와 첫2D 내부 중 정확한 실패 위치는 미확정이다. 전체 로그/상태를 `.local/studio-worker-review-20261005/rehearsal-37267554755.{log,json}`에 저장했다. 원격 재실행·DB 변경·유료 AI·학생용 게시0회, 감시 프로세스는 exit1로 종료했다.
+
+새 로컬 변경은 runtime-container/rehearsal의 안전한 오류 단계·정리 상태 기록, 관련 검사2개, STATUS/RESUME_HANDOFF/WORKER_ROLLOUT 총7개다. 9/9 로컬 검사 PASS(모의 Docker)이며 실제 격리 원인을 해결한 결과는 아니다. 다음 공개/병합·추가 검사1회는 새 범위로 확인한다. 로컬 HEAD94a3bca와 origin/main8d9a876은 파일 트리가 동일하므로 미커밋7개를 보존해 새 codex/ 브랜치를 origin/main에서 준비할 수 있다. 무조건 reset/checkout하지 않는다. 사용량은82% 남았으며20% 보호 규칙 유지. 아래14:17 이전 내용은 이력이다.
+
+**최신 14:17 KST:** 사용자는 다음 단계 진행을 요청했고, 과제는 설치 없는 기존 제작실 웹앱에서 입력한다고 안내했다. PR #1은 OPEN / ready for review / CLEAN이며 head는 `94a3bca07f708544650ec8ab20c0639b51e5241c`다. draft 해제만 성공했다. main 병합은 자동 승인 검토에서 “이전 승인에서 제외했고 운영 배포를 유발하므로 다음 단계 요청만으로 불충분”하다는 사유로 거부됐다. **PR 병합·기존 제작실 갱신·키 없는 Linux rehearsal 1회**의 구체적 승인 질문이 대기 중이다. 새 응답을 확인하고, 승인 전 병합을 우회하지 않는다. 과거 153개 공개 업로드 승인을 다시 묻지 않는다.
+
+Vercel 실제 조회: 기존 6개 변수 이름만 Production 범위, 새 기능 활성화 변수 없음. Production은4931c7e / `dpl_FKPC9E44CpVJmJNJB7wWEsBFtg4F` / READY다. 익명 GET은 홈200·session API401·아직 없는 worker GET404다. Supabase READ ONLY 메타데이터: capability2·삭제 gate=false·8개 테이블 RLS=true·baseline/v2 migration2개·새 실행기 함수 없음. 로그인 후 새 UI·실제 Actions/Linux는 미검증. 운영 변경/유료 호출/검사 서버 기동 없음. 상세는 STATUS 맨 위를 따른다. 아래 draft 생성 직후의 문단은 이전 상태다.
+
+**최신 원격 상태**: 사용자가 검토한153개 공개 업로드·draft PR을 승인했다. `94a3bca07f708544650ec8ab20c0639b51e5241c`를codex/studio-v2-budget에push하고 [draft PR #1](https://github.com/Raph-Alpaca/science-simulations/pull/1)을생성·첨부했다. main은4931c7e그대로다. 기존40개스테이징은`.local/studio-worker-review-20261005/original-staged-40.patch`로보존하고최신153개를커밋했다. 아래“40개스테이징유지/공개승인대기”는이전상태다. 이문서와STATUS의업로드후기록은로컬미커밋이며승인된153개코드버전과분리한다. **병합·운영SQL·유료AI·학생용게시 권한은 이번 승인에서 제외**됐다.
+
 후속 수정 연결의 로컬 구현과 검증을 완료했다. 동일 콘텐츠ID·정확한 부모 후보·누적 과제·새 동의/예산·계보/중복접수 방지·후속 결과 조회를 연결했고 운영 적용은 하지 않았다. [최신 구현](FOLLOWUP_REVISION.md), STATUS 맨 위를 따른다. 아래141/17/21개 수치는 이전 단계 이력이며 최신은 **제작실151개·Chrome19개 통과 증거·실제PG17 경쟁29개**다. Chrome은 최초17/19 뒤 선택자 오류를 수정하여 새2/2를 재실행했으며 한 번의 전체19/19 실행은 아니다.
 
-현재 검사 프로세스와 임시 DB/서버는 종료됐다. 원격 main과 HEAD는 동일한4931c7e이며 원격 Git/운영 SQL/앱/키를 바꾸지 않았다. 유료 AI0회. 기존40개 스테이징은 그대로다. 재개 시 남은 사용량100%, 최근 도구 확인은91%(사용9%)로 사용량 중단 문턱에 도달하지 않았다. 초기화권을 사용하지 않았다.
+현재 검사 프로세스와 임시 DB/서버는 종료됐다. 포트3000/3001/4177/55443 수신0·postgres프로세스0을 정상 사용자 권한으로 확인했다. 운영 SQL/앱/키 변경·유료 AI0회. 재개 시 남은 사용량100%, 최신도구확인은88%(사용12%)로 사용량 중단 문턱에 도달하지 않았다. 초기화권을 사용하지 않았다. 현재인계이유는draft PR다음의병합/운영권한·자격증명준비경계다.
+
+Vercel/GitHub의PR상태검사2개SUCCESS, Preview배포6851730555가정확한94a3bca커밋으로성공했다. URL은https://science-simulations-studio-btdszn6fq-alpaca-t.vercel.app/ 이며익명GET1회는HTTP302리다이렉트였다. 로그인후UI동작은미검증이다. Production은4931c7e그대로다. PR상태확인을빌드외기능검사/실제AI/게시성공으로확대하지않는다.
 
 ## 사용자 목표와 사용량 중단 조건
+
+현재 단계 체크포인트는 `.local/studio-worker-review-20261005/premerge-checkpoint.json`에 있다. 최신 사용량은 남음84%(사용16%)이고 초기화권은 사용하지 않았다. 지금 대기는 사용량 문턱 때문이 아니라 위 병합 승인 경계다.
 
 - 목표: 과제 입력 → 구체적인2D/3D 과학 시뮬레이션 제작 → 독립 검토 → 필요한 수정 → 승인/게시 → 실제 게시 확인. 로컬 합성 통과만으로 전체 목표 완료가 아니다.
 - API 예산: 월10,000원·월약10건, 동시1·건당1,000원에 검토/작업 내 최대2회 보완 포함. 후속 수정은 별도1건으로 같은 월 한도에 포함한다.
@@ -20,9 +36,9 @@
 
 작업 경로 `C:\Users\user\Desktop\science-simulations`, PowerShell. branch `codex/studio-v2-budget`, 마지막 확인 HEAD/origin main `4931c7e0445b2d227bac9c6ecfa29fcff62b5607`. 다시 Git 상태를 확인한다.
 
-**기존40개 스테이징(2261추가/44삭제)은 승인 검토용 스냅샷이므로 그대로 보존한다.** 새 실행기/접수/검토 구현은 미스테이징이다. 같은 파일의 staged와working copy가 다르며 전체git add·reset·checkout으로 덮지 않는다. 콘텐츠ID와 기존주소도 유지한다.
+기존40개 스테이징(2261추가/44삭제)은 `.local/studio-worker-review-20261005/original-staged-40.patch`로보존했다. 승인한153개전체해시명세는같은폴더의manifest.json,사용자용목록은review.md다. 전체명세SHA256 `a5c11dd1d7b1cbf883b090fe14a0fd8d0076c260b569ee40aafba8935ea7cc03`. 153개를정확히스테이징/검증/커밋/push했고추가문서만미커밋이다. 무조건gitadd/reset/checkout으로미커밋상태를덮지않는다.
 
-자동 승인 검토가 기존 공개 GitHub에40개를 commit/push/PR하는 작업을 명시적 대상/범위 동의 부족으로 거부했다. 그 구체적 승인을 묻는 질문이 답변 대기다. 재시도·우회 공개하지 않는다. OpenAI API 키 준비 질문도 답변 대기며 비밀값을 채팅에 받지 않는다. DB 비밀번호는 이미 준비/갱신/접속 확인을 완료했으므로 다시 요구하지 않는다.
+이전 자동 승인 검토의40개공개거부는새153개에대한명시적사용자승인으로해결했고해당작업만수행했다. 같은업로드승인을다시묻지않는다. API키준비응답은계속대기이며비밀값을채팅에받지않는다. DB비밀번호준비/갱신/접속은완료했으므로다시요구하지않는다. 다음main병합/운영활성화는현재승인범위밖이다.
 
 ## 완료된 실제 운영 작업
 

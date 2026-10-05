@@ -1,5 +1,45 @@
 # 구현 현황
 
+## 2026-10-05 14:28 KST — PR 병합·운영 제작실 갱신, Linux 검사 1회 실패
+
+사용자가 PR #1 병합·기존 제작실 갱신·키 없는 실행기 검사 1회를 명시 승인했다. 이전 자동 승인 검토의 병합 거부는 이 승인으로 해결됐다. 정확한 head94a3bca를 확인한 뒤 PR #1을 병합했고 main은 `8d9a87657a0341d478bf6706e404657e31ee9e28`이 됐다(14:22:52 KST). 원격 main을 fetch했으며, 로컬 작업 브랜치 HEAD94a3bca와 main의 파일 트리는 같다. 미커밋 기록은 보존했다.
+
+Vercel Production 배포 `dpl_GjajT37AeTqm2gaDBWQ1BHuLyJNm`가 같은 main SHA로 READY이고 기존 [제작실 주소](https://science-simulations-studio.vercel.app/)에 연결된 것을 확인했다. 배포 후 실제 요청: 홈 GET200, session GET401/LOGIN_REQUIRED, worker input POST503/WORKER_SETUP_REQUIRED이며 모두 private, no-store다. 새 worker는 여전히 비활성이다. 로그인 후 실제 UI 왕복은 이번에 검사하지 않았다. 실행 로그 집계 도구는403으로 거부되어 로그 미검증으로 남긴다.
+
+승인한 [Actions 검사 37267554755](https://github.com/Raph-Alpaca/science-simulations/actions/runs/37267554755)는 같은 main SHA, rehearsal 모드로 정확히 한 번 실행했다. Linux 설치와 고정 Docker 이미지 빌드는 성공했으나 `Verify isolation and reviewed 2D/3D fixtures` 단계가 `CONTAINER_REHEARSAL_FAILED`로 실패했다. 실행은14:23:19~14:24:35 KST, failure로 종료됐다. configuration/generate/verify_0/1/2는 모두 skipped다. 유료 AI·운영 DB 변경·학생용 게시는0회다. 원격 재실행은 하지 않았다.
+
+기존 로그에는 세부 오류/격리 probe 체크포인트가 없어 격리 probe와 첫2D 검사 중 어느 내부 단계인지 확정할 수 없다. 2D/3D 통과나 컨테이너 삭제 확인을 성공으로 기록하지 않는다. seccomp의 작업 파일·Git 커밋 SHA256이 모두 기존 `cc3e61cabda6bbc1e53e54d27ba4d55a9d3be829b6dd1a596f4a7b31b1cc7849`인 것은 확인했다. 실패 상태와 전체 로그는 `.local/studio-worker-review-20261005/rehearsal-37267554755.{json,log}`에 보존했다.
+
+로컬 보완: rehearsal의 단계/isolation 체크포인트와 고정 오류 코드, 컨테이너 create/inspect/execute/report/cleanup 및 정리 확인 상태를 기록하도록 수정했다. 오류 원문·Docker stderr·후보·환경값을 출력하지 않는다. 기존 격리 옵션·정리 필수 조건·시간/자원 상한은 유지했다. 실제 격리 오류를 고친 것으로 판정하지 않는다. 두 관련 검사 파일의 **9/9 PASS, exit0,568ms**를 확인했고 실패 후 다음 fixture 미실행·임의 오류/비밀 문자열 출력 차단·정리 실패 시 성공 거부를 검사했다. 이 결과는 모의 Docker 호출이며 Linux 재검사가 아니다.
+
+현재 미커밋은 진단 코드2개·검사2개·진행 문서3개 총7개다. 다음은 이 진단 보완의 공개 PR/병합과 추가 키 없는 검사1회를 검토한 뒤 실제 실패 단계를 확인하는 것이다. 이번 승인의 검사1회는 이미 소비했으므로 추가 실행은 별도 승인을 받는다. 이후 운영 DB/API키/실제 제작·게시 활성화는 아직 범위 밖이다. 남은 사용량82%(사용18%)이고 초기화권은 사용하지 않았다.
+
+## 2026-10-05 14:17 KST — 제작실 사용 안내·운영 반영 전 확인
+
+사용자가 다음 단계 진행과 과제 입력 위치를 물었다. 별도 설치 없이 기존 [과학 제작실](https://science-simulations-studio.vercel.app/)에서 입력하고 결과·수정 요청을 확인하는 구조이며, 현재 운영 앱은 모의 실행이라고 안내했다. 실제 제작 연결이나 학생용 콘텐츠 게시가 완료되었다고 설명하지 않았다.
+
+PR #1의 head `94a3bca07f708544650ec8ab20c0639b51e5241c`, main 대상, 두 Vercel 검사 SUCCESS와 CLEAN 상태를 확인했다. PR은 draft에서 ready for review로 전환했다. **main 병합은 실행되지 않았다.** 자동 승인 검토가 이전 승인에서 병합을 제외했고 Vercel 운영 배포를 자동 유발하므로 “다음 단계”만으로는 승인이 불충분하다고 거부했다. 사용자에게 PR 병합·제작실 갱신·키 없는 Linux rehearsal 1회를 묶어 승인 요청했다. 운영 DB 변경·유료 AI·학생용 게시는 이 요청에서 제외했다. 승인 전 우회 실행하지 않는다.
+
+Vercel 연결 도구로 실제 조회했다. 환경 변수는 기존 여섯 이름만 등록되어 있으며 모두 Production 범위다. 값을 복호화하거나 출력하지 않았다. 새 INPUT_REVIEW/WORKER_API/DISPATCH/RESULT_REVIEW/REVISION 활성화 변수는 없다. Production은 `4931c7e0445b2d227bac9c6ecfa29fcff62b5607`, 배포 `dpl_FKPC9E44CpVJmJNJB7wWEsBFtg4F`, READY다. 이 배포는 삭제 gate가 닫힌 현재 상태의 이전 앱 복구 기준이며, 향후 삭제 활성화 후에도 무조건 사용할 수 있는 복구 버전은 아니다.
+
+실제 Supabase 프로젝트 science-studio에서 READ ONLY 트랜잭션·statement_timeout 10초로 메타데이터를 확인했다. capability=2, 삭제 gate=false, 기존 8개 테이블 RLS=true, migration은 `20261004111955`와 `20261004111958` 두 개다. 실행기/입력/접수/결과/수정용 새 함수는 없고 새 SQL은 미적용이다. 사용자 행·원문·인증값은 조회 출력하지 않았다. 기존 v2 앱 경로와 새 기능 기본 비활성 경계를 코드와 대조했다.
+
+운영 URL의 익명 GET을 경로마다 한 번·10초 상한으로 확인했다. `/`=200, `/api/studio/session`=401, `/api/worker/input`=404다. 기존 앱의 도달 가능성과 미로그인 API 차단 확인이며 로그인 후 새 UI나 새 worker 검사 성공은 아니다. 소스 변경이 없어 기존 로컬 검사는 반복하지 않았다. Linux rehearsal·운영 재배포·새 DB 적용·유료 호출은 실행하지 않았다.
+
+다음은 위 승인 응답 확인 → 동일 PR head 재확인 → 병합 → 새 main/Production SHA 확인 → rehearsal 1회다. 실패 증거를 보존하고 해당 단계만 수정한다. 이 기록과 RESUME_HANDOFF/WORKER_ROLLOUT는 로컬 미커밋 문서이며 공개한 153개 코드와 구분한다. 사용량 제한으로 중단한 상태가 아니라 병합 승인 응답을 기다리는 상태다.
+
+## 2026-10-05 최신153개 공개 업로드 승인·draft PR 생성
+
+사용자가 기존40개 제안 대신 검토 목록의 최신153개를 Raph-Alpaca/science-simulations의codex/studio-v2-budget에commit/push하고main대상draft PR로 올리는 것을 명시 승인했다. 고정된manifest SHA256 `a5c11dd1d7b1cbf883b090fe14a0fd8d0076c260b569ee40aafba8935ea7cc03`의 전체 파일해시와 Git 필터 적용 후 스테이징 바이트를 확인했다. 기존40개 스테이징은 `.local/studio-worker-review-20261005/original-staged-40.patch`와해시로 보존했다.
+
+커밋 `94a3bca07f708544650ec8ab20c0639b51e5241c`,153files/9614추가/86삭제를 공개 브랜치에 업로드했고 [draft PR #1](https://github.com/Raph-Alpaca/science-simulations/pull/1)을 생성·현재Codex task에 연결했다. PR의head/base/153개/draft·OPEN 상태를 확인했다. 업로드직후Git작업트리는 깨끗했고, 이 진행 기록은 그 뒤 추가한 로컬 미커밋 문서다. 아래 “공개 승인 대기”는 이전 이력이며 최신153개코드의업로드 승인은 해결됐다.
+
+최종 업로드 감사240후보/문제0. `.local`,`.env.local`,원문PDF/HWP와검사자료는 제외했다. 포트3000/3001/4177/55443 수신0·postgres프로세스0을 정상사용자권한으로확인했다. 샌드박스의포트조회는권한거부되어그결과만으로종료를판정하지않았다.
+
+이번 승인은draft PR까지이며 병합·운영DB적용·유료AI·학생용게시를 포함하지 않는다. 실제Actions/Linux검사는현재main전용게이트여서병합전에는실행할수없다. Vercel/GitHub의두PR상태검사는SUCCESS이며Preview배포6851730555가같은94a3bca커밋으로성공했다(UTC05:03:39). [PR미리보기](https://science-simulations-studio-btdszn6fq-alpaca-t.vercel.app/)는로그인없이GET1회/10초상한으로HTTP302리다이렉트까지만확인했고인증후UI동작은미검증이다. Production은4931c7e배포그대로다.
+
+최신사용량은88%남음(사용12%)이며20%중단문턱에도달한것이아니다. 다음외부단계의권한·키가준비되지않아draft PR경계에서인계한다. 로컬/저장소에실제API키와App설정을연결하는단계, 원문근거발급/격리미리보기/배포물승인·게시확인은남아있다. 전체목표를완료처리하지않는다. 현재미커밋변경은업로드후기록용STATUS와RESUME_HANDOFF두문서다.
+
 ## 2026-10-05 재개 — 같은 콘텐츠의 후속 수정 연결
 
 사용자가 재개를 지시했고 사용량 중단 기준을 **남은 약20%**로 변경했다. 약25%에서 새 큰 단계를 시작하지 않고 정리하여20% 전에 멈춘다. 재개 시100%, 구현 중 최근93%가 남았으며 초기화권을 사용하지 않았다. 아래21%/15% 중단 문단은 이전 작업 이력이다.
