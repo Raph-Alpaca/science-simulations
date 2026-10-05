@@ -3,6 +3,7 @@
 import {chromium} from '@playwright/test';
 import {hash} from '../../packages/contracts/content-source.js';
 import {RUNTIME_CONTRACT,RuntimeCheckError,runtimeNeed as need,checkRuntimeSource} from './runtime-contract.mjs';
+import {browserLaunchIssue} from './runtime-diagnostics.mjs';
 
 const ORIGIN='https://simulation.invalid';
 const CSP="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'none'; connect-src 'self'; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
@@ -52,8 +53,9 @@ export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',envir
   async function execute(){
    try{await checkRuntimeSource(bundle.candidate);result.checks.contract='pass';}catch(error){result.checks.contract='fail';throw error;}finally{result.checksExecuted.push('contract');}
    stop();
-   browser=await chromium.launch({channel,headless:true,chromiumSandbox:true,env:browserEnvironment(environment),timeout:10000,
-    args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-pings','--force-webrtc-ip-handling-policy=disable_non_proxied_udp']});
+   try{browser=await chromium.launch({channel,headless:true,chromiumSandbox:true,env:browserEnvironment(environment),timeout:10000,
+    args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-pings','--force-webrtc-ip-handling-policy=disable_non_proxied_udp']});}
+   catch(error){stop();throw new RuntimeCheckError(browserLaunchIssue(error));}
    stop();result.browserVersion=browser.version();result.checksExecuted.push('runtime');result.checks.runtime='fail';
    const files=new Map(bundle.candidate.files.map(f=>['/'+f.path,f.content]));let requests=0;
    async function scene(width,noWebgl=false){

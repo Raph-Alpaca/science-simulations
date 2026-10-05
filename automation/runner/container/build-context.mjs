@@ -7,7 +7,7 @@ import {hash} from '../../../packages/contracts/content-source.js';
 export const CONTAINER_FILES=Object.freeze([
  'package.json','package-lock.json','apps/catalog/package.json','apps/studio/package.json',
  ...['package.json','index.js','catalog.js','meta.schema.json','content-source.js','education-evidence.js','runtime-report.js','runtime-spec.js'].map(f=>'packages/contracts/'+f),
- ...['bounded-responses.mjs','candidate.mjs','runtime-contract.mjs','runtime-browser.mjs','runtime-child.mjs','container/isolation-probe.mjs'].map(f=>'automation/runner/'+f),
+ ...['bounded-responses.mjs','candidate.mjs','runtime-contract.mjs','runtime-browser.mjs','runtime-diagnostics.mjs','runtime-child.mjs','container/isolation-probe.mjs'].map(f=>'automation/runner/'+f),
 ]);
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 export async function createBuildContext(parent){
