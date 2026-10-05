@@ -1,5 +1,9 @@
 # 폐기 가능한 실행 검사 이미지
 
+2026-10-05 네 번째 실제 Linux rehearsal(run37318625336, main6e186b6)은 이미지 빌드·격리/삭제와 소스 검사를 통과했지만 Chromium 시작에 실패했다. runtime not_run / RUNTIME_BROWSER_LAUNCH_FAILED / browserStarted false / browserStopped true / requests0 / cleanup confirmed다. 2D/3D 실제 조작과 고장 fixture는 실행하지 못했다. 누적4회 이후 재실행하지 않았다.
+
+로컬 분류기는 Playwright1.63.0이 일부 sandbox 원문을 다시 쓴 `Chromium sandboxing failed!`도 인식하도록 보완했다. 설치된 코드와 [공식 구현](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/chromium/chromium.ts)을 대조했다. 관련7개 검사 통과이며 실제 Linux 오류가 이 문구였는지, OS 원인이 sandbox인지는 미확정이다. 원문 출력이나 권한/환경 설정 변경은 없다.
+
 2026-10-05 세 번째 실제 Linux rehearsal(run37316382745, main f5e58f4)은 이미지 빌드·pwuser 소스 읽기·격리 probe와 컨테이너 삭제를 통과했다. 다음2D는 반환된 보고서의 기대 결과 확인에서 실패했고3D/고장 fixture는 미실행이다. 기존 로그가 runtime issue를 생략하므로 브라우저 시작/동작 중 정확한 원인은 미확정이다. 이전 두 실패의 증거도 보존했다.
 
 PR #3은 호스트 임시 폴더의0700 모드가 COPY로 하위 디렉터리에 보존되고 기본 root 소유가 되는 문제를 다뤘다. [Docker COPY 문서](https://docs.docker.com/reference/dockerfile/#copy)에 따라 이미지 안의 허용된 검사 소스 두 경로만0555로 복사하고, USER pwuser 뒤 node --check로 중첩 probe·checker·계약 파일 읽기를 빌드 조건으로 추가했다. 이 빌드와 격리 probe는 실제 Linux에서 통과했다. 호스트 임시 폴더0700, root 소유, 비특권 사용자, 격리/네트워크/자원 제한은 유지한다.

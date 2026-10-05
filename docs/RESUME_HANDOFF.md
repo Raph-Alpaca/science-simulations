@@ -4,6 +4,12 @@
 
 ## 현재 지점 — 2026-10-05 재개 후
 
+**최신 22:45 KST:** 승인10개는 PR #4로 공개·병합 완료다. branch codex/studio-runtime-diagnostics / HEAD `6031b8b1213d0a026200e3566de5f9b467e4749c`, main/Production `6e186b6e15ee16eff460e59fc78e8a5d67682d72`, 배포 `dpl_7w39jE91pXnZJ2q5NPJ9JpxAcuVW` READY. HEAD/main 파일 트리는 같다. 홈200·session401·worker503 및 no-store를 실제 확인했다. 운영 DB/환경값·유료AI·학생용 게시 변경 없음.
+
+추가1회 run37318625336은22:40:30~22:41:35 KST failure 종료했다. 이미지 빌드·격리/삭제·2D 소스 contract 통과, Chromium 시작 실패다. RUNTIME_BROWSER_LAUNCH_FAILED / runtime not_run / browserStarted false / browserStopped true / requests0 / duration985ms / cleanup confirmed. 3D/고장 fixture 미실행, 제작/검토 jobs skipped. 누적 원격4회이며 추가 dispatch 없음. `.local/studio-worker-review-20261005/rehearsal-37318625336.{log,json}` 및 runtime-diagnostic-production-http.json과 앞선 실패를 보존했다.
+
+Playwright1.63.0이 일부 sandbox 오류를 `Chromium sandboxing failed!`로 다시 쓰는데 분류기가 이를 누락한 것을 확인했다. 로컬 분류기/회귀 입력에 추가해 관련7/7 PASS(exit0,324ms). 실제 Linux 메시지가 그 문구였는지는 모른다. OS 원인을 sandbox/AppArmor로 확정하거나 권한을 풀지 않는다. 미커밋6개는 runtime-diagnostics.mjs, runtime-diagnostics.test.mjs, container/README.md, STATUS/RESUME_HANDOFF/WORKER_ROLLOUT다. 위 보호 폴더의 rewritten-sandbox-review.md 및 rewritten-sandbox-manifest.json을 확인한다. 직전10개 승인은 완료됐으며 새6개 공개/병합·추가 진단1회는 별도 범위다. 현재 검사/감시 세션 없음, 사용량74% 남음·20% 보존·초기화권 미사용. 실제 Linux2D/3D 통과 전 운영 DB/키/유료 제작으로 넘어가지 않는다. 아래22:33 이전 내용은 이력이다.
+
 **최신 22:33 KST:** 앞서 준비한 읽기 권한5개는 PR #3 공개·병합 완료다. 로컬 branch codex/studio-checker-readability / HEAD `94cdd9f8cfd5ec1efe96500899de833aba559e04`, main/Production `f5e58f47ce535eb7dcf9e9e4ecbc379051568dea`, 배포 `dpl_CMkLJQ6Rp7nZXiHGKhpvhVapkocM` READY. HEAD/main 파일 트리는 같다. 홈200·session401·worker POST503/WORKER_SETUP_REQUIRED를 확인했다. 기존5개 승인은 해결됐다.
 
 승인된1회 run37316382745는 이미지 빌드와 실제 격리 probe/삭제를 통과하고 2D의 반환 보고서 기대값 확인에서 failure 종료했다. 2D의 세부 runtime issue는 기존 로그에 없으므로 원인은 미확정이다. 반환 경로는 보고서 형식/대상/브라우저 종료 및 컨테이너 삭제를 확인한다. 3D·고장 fixture는 미실행, 제작/검토 jobs는 skipped다. 보호 기록 `.local/studio-worker-review-20261005/rehearsal-37316382745.{json,log}`, 운영 HTTP 기록 readability-production-http.json. 앞선 실패2회도 보존했다. 누적 원격 실행3회이며 추가 실행하지 않았다.

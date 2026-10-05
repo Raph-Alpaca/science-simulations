@@ -10,7 +10,9 @@ const issues=new Set([
 ]);
 export function browserLaunchIssue(error){
  const message=typeof error?.message==='string'?error.message.slice(0,32768):'';
- if(/No usable sandbox|Failed to move to new namespace|apparmor[^\n]*DENIED[^\n]*userns/i.test(message))return 'RUNTIME_SANDBOX_UNAVAILABLE';
+ // Playwright rewrites some Chromium sandbox stderr into this summary before
+ // returning the public launch error. Recognize both forms without logging it.
+ if(/Chromium sandboxing failed|No usable sandbox|Failed to move to new namespace|apparmor[^\n]*DENIED[^\n]*userns/i.test(message))return 'RUNTIME_SANDBOX_UNAVAILABLE';
  if(/Executable doesn.t exist|browser executable.*(?:not found|does not exist)/i.test(message))return 'RUNTIME_BROWSER_EXECUTABLE_MISSING';
  if(/error while loading shared libraries|Host system is missing dependencies/i.test(message))return 'RUNTIME_BROWSER_LIBRARY_MISSING';
  if(/pthread_create[^\n]*Resource temporarily unavailable|fork[^\n]*Resource temporarily unavailable/i.test(message))return 'RUNTIME_BROWSER_PROCESS_LIMIT';
