@@ -8,9 +8,16 @@ COPY apps/studio/package.json ./apps/studio/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 RUN node -e 'if (process.versions.node.split(".")[0] !== "24") process.exit(1)' \
  && npm ci --ignore-scripts --no-audit --no-fund --include=dev
-COPY packages/contracts/ ./packages/contracts/
-COPY automation/runner/ ./automation/runner/
+# The private host context uses 0700 directories. COPY preserves nested modes
+# and defaults to root ownership; normalize only the allowlisted image source.
+COPY --chmod=0555 packages/contracts/ ./packages/contracts/
+COPY --chmod=0555 automation/runner/ ./automation/runner/
 ENV HOME=/tmp
 USER pwuser
+# Read the nested probe and checker as the actual unprivileged image user.
+# --check parses trusted source without executing the isolation probe.
+RUN node --check automation/runner/container/isolation-probe.mjs \
+ && node --check automation/runner/runtime-child.mjs \
+ && node --check packages/contracts/runtime-report.js
 ENTRYPOINT ["node", "automation/runner/runtime-child.mjs", "--container"]
 CMD []

@@ -1,5 +1,19 @@
 # 구현 현황
 
+## 2026-10-05 14:36 KST — 진단 PR #2 병합·추가 검사 종료·이미지 읽기 권한 보완
+
+사용자가 진단 보완7개 공개/병합과 추가 키 없는 검사1회를 명시 승인했다. manifest `22de2f0faab1743e32f454c1a445c73fbba7efc5d6c93da0f6820f2d789f6e91`과7개 파일/스테이징 바이트 일치를 확인했다. `ae2231f40f1e331eeab2f625180b1da8d977d808`을codex/studio-rehearsal-diagnostics에 업로드해 [PR #2](https://github.com/Raph-Alpaca/science-simulations/pull/2)를 생성·첨부했고 Vercel 검사 성공 후 승인된 head로 병합했다. main은 `c5f781a00eae78f9da14cff6c95eac750917ba42`다(14:32:22 KST).
+
+Production 배포 `dpl_CosqyoN7AHDvErGSXSHLaZMTKEiK`가 같은 main SHA로 READY다. 14:33:12 KST 실제 확인은 홈200·session401/LOGIN_REQUIRED·worker POST503/WORKER_SETUP_REQUIRED, 모두 private,no-store였다. `.local/studio-worker-review-20261005/diagnostic-production-http.json`에 저장했다. 운영 DB·환경값·유료AI·학생용 게시 변경은 없다. 로그인 후 새 UI와 이전403인 runtime 로그 조회는 이번에 반복하지 않았다.
+
+승인한 [추가 실행 37268245456](https://github.com/Raph-Alpaca/science-simulations/actions/runs/37268245456)은 정확한 main SHA에서14:32:37~14:33:32 KST 실행 후 failure로 종료됐다. 이미지 생성/컨테이너 생성/설정 확인을 지나 **stage=isolation, code=CONTAINER_COMMAND_FAILED, containerStage=execute, cleanup=confirmed**로 기록됐다. 즉 격리 확인용 프로세스 실행 실패이며 컨테이너 삭제는 확인됐다. 2D/3D 및 생성/검토 작업은 실행하지 않았다. 이전 실패와 이번 실패의 전체 로그/상태를 각각 보존했고 추가 dispatch는 없다.
+
+코드 검토에서 build-context가 만든0700 하위 디렉터리가 이미지의 기본 root 소유로 복사되어 pwuser가 중첩 probe를 읽지 못할 수 있는 구성 결함을 찾았다. [Docker 공식 COPY 문서](https://docs.docker.com/reference/dockerfile/#copy)에서 하위 디렉터리 메타데이터 보존과 기본 UID/GID0을 확인했다. 실제 프로세스 오류 원문은 기록하지 않았으므로 이 결함이 이번 실행 실패의 원인이라는 판단은 아직 추정이다.
+
+로컬 Dockerfile 보완은 이미지 안의 허용된 검사 소스2개 경로를 COPY --chmod=0555로 복사하고 USER pwuser 뒤 node --check3개를 실행해 중첩 probe/진입점/계약 소스를 읽을 수 있는지 빌드 중 확인하도록 한다. 호스트0700·root 소유·비특권 사용자·기존 격리/자원/시간 제한을 유지한다. 관련 로컬9/9 PASS, exit0,654ms. 모의 Docker/허용 목록/import 검사이며 실제 Linux 빌드·재검사는 미실행이다.
+
+현재 추가 미커밋은 Dockerfile·컨테이너 README·STATUS·RESUME_HANDOFF·WORKER_ROLLOUT 총5개다. 다음 단계는 이 읽기 권한 보완을 공개/병합하고 추가 키 없는 검사1회를 승인받아 실제 원인을 확인하는 것이다. 이번 추가1회 승인은 이미 사용했으며 자동 반복하지 않는다. 사용량78% 남음(사용22%), 초기화권 미사용. 검사 감시 프로세스도 종료됐다.
+
 ## 2026-10-05 14:28 KST — PR 병합·운영 제작실 갱신, Linux 검사 1회 실패
 
 사용자가 PR #1 병합·기존 제작실 갱신·키 없는 실행기 검사 1회를 명시 승인했다. 이전 자동 승인 검토의 병합 거부는 이 승인으로 해결됐다. 정확한 head94a3bca를 확인한 뒤 PR #1을 병합했고 main은 `8d9a87657a0341d478bf6706e404657e31ee9e28`이 됐다(14:22:52 KST). 원격 main을 fetch했으며, 로컬 작업 브랜치 HEAD94a3bca와 main의 파일 트리는 같다. 미커밋 기록은 보존했다.
