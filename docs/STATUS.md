@@ -1,5 +1,15 @@
 # 구현 현황
 
+## 2026-10-05 22:45 KST — 진단 PR #4 반영·실제 Chromium 시작 실패 확인
+
+사용자가 manifest `48b8a0ab6a9045d60c9fcdf16099b89d83195eaa74cbcad5afa47d0f568753a8`의10개 공개·병합과 추가 키 없는 검사1회를 명시 승인했다. 파일/스테이징 바이트를 검증하고 `6031b8b1213d0a026200e3566de5f9b467e4749c`를 codex/studio-runtime-diagnostics에 공개해 [PR #4](https://github.com/Raph-Alpaca/science-simulations/pull/4)를 생성·첨부했다. Vercel 검사 통과 후 같은 head로 병합했다(22:39:44 KST). main은 `6e186b6e15ee16eff460e59fc78e8a5d67682d72`, Production `dpl_7w39jE91pXnZJ2q5NPJ9JpxAcuVW` READY다. 22:41:19 KST 실제 홈200·session401/LOGIN_REQUIRED·worker POST503/WORKER_SETUP_REQUIRED 및 private,no-store를 확인했다. 로그인 이후 UI/runtime 로그는 이번에 검사하지 않았다.
+
+승인된 [실행 37318625336](https://github.com/Raph-Alpaca/science-simulations/actions/runs/37318625336)은 같은 main에서22:40:30~22:41:35 KST 실행 후 failure로 종료됐다. Ubuntu24.04.5 / runner image20260927.320.1, 검사 이미지 `sha256:0794318e44933fb07fc2dcac93408eba5ea36607d064eeeba9e978f6f60094fb`다. 이미지 빌드·격리 probe/삭제는 통과했다. 2D 결과는 contract=pass, runtime=not_run, issue=RUNTIME_BROWSER_LAUNCH_FAILED, browserStarted=false, browserStopped=true, requests=0, durationMs=985다. containerStage=report/cleanup=confirmed이며 **소스 검사를 통과했지만 Chromium 시작에 실패해 실제 화면/조작 검사는 실행하지 못했다.** 3D·고장 fixture도 미실행이다. configuration/generate/verify_0/1/2는 모두 skipped, 유료 호출·운영 DB/환경값·학생용 게시 변경0회다. 누적 원격 검사는4회, 추가 dispatch는 없다. 로그/상태는 `.local/studio-worker-review-20261005/rehearsal-37318625336.{json,log}`, HTTP 증거는 같은 폴더 runtime-diagnostic-production-http.json에 보존했다. 이전 실패3회도 유지한다.
+
+설치된 Playwright1.63.0의 coreBundle.js와 [공식 Chromium 실행 코드](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/chromium/chromium.ts)를 확인했다. 일부 sandbox 원문을 `Chromium sandboxing failed!`로 다시 쓰는데 새 분류기가 이 요약을 누락했다. 로컬에서 해당 고정 문구 인식과 회귀 입력을 추가하고 관련7/7 PASS(exit0,324ms)를 확인했다. 누락은 확인된 진단 결함이지만 실제 Linux 오류 원문을 보존하지 않았으므로 이번 실패의 OS 원인까지 sandbox로 확정하지 않는다. 권한·sandbox·runner 이미지·환경 설정은 변경하지 않았다. Chrome8개는 직전 검증 증거이며 이번 문구 분류 수정 후 반복하지 않았다.
+
+현재 미커밋은 분류기·관련 검사·컨테이너 README·진행 문서3개 총6개다. 다음 원격 진단은 새6개 공개/병합·추가 키 없는 검사1회 범위이며 직전10개 승인은 완료했다. 검토 목록/해시를 별도로 고정하고 원인 확인 전 권한 확대나 운영 DB 단계로 이동하지 않는다. 사용량74% 남음(사용26%), 초기화권 미사용. 원격 감시 exit1·로컬 검사 exit0으로 종료했으며 현재 검사/감시 세션 없음.
+
 ## 2026-10-05 22:33 KST — 읽기 권한 PR #3 반영·Linux 격리 통과·2D 보고서 진단 준비
 
 사용자의 다음 단계 진행 요청에 따라 앞서 제시한 읽기 권한 보완5개와 추가 검사1회를 실행했다. manifest `0fb6936294f2bde9a47b1b63f1b9863eb487768abdb36dacc6993949caad0106`을 확인하고 `94cdd9f8cfd5ec1efe96500899de833aba559e04`를 공개해 [PR #3](https://github.com/Raph-Alpaca/science-simulations/pull/3)을 생성·첨부·병합했다. main은 `f5e58f47ce535eb7dcf9e9e4ecbc379051568dea`, 병합 시각22:22:55 KST다. 로컬 codex/studio-checker-readability의 HEAD와 main 파일 트리는 같다. 이5개 승인 범위는 완료됐으므로 다시 묻지 않는다.

@@ -5,6 +5,7 @@ import {browserLaunchIssue,runtimeDiagnostic} from '../../automation/runner/runt
 test('browser launch diagnostics classify infrastructure failures without returning raw data',()=>{
  for(const [message,expected] of [
   ['No usable sandbox! private-path','RUNTIME_SANDBOX_UNAVAILABLE'],
+  ['browserType.launch: Target page, context or browser has been closed\nBrowser logs:\nChromium sandboxing failed!\nprivate-path','RUNTIME_SANDBOX_UNAVAILABLE'],
   ['Failed to move to new namespace: Operation not permitted private-path','RUNTIME_SANDBOX_UNAVAILABLE'],
   ['Executable doesn\'t exist at private-path','RUNTIME_BROWSER_EXECUTABLE_MISSING'],
   ['error while loading shared libraries: private-path','RUNTIME_BROWSER_LIBRARY_MISSING'],
