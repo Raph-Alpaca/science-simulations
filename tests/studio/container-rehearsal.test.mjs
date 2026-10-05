@@ -38,3 +38,12 @@ test('a passing broken-reset or unstopped browser never completes rehearsal',asy
   assert.equal(out.logs.includes('CONTAINER_REHEARSAL_PASSED'),false);
  }
 });
+test('a returned failed report preserves safe runtime issues and confirmed cleanup without raw content',async()=>{
+ const out=output();let calls=0;
+ const status=await runRehearsal({image,...out,run:async()=>++calls===1?{isolated:true}:{checks:{contract:'pass',runtime:'not_run'},issues:['RUNTIME_SANDBOX_UNAVAILABLE','RUNTIME_SECRET_PAYLOAD'],details:{browserVersion:null,browserStopped:true,durationMs:345,requests:0,observations:['private content']}}});
+ assert.equal(status,1);assert.equal(calls,2);const result=JSON.parse(out.errors[0]);
+ assert.equal(result.stage,'2d');assert.equal(result.containerStage,'report');assert.equal(result.cleanup,'confirmed');
+ assert.equal(result.runtimeReport.runtime,'not_run');assert.equal(result.runtimeReport.browserStarted,false);
+ assert.deepEqual(result.runtimeReport.issueCodes,['RUNTIME_SANDBOX_UNAVAILABLE','RUNTIME_UNRECOGNIZED_ISSUE']);
+ assert.equal(JSON.stringify(out).includes('private'),false);assert.equal(JSON.stringify(out).includes('SECRET_PAYLOAD'),false);
+});

@@ -4,6 +4,14 @@
 
 ## 현재 지점 — 2026-10-05 재개 후
 
+**최신 22:33 KST:** 앞서 준비한 읽기 권한5개는 PR #3 공개·병합 완료다. 로컬 branch codex/studio-checker-readability / HEAD `94cdd9f8cfd5ec1efe96500899de833aba559e04`, main/Production `f5e58f47ce535eb7dcf9e9e4ecbc379051568dea`, 배포 `dpl_CMkLJQ6Rp7nZXiHGKhpvhVapkocM` READY. HEAD/main 파일 트리는 같다. 홈200·session401·worker POST503/WORKER_SETUP_REQUIRED를 확인했다. 기존5개 승인은 해결됐다.
+
+승인된1회 run37316382745는 이미지 빌드와 실제 격리 probe/삭제를 통과하고 2D의 반환 보고서 기대값 확인에서 failure 종료했다. 2D의 세부 runtime issue는 기존 로그에 없으므로 원인은 미확정이다. 반환 경로는 보고서 형식/대상/브라우저 종료 및 컨테이너 삭제를 확인한다. 3D·고장 fixture는 미실행, 제작/검토 jobs는 skipped다. 보호 기록 `.local/studio-worker-review-20261005/rehearsal-37316382745.{json,log}`, 운영 HTTP 기록 readability-production-http.json. 앞선 실패2회도 보존했다. 누적 원격 실행3회이며 추가 실행하지 않았다.
+
+새 미커밋10개: runtime-diagnostics(신규), runtime-browser, container/build-context, container/rehearsal, runtime-diagnostics.test(신규), container-rehearsal.test, container/README, STATUS, RESUME_HANDOFF, WORKER_ROLLOUT. 실패 보고서의 허용된 issue/제한된 수치와 브라우저 시작 오류 분류만 추가하며 원문/경로/환경값을 출력하지 않는다. 권한/격리/시간 상한 유지. 관련12/12 PASS와 실제 Chrome8개 PASS/정상 종료, 증거 `.local/evidence/worker/runtime-browser-a62f5d46-7b93-41b3-bc4c-4f8c2572380c.json`. 합성 모델7회·실제 유료0회이며 Linux 성공 증거가 아니다.
+
+다음은 runtime-diagnostic-review.md와 runtime-diagnostic-manifest.json에 고정한10개 공개/병합·추가 키 없는 Linux1회 범위를 확인한 뒤 실행한다. 보호 폴더는 `.local/studio-worker-review-20261005/`다. 실패하면 원문 대신 새 고정 issue를 확인하고 해당 단계만 보완한다. sandbox/권한 확대로 우회하지 않는다. 통과 후에만 WORKER_ROLLOUT의 운영 DB 증분/키 연결 단계로 이동한다. 사용량76% 남음,20% 보존·초기화권 미사용, 진행 중 검사/감시 세션 없음. 아래14:36 이전 승인 대기와 원격 SHA는 이력이다.
+
 **최신 14:36 KST:** 사용자 승인한 진단7개를 새 PR #2로 공개·병합했다. branch codex/studio-rehearsal-diagnostics, HEAD `ae2231f40f1e331eeab2f625180b1da8d977d808`, origin/main과Production은 `c5f781a00eae78f9da14cff6c95eac750917ba42` / `dpl_CosqyoN7AHDvErGSXSHLaZMTKEiK` READY. HEAD와 main 파일 트리는 같다. 홈200·session401·worker POST503/WORKER_SETUP_REQUIRED 확인. 앞선 진단7개 공개/병합 승인은 해결됐으므로 다시 묻지 않는다.
 
 추가 승인1회 run37268245456은 failure 종료. 기록은 isolation / CONTAINER_COMMAND_FAILED / execute / cleanup confirmed다. 컨테이너 생성·설정 확인은 지났고 격리 확인용 프로세스가 실패했으며 삭제는 확인됐다. 2D/3D는 미실행, 생성/검토 job은 skipped. 기존 run37267554755와 별도로 `.local/studio-worker-review-20261005/rehearsal-37268245456.{json,log}` 보존. 원격 검사는 총2회이며 다음1회는 미승인 상태다.

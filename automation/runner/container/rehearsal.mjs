@@ -1,5 +1,6 @@
 import {runRuntimeContainer} from '../runtime-container.mjs';
 import {runtimeFixture} from '../../../tests/studio/runtime-fixture.mjs';
+import {runtimeDiagnostic} from '../runtime-diagnostics.mjs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
@@ -9,21 +10,26 @@ const codes=new Set(['CONTAINER_CONFIGURATION','CONTAINER_INSPECTION_FAILED','CO
 const stages=new Set(['configuration','create','inspect','execute','report','cleanup']);
 const cleanupStates=new Set(['not_needed','confirmed','unconfirmed']);
 export async function runRehearsal({image,run=runRuntimeContainer,log=console.log,error=console.error}){
- let stage='isolation';
+ let stage='isolation',diagnostic;
  try{
  await run(null,{image,probe:true});
  log(JSON.stringify({name:'isolation',isolated:true,cleanup:'confirmed'}));
  for(const [name,options,expected] of [['2d',{},'pass'],['3d',{kind:'interactive_3d'},'pass'],['broken-reset',{brokenReset:true},'fail']]){
   stage=name;
+  diagnostic=undefined;
   const f=runtimeFixture(options),packet={inputText:f.inputText,candidateText:f.candidateText,expected:f.expected};
   const report=await run(packet,{image});
-  if(report.checks.contract!=='pass'||report.checks.runtime!==expected||report.details.browserStopped!==true||(expected==='fail'&&!report.issues.includes('RUNTIME_RESET_FAILED')))throw Error('CONTAINER_REHEARSAL_REPORT_INVALID');
+  if(report.checks.contract!=='pass'||report.checks.runtime!==expected||report.details.browserStopped!==true||(expected==='fail'&&!report.issues.includes('RUNTIME_RESET_FAILED'))){
+   diagnostic=runtimeDiagnostic(report);
+   // runRuntimeContainer returns only after validated report and confirmed rm.
+   throw Object.assign(Error('CONTAINER_REHEARSAL_REPORT_INVALID'),{containerStage:'report',cleanup:'confirmed'});
+  }
   log(JSON.stringify({name,runtime:report.checks.runtime,browserStopped:report.details.browserStopped,cleanup:'confirmed'}));
  }
  log('CONTAINER_REHEARSAL_PASSED');return 0;
  }catch(cause){
   const code=codes.has(cause?.code)?cause.code:codes.has(cause?.message)?cause.message:'CONTAINER_REHEARSAL_FAILED';
-  error(JSON.stringify({result:'CONTAINER_REHEARSAL_FAILED',stage,code,containerStage:stages.has(cause?.containerStage)?cause.containerStage:'unknown',cleanup:cleanupStates.has(cause?.cleanup)?cause.cleanup:'unknown'}));
+  error(JSON.stringify({result:'CONTAINER_REHEARSAL_FAILED',stage,code,containerStage:stages.has(cause?.containerStage)?cause.containerStage:'unknown',cleanup:cleanupStates.has(cause?.cleanup)?cause.cleanup:'unknown',...(diagnostic?{runtimeReport:diagnostic}:{})}));
   return 1;
  }
 }

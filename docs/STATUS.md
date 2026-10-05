@@ -1,5 +1,19 @@
 # 구현 현황
 
+## 2026-10-05 22:33 KST — 읽기 권한 PR #3 반영·Linux 격리 통과·2D 보고서 진단 준비
+
+사용자의 다음 단계 진행 요청에 따라 앞서 제시한 읽기 권한 보완5개와 추가 검사1회를 실행했다. manifest `0fb6936294f2bde9a47b1b63f1b9863eb487768abdb36dacc6993949caad0106`을 확인하고 `94cdd9f8cfd5ec1efe96500899de833aba559e04`를 공개해 [PR #3](https://github.com/Raph-Alpaca/science-simulations/pull/3)을 생성·첨부·병합했다. main은 `f5e58f47ce535eb7dcf9e9e4ecbc379051568dea`, 병합 시각22:22:55 KST다. 로컬 codex/studio-checker-readability의 HEAD와 main 파일 트리는 같다. 이5개 승인 범위는 완료됐으므로 다시 묻지 않는다.
+
+Production `dpl_CMkLJQ6Rp7nZXiHGKhpvhVapkocM`가 같은 main SHA로 READY다. 22:24:03 KST 홈200·session401/LOGIN_REQUIRED·worker POST503/WORKER_SETUP_REQUIRED 및 private,no-store를 실제 확인했다. 기록은 `.local/studio-worker-review-20261005/readability-production-http.json`이다. 운영 DB/환경값·유료AI·학생용 게시 변경은 없다. 실제 로그인 이후 UI와 이전403인 runtime 로그 조회는 이번에 검사하지 않았다.
+
+추가 [실행 37316382745](https://github.com/Raph-Alpaca/science-simulations/actions/runs/37316382745)은 같은 main SHA에서22:23:20~22:24:25 KST 실행 후 failure로 종료됐다. 이미지 빌드와 pwuser의 소스 구문/읽기 검사는 성공했고, 실제 Linux isolation=true/cleanup=confirmed를 확인했다. 다음2D는 CONTAINER_REHEARSAL_REPORT_INVALID로 실패했다. 보고서가 반환된 뒤 기대 결과와 일치하지 않은 상황이며, runRuntimeContainer는 보고서 형식/대상/브라우저 종료 확인과 컨테이너 삭제가 성공해야 반환한다. 다만 기존 출력은 세부 issue를 생략하므로 contract 실패인지 브라우저 시작/동작 실패인지 아직 확정할 수 없다. 3D·고장난 초기화 fixture는 실행하지 않았고 configuration/generate/verify_0/1/2는 모두 skipped다. 전체 로그와 상태는 같은 보호 폴더의 rehearsal-37316382745.{log,json}에 보존했다. 원격 검사는 누적3회이며 추가 dispatch는 없다.
+
+로컬 진단 보완은 허용 목록의 runtime 오류 코드·검사 상태·제한된 숫자·브라우저 시작/종료 여부만 출력한다. Chromium 시작 실패는 sandbox/실행 파일/공유 라이브러리/프로세스 제한/기타로 분류하고 오류 원문·경로·후보·환경값은 기록하지 않는다. 보고서 반환 후 실패한 경우 report/cleanup confirmed를 표시한다. 컨테이너 복사 목록에 새 진단 모듈을 추가했으며 sandbox·권한·자원/시간 상한은 유지했다. Linux 실패 원인 해결로 판정하지 않는다.
+
+검증: 관련 단위/모의 컨테이너 검사12/12 PASS(exit0,1314ms), 실제 로컬 Chrome8개 PASS(exit0)다. Chrome은 정상2D/3D·초기화 고장·정적 화면·외부 요청·위조 pass·응답 없는 스크립트·자식 프로세스 수정 왕복을 검사했다. 마지막 왕복의 모델7회 응답은 합성이며 유료 호출0회다. 증거 `.local/evidence/worker/runtime-browser-a62f5d46-7b93-41b3-bc4c-4f8c2572380c.json`, 기록22:32:30 KST. 실제 Linux 재검사는 아니다.
+
+다음 검토 범위는 진단 코드4개·검사2개·문서4개 총10개를 새 공개 PR로 병합하고 키 없는 Linux 검사를 추가1회 수행하는 것이다. 직전1회 권한은 사용했으므로 검토 가능한 파일/해시를 고정해 이 추가 범위를 확인한다. 업로드 후보243개에서 금지 경로/키 패턴 문제0개, diff 공백 검사도 통과했다. 패턴 검사는 임의 인코딩된 비밀값이나 원문 권리 확인을 대신하지 않는다. 사용량76% 남음(사용24%), 초기화권 미사용. 원격 감시와 로컬 검사 프로세스는 모두 종료했다. 실제 Linux2D/3D 통과 전 운영 DB/실제 제작 활성화로 넘어가지 않는다.
+
 ## 2026-10-05 14:36 KST — 진단 PR #2 병합·추가 검사 종료·이미지 읽기 권한 보완
 
 사용자가 진단 보완7개 공개/병합과 추가 키 없는 검사1회를 명시 승인했다. manifest `22de2f0faab1743e32f454c1a445c73fbba7efc5d6c93da0f6820f2d789f6e91`과7개 파일/스테이징 바이트 일치를 확인했다. `ae2231f40f1e331eeab2f625180b1da8d977d808`을codex/studio-rehearsal-diagnostics에 업로드해 [PR #2](https://github.com/Raph-Alpaca/science-simulations/pull/2)를 생성·첨부했고 Vercel 검사 성공 후 승인된 head로 병합했다. main은 `c5f781a00eae78f9da14cff6c95eac750917ba42`다(14:32:22 KST).

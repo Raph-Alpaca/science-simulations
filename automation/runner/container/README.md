@@ -1,8 +1,10 @@
 # 폐기 가능한 실행 검사 이미지
 
-2026-10-05 실제 Linux rehearsal 두 번째 실행(run37268245456)은 이미지 빌드·컨테이너 생성·설정 확인 뒤 isolation 프로세스 execute에서 실패했고 cleanup=confirmed였다. 2D/3D는 실행 전이다. 진단 원문을 출력하지 않으므로 이 기록만으로 OS 수준 원인을 확정하지 않는다.
+2026-10-05 세 번째 실제 Linux rehearsal(run37316382745, main f5e58f4)은 이미지 빌드·pwuser 소스 읽기·격리 probe와 컨테이너 삭제를 통과했다. 다음2D는 반환된 보고서의 기대 결과 확인에서 실패했고3D/고장 fixture는 미실행이다. 기존 로그가 runtime issue를 생략하므로 브라우저 시작/동작 중 정확한 원인은 미확정이다. 이전 두 실패의 증거도 보존했다.
 
-로컬 보완에서는 호스트 임시 폴더의0700 모드가 COPY로 하위 디렉터리에 보존되고 기본 root 소유가 되는 문제를 다룬다. [Docker COPY 문서](https://docs.docker.com/reference/dockerfile/#copy)에 따라 이미지 안의 허용된 검사 소스 두 경로만0555로 복사하고, USER pwuser 뒤 node --check로 중첩 probe·checker·계약 파일의 읽기를 실제 빌드 조건으로 추가한다. 호스트 임시 폴더0700, root 소유, 비특권 사용자, 격리/네트워크/자원 제한은 유지한다. 이 로컬 수정의 실제 Linux 빌드/재검사는 아직 실행하지 않았으며, 위 실패의 유력한 원인에 대한 보완이지 해결 확인은 아니다.
+PR #3은 호스트 임시 폴더의0700 모드가 COPY로 하위 디렉터리에 보존되고 기본 root 소유가 되는 문제를 다뤘다. [Docker COPY 문서](https://docs.docker.com/reference/dockerfile/#copy)에 따라 이미지 안의 허용된 검사 소스 두 경로만0555로 복사하고, USER pwuser 뒤 node --check로 중첩 probe·checker·계약 파일 읽기를 빌드 조건으로 추가했다. 이 빌드와 격리 probe는 실제 Linux에서 통과했다. 호스트 임시 폴더0700, root 소유, 비특권 사용자, 격리/네트워크/자원 제한은 유지한다.
+
+실패 보고서 진단은 허용된 runtime issue·검사 상태·제한된 숫자·브라우저 시작/종료 여부만 출력한다. Chromium 시작 오류는 고정 코드로 분류하며 stderr/경로/후보/환경값은 공개하지 않는다. 반환 보고서의 기대값 실패는 runRuntimeContainer의 성공적 삭제 이후이므로 report/cleanup confirmed로 기록한다. 이 진단 보완은 로컬12개·실제 Chrome8개를 통과했으며 Linux 재검사는 아직 실행하지 않았다.
 
 Dockerfile은 2026-10-04 공식 MCR registry에서 읽은 Playwright 1.63.0 noble OCI index digest를 고정한다. 플랫폼은 linux/amd64다. [공식 Docker 안내](https://playwright.dev/docs/docker)에 따라 npm 패키지와 브라우저 버전을 맞추고, pwuser와 Chromium sandbox를 사용한다. root 실행이나 sandbox 해제를 통한 우회는 허용하지 않는다.
 
