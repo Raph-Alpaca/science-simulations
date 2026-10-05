@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {browserLaunchIssue,runtimeDiagnostic} from '../../automation/runner/runtime-diagnostics.mjs';
+import {browserLaunchIssue,browserLaunchIssues,runtimeDiagnostic} from '../../automation/runner/runtime-diagnostics.mjs';
 
 test('browser launch diagnostics classify infrastructure failures without returning raw data',()=>{
  for(const [message,expected] of [
@@ -23,4 +23,14 @@ test('runtime report diagnostics expose known issues and bounded measurements on
  assert.equal(JSON.stringify(runtimeDiagnostic(report)).includes('private'),false);
  const bad=runtimeDiagnostic({checks:{contract:'private'},issues:Array(50).fill('private'),details:{browserVersion:'private version',durationMs:Infinity,requests:-1}});
  assert.equal(bad.contract,'unknown');assert.equal(bad.issueCodes.length,30);assert.equal(bad.durationMs,null);assert.equal(bad.requests,null);assert.equal(bad.browserStarted,false);
+});
+
+test('launch markers distinguish process failures without retaining arbitrary error text',()=>{
+ const codes=browserLaunchIssues(Error('browserType.launch: failed\nchrome_crashpad_handler: --database is required\nprivate-path: Read-only file system\n[pid=123] <process did exit: exitCode=null, signal=SIGTRAP>'));
+ assert.deepEqual(codes,['RUNTIME_BROWSER_LAUNCH_FAILED','RUNTIME_LAUNCH_READONLY_PATH','RUNTIME_LAUNCH_CRASHPAD','RUNTIME_LAUNCH_SIGTRAP']);
+ assert.deepEqual(runtimeDiagnostic({issues:codes}).issueCodes,codes);
+ assert.equal(JSON.stringify(codes).includes('private'),false);
+ assert.deepEqual(browserLaunchIssues(Error('private payload')),['RUNTIME_BROWSER_LAUNCH_FAILED']);
+ assert.deepEqual(browserLaunchIssues(Error('x'.repeat(32768)+' Permission denied')),['RUNTIME_BROWSER_LAUNCH_FAILED']);
+ for(const [message,code] of [['spawn private EACCES','RUNTIME_LAUNCH_PERMISSION_DENIED'],['private ENOENT','RUNTIME_LAUNCH_MISSING_PATH'],['private ENOSPC','RUNTIME_LAUNCH_NO_SPACE'],['private EAGAIN','RUNTIME_LAUNCH_PROCESS_LIMIT'],['FATAL:sandbox/linux/services/credentials.cc:1 private','RUNTIME_LAUNCH_NAMESPACE'],['FATAL:zygote_host_impl_linux.cc:1 private','RUNTIME_LAUNCH_ZYGOTE'],['Missing X server private','RUNTIME_LAUNCH_DISPLAY'],['Timeout 10000ms exceeded private','RUNTIME_LAUNCH_TIMEOUT'],['signal=SIGSYS','RUNTIME_LAUNCH_SIGSYS'],['signal=SIGSEGV','RUNTIME_LAUNCH_SIGSEGV'],['signal=SIGABRT','RUNTIME_LAUNCH_SIGABRT']])assert.ok(browserLaunchIssues(Error(message)).includes(code));
 });

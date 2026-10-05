@@ -4,6 +4,10 @@
 
 ## 현재 지점 — 2026-10-05 재개 후
 
+**최신 계속 요청:** 남은50%를 보존하며53~55%부터 정리한다. 과거20% 기준은 대체됐다. 사용자는 단계가 끝나도 계속 진행하도록 요청했으므로 완료된6개/10개 승인을 반복 질문하지 않는다. 이번 키 없는 진단 단계는 `.local/studio-worker-review-20261005/continuation-50-budget.json`과 dispatch-rehearsal.mjs로 최대4회 및 같은 SHA 중복/활성 실행 중복을 차단한다. 현재1/4회 사용, 전체 누적5회다.
+
+PR #5 병합 완료: branch codex/studio-sandbox-diagnostic, HEAD1fee8b5, main85f740249109159aa899bac6baa8315616b124f9, Production dpl_FA2MYNJ5yKnQEbv2W77hti6vbffh READY. run37326412392는 격리/삭제·소스 통과 뒤 브라우저 시작 실패(RUNTIME_BROWSER_LAUNCH_FAILED, runtime not_run,827ms,requests0,cleanup confirmed). Playwright 요약 문구 보완으로도 원인이 확정되지 않았다. 실제 sandbox 원인이라고 단정하지 않는다. 다음 변경은 원문 대신14개 고정 오류 표식 추가, 관련13/13 PASS. 사용자 사용량 기준도 OWNER_INPUT에 갱신했다. 실제 Linux 재검사 전이며 다음 PR로 반영한다. 운영 DB/환경값/유료AI/학생용 게시 변경0회, 사용량73% 남음.
+
 **최신 22:45 KST:** 승인10개는 PR #4로 공개·병합 완료다. branch codex/studio-runtime-diagnostics / HEAD `6031b8b1213d0a026200e3566de5f9b467e4749c`, main/Production `6e186b6e15ee16eff460e59fc78e8a5d67682d72`, 배포 `dpl_7w39jE91pXnZJ2q5NPJ9JpxAcuVW` READY. HEAD/main 파일 트리는 같다. 홈200·session401·worker503 및 no-store를 실제 확인했다. 운영 DB/환경값·유료AI·학생용 게시 변경 없음.
 
 추가1회 run37318625336은22:40:30~22:41:35 KST failure 종료했다. 이미지 빌드·격리/삭제·2D 소스 contract 통과, Chromium 시작 실패다. RUNTIME_BROWSER_LAUNCH_FAILED / runtime not_run / browserStarted false / browserStopped true / requests0 / duration985ms / cleanup confirmed. 3D/고장 fixture 미실행, 제작/검토 jobs skipped. 누적 원격4회이며 추가 dispatch 없음. `.local/studio-worker-review-20261005/rehearsal-37318625336.{log,json}` 및 runtime-diagnostic-production-http.json과 앞선 실패를 보존했다.

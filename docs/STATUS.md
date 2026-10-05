@@ -1,5 +1,13 @@
 # 구현 현황
 
+## 2026-10-05 계속 작업 — PR #5·다섯 번째 실행·시작 오류 표식 추가
+
+사용자가 다음 단계가 끝나도 계속 진행하고 사용량50%까지만 사용하도록 요청했다. 남은50% 보존,53~55%부터 정리 기준으로 적용한다. 이번 진단 단계 원격 실행은 보호 기록/실행 도구에서 최대4회·같은 main 중복 금지·진행 중 실행 중복 금지를 강제한다. 키 없는 진단/수정은 이 계속 요청 범위에서 이어가며 운영 DB·환경값·유료AI·학생용 게시 변경은 아직 없다.
+
+검토된6개를 head `1fee8b56513c59fa3964cb34c9702e5a8dcead5f`로 공개하고 [PR #5](https://github.com/Raph-Alpaca/science-simulations/pull/5)를 생성·첨부·병합했다(23:37:59 KST). main `85f740249109159aa899bac6baa8315616b124f9`, Production `dpl_FA2MYNJ5yKnQEbv2W77hti6vbffh` READY를 확인했다. [run37326412392](https://github.com/Raph-Alpaca/science-simulations/actions/runs/37326412392)에서 격리/삭제·소스 검사는 통과했으나 다시 RUNTIME_BROWSER_LAUNCH_FAILED / runtime not_run / browserStarted false / browserStopped true / requests0 / duration827ms / cleanup confirmed로 실패했다. 요약 문구 분류 보완만으로 OS 원인을 확정할 수 없었다. 3D/고장 fixture와 제작/검토 jobs 미실행. 누적5회, 이번 계속 단계1/4회. 로그/상태는 `.local/studio-worker-review-20261005/rehearsal-37326412392.{log,json}`에 보존했다.
+
+다음 진단에서는 시작 오류 원문 대신14개의 고정 표식(권한/읽기 전용/공간/경로/프로세스 한도, crashpad/namespace/zygote/display, timeout/종료 신호)을 함께 기록한다. 이는 관찰된 오류 표식이며 각각을 근본 원인으로 판정하지 않는다. 메시지 입력32KiB·출력 최대15개 고정 코드, 후보 실행 이전 launch catch에만 적용하며 기존 보고서 허용 목록을 통과한다. 관련13/13 PASS(exit0,623ms). 권한·sandbox·자원 상한은 그대로다. 사용량73% 남음, 감시 프로세스 종료 확인.
+
 ## 2026-10-05 22:45 KST — 진단 PR #4 반영·실제 Chromium 시작 실패 확인
 
 사용자가 manifest `48b8a0ab6a9045d60c9fcdf16099b89d83195eaa74cbcad5afa47d0f568753a8`의10개 공개·병합과 추가 키 없는 검사1회를 명시 승인했다. 파일/스테이징 바이트를 검증하고 `6031b8b1213d0a026200e3566de5f9b467e4749c`를 codex/studio-runtime-diagnostics에 공개해 [PR #4](https://github.com/Raph-Alpaca/science-simulations/pull/4)를 생성·첨부했다. Vercel 검사 통과 후 같은 head로 병합했다(22:39:44 KST). main은 `6e186b6e15ee16eff460e59fc78e8a5d67682d72`, Production `dpl_7w39jE91pXnZJ2q5NPJ9JpxAcuVW` READY다. 22:41:19 KST 실제 홈200·session401/LOGIN_REQUIRED·worker POST503/WORKER_SETUP_REQUIRED 및 private,no-store를 확인했다. 로그인 이후 UI/runtime 로그는 이번에 검사하지 않았다.
