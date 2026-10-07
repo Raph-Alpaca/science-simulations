@@ -10,9 +10,18 @@ import {runtimeFixture} from './runtime-fixture.mjs';
 import {runtimeSubmission} from '../../packages/contracts/runtime-report.js';
 import {generateKeyPairSync} from 'node:crypto';
 import {sealStartupError} from '../../automation/runner/startup-diagnostic.mjs';
+import {hash} from '../../packages/contracts/content-source.js';
 
 const image='sha256:'+'a'.repeat(64),id='b'.repeat(64),seccomp=await checkedSeccomp(),profile=JSON.parse(await readFile(seccomp,'utf8'));
 const f=runtimeFixture(),packet={inputText:f.inputText,candidateText:f.candidateText,expected:f.expected};
+test('Chromium seccomp derivative changes only the chroot capability selector',async()=>{
+ const upstreamBytes=await readFile(new URL('../../automation/runner/container/seccomp.json',import.meta.url));
+ assert.equal(hash(upstreamBytes),'cc3e61cabda6bbc1e53e54d27ba4d55a9d3be829b6dd1a596f4a7b31b1cc7849');
+ const upstream=JSON.parse(upstreamBytes),rules=upstream.syscalls.filter(rule=>rule.names.includes('chroot'));
+ assert.equal(rules.length,1);assert.deepEqual(rules[0].names,['chroot']);
+ assert.deepEqual(rules[0].includes,{caps:['CAP_SYS_CHROOT']});rules[0].includes={};
+ assert.deepEqual(profile,upstream);assert.equal(profile.defaultAction,'SCMP_ACT_ERRNO');
+});
 const report=runtimeSubmission({...f.expected,contractVersion:'browser-v1',browserVersion:'154.0.0.0',browserStopped:true,durationMs:100,requests:8,checks:{contract:'pass',runtime:'pass'},checksExecuted:['contract','runtime'],issues:[],observations:[390,1440].map(width=>({width,controlChanged:true,outputChanged:true,viewChanged:true,resetRestored:true,initialViewHash:'a'.repeat(64),changedViewHash:'b'.repeat(64)}))});
 function inspection(){return [{Id:id,Image:image,Mounts:[],Config:{User:'pwuser',WorkingDir:'/app',Env:['PATH=/usr/bin','HOME=/tmp'],Entrypoint:['node','automation/runner/runtime-child.mjs','--container'],Cmd:[]},HostConfig:{ReadonlyRootfs:true,NetworkMode:'none',IpcMode:'private',Privileged:false,Init:true,CapDrop:['ALL'],CapAdd:[],SecurityOpt:['no-new-privileges=true','seccomp='+JSON.stringify(profile)],Binds:[],Mounts:[],Memory:2147483648,MemorySwap:2147483648,NanoCpus:2_000_000_000,PidsLimit:128,ShmSize:1073741824,Tmpfs:{'/tmp':'rw,noexec,nosuid,nodev,size=512m,mode=1777'},LogConfig:{Type:'none'}}}];}
 function mock({change=()=>{},start=()=>JSON.stringify(report),remove=()=>'',create=()=>id}={}){
@@ -31,7 +40,7 @@ test('candidate enters only stdin after inspected isolation; successful report r
  assert.deepEqual(dockerEnvironment({PATH:'trusted',HOME:'home',OPENAI_API_KEY:'private',STUDIO_TRANSFER_KEY:'private',ACTIONS_ID_TOKEN_REQUEST_TOKEN:'private',NODE_OPTIONS:'injected',DOCKER_HOST:'remote',HTTPS_PROXY:'proxy'}),{PATH:'trusted',HOME:'home'});
 });
 test('network, mounts, credentials, changed image/profile or resource escape prevent candidate start and still clean up',async()=>{
- for(const change of [c=>{c.HostConfig.NetworkMode='host';},c=>{c.Mounts=[{Type:'bind',Source:'/',Destination:'/host'}];},c=>{c.Config.Env.push('STUDIO_TRANSFER_KEY=private');},c=>{c.Image='sha256:'+'c'.repeat(64);},c=>{c.HostConfig.Memory=0;},c=>{c.HostConfig.SecurityOpt=['seccomp=unconfined','no-new-privileges=true'];},c=>{c.Config.Entrypoint=['node','candidate.js'];}]){
+ for(const change of [c=>{c.HostConfig.NetworkMode='host';},c=>{c.Mounts=[{Type:'bind',Source:'/',Destination:'/host'}];},c=>{c.Config.Env.push('STUDIO_TRANSFER_KEY=private');},c=>{c.Image='sha256:'+'c'.repeat(64);},c=>{c.HostConfig.Memory=0;},c=>{c.HostConfig.SecurityOpt=['seccomp=unconfined','no-new-privileges=true'];},c=>{c.Config.Entrypoint=['node','candidate.js'];},c=>{c.HostConfig.CapAdd=['SYS_CHROOT'];},c=>{c.HostConfig.CapDrop=[];},c=>{c.HostConfig.Privileged=true;},c=>{c.Config.User='root';},c=>{c.HostConfig.ReadonlyRootfs=false;}]){
   const docker=mock({change});await assert.rejects(runRuntimeContainer(packet,{image,command:docker.command}),/CONTAINER_/);
   assert.equal(docker.calls.some(c=>c.args[0]==='start'),false);assert.equal(docker.calls.at(-1).args[0],'rm');
  }

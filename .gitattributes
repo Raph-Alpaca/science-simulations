@@ -1,0 +1,2 @@
+# These reviewed profiles have byte-level SHA-256 pins on Windows and Linux.
+automation/runner/container/seccomp*.json text eol=lf

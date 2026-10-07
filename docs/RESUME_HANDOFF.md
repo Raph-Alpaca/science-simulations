@@ -1,5 +1,8 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**현재 2026-10-07:** PR #7 병합/main16be52e, Production READY. run37620220753 실패를 보존하고 암호화 오류를 실제 DPAPI 키로 복호화했다. Chromium 내부 sys_chroot 실패가 확인돼 단일 syscall 허용 파생 프로필을 로컬 준비했고 관련15개 검사 통과했다. 현재 branch codex/studio-chromium-chroot, 아직 미커밋. capability 추가 없이 초기5종 capability0을 검사한다. STATUS 맨 위/컨테이너 README의 근거와 변경 범위를 따른다. 다음은 수정 PR 검사/병합→기존 dispatch helper로 이번 단계4/4번째 실제 Linux 검사. 이번 단계3/4회 사용·누적7회이며 모두 실패, 유료0회다. 이전 중단/승인 대기는 이력이다. 사용량96% 남음·50% 보존. 기존 private.dpapi와 run37620220753 원문은 보호 폴더에 보존하며 공개하지 않는다.
+
+
 이 문서는 다음 작업자가 그대로 이어갈 수 있도록 유지한다. 마지막 실제 검증은 STATUS 맨 위와 비공개 `.local/evidence`를 함께 확인한다. 키·암호는 이 문서에 쓰지 않는다.
 
 ## 현재 지점 — 2026-10-05 재개 후

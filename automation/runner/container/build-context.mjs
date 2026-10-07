@@ -22,7 +22,9 @@ export async function createBuildContext(parent){
  return folder;
 }
 export async function checkedSeccomp(){
- const filename=path.join(ROOT,'automation/runner/container/seccomp.json');
- if(hash(await readFile(filename))!=='cc3e61cabda6bbc1e53e54d27ba4d55a9d3be829b6dd1a596f4a7b31b1cc7849')throw Error('CONTAINER_SECCOMP_CHANGED');
+ // Keep the upstream profile intact. The reviewed derivative permits chroot
+ // for Chromium's nested user-namespace sandbox without adding a container cap.
+ const filename=path.join(ROOT,'automation/runner/container/seccomp-chromium.json');
+ if(hash(await readFile(filename))!=='f922c7c9bfc1ece0b72b244e56dc85756ded002c837fb46054cfd8b275c74b6b')throw Error('CONTAINER_SECCOMP_CHANGED');
  return filename;
 }
