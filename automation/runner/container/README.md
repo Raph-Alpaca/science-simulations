@@ -1,5 +1,7 @@
 # 폐기 가능한 실행 검사 이미지
 
+한시적인 상세 시작 진단: `startup-public-key.json`이 존재하면 fixture의 브라우저 시작 실패 뒤 후보 없는 startup-probe 컨테이너를 최대1회 실행한다. 이미지·권한·네트워크·읽기 전용·자원 상한·삭제 검증은 동일하며 공개키만 stdin으로 전달한다. 원문 최대32KiB는 AES-256-GCM(키 식별자를 AAD로 결합), RSA3072-OAEP-SHA256으로 봉인한다. 출력은 엄격한 암호문 형식만 허용하고 원래 rehearsal 실패를 유지한다. 비밀키는 로컬 DPAPI에만 보관한다. 이 공개 구성 파일을 제거하면 추가 진단이 꺼지며, 진단 결과를 실제2D/3D 통과로 취급하지 않는다.
+
 2026-10-05 네 번째 실제 Linux rehearsal(run37318625336, main6e186b6)은 이미지 빌드·격리/삭제와 소스 검사를 통과했지만 Chromium 시작에 실패했다. runtime not_run / RUNTIME_BROWSER_LAUNCH_FAILED / browserStarted false / browserStopped true / requests0 / cleanup confirmed다. 2D/3D 실제 조작과 고장 fixture는 실행하지 못했다. 누적4회 이후 재실행하지 않았다.
 
 로컬 분류기는 Playwright1.63.0이 일부 sandbox 원문을 다시 쓴 `Chromium sandboxing failed!`도 인식하도록 보완했다. 설치된 코드와 [공식 구현](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/chromium/chromium.ts)을 대조했다. 관련7개 검사 통과이며 실제 Linux 오류가 이 문구였는지, OS 원인이 sandbox인지는 미확정이다. 원문 출력이나 권한/환경 설정 변경은 없다.

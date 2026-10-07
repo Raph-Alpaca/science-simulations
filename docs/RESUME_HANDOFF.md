@@ -4,6 +4,16 @@
 
 ## 현재 지점 — 2026-10-05 재개 후
 
+**2026-10-07 재개:** 사용자 계속 요청으로 아래 중단 상태를 해제했다. 저장된12개/전체 해시·원격 main·종료 실행 상태가 일치하고 기존 DPAPI 키 대응도 재확인했다. 남은 사용량97%,50% 보존/53~55% 정리 기준 유지. 암호화 시작 진단12개를 새 PR에 반영한 뒤 기존 단계3/4번째 실행을 진행한다. 이전 실패/비밀키/증거를 덮어쓰지 않는다.
+
+**사용자 종료 요청 — 2026-10-06:** 컴퓨터를 끄므로 즉시 중단했다. 추가 실행/업로드 금지. 모든 검사/감시 세션은 종료했고 이 작업에서 실행 중인 로컬 서버/DB는 없다. 암호화 시작 진단12개는 로컬 미커밋, 아직 PR #7 없음. 현재 branch codex/studio-launch-markers / HEADc81aa0f4e8ec480133d7871e2c3a03bbdc717881, origin/main4cfa44a1e6c45df52c921733bfeb34bf9c80cfbe이며 HEAD/main 파일 트리는 같다. 마지막 원격 run37327477053 종료/failure, 이번 단계2/4회 사용. 마지막 사용량72% 남음, 재개 시 다시 확인하며 남은50% 보존/53~55% 정리 기준 유지.
+
+재개 첫 작업은 `.local/studio-worker-review-20261005/shutdown-checkpoint.json`의12개 목록/해시와 실제 Git 상태를 비교하는 것이다. 새 공개키에 대응하는 실제 사용자 전용 startup-diagnostic/private.dpapi가 이미 있고 왕복 검증도 통과했다. 새 키를 만들거나 기존 파일을 덮어쓰지 않는다. 관련17개 및 Chrome8개 검사는 이미 통과했으므로 소스 변경 없이 반복하지 않는다. 공개 업로드 후보247개/금지 경로·키 패턴 문제0개였다. 이후 로컬 진단 변경을 검토·PR/병합한 뒤 dispatch-rehearsal.mjs로 세 번째 제한 실행을 수행한다. 상세 오류는 공개하지 않고 로컬에서 복호화한다. 다음 원인 수정과 실제2D/3D 통과 전 운영 DB/유료 제작 단계로 넘어가지 않는다.
+
+**최신 2026-10-06 00:01 KST:** PR #6 병합, HEADc81aa0f/main4cfa44a1e6c45df52c921733bfeb34bf9c80cfbe, Production dpl_ASUCiVoHyD2mspTu8YSfvvcCEcZL READY. run37327477053은 시작 실패이며 MISSING_PATH/CRASHPAD/ZYGOTE/SIGABRT 표식, 원인은 아직 미확정이다. 누적6회·이번계속2/4회. 로그/상태는 보호 폴더의 rehearsal-37327477053.{log,json}. 진행 중 검사/감시 없음. 사용량72% 남음·50% 보존.
+
+다음은 준비한 암호화 시작 진단 PR/병합 후 세 번째 제한 실행이다. 후보 없는 별도 컨테이너에 공개키만 주고 최대32KiB 시작 오류를 봉인한다. 원래 실패 유지·한 번만 추가 probe·기존 격리/정리 검증 유지. 공개키는 container/startup-public-key.json에만 있고 이미지에는 복사하지 않는다. 제거하면 추가 probe가 꺼진다. 관련17개·실제 Chrome8개 PASS, 실제 DPAPI 왕복 PASS. 비밀키와 평문 결과는 `.local/studio-worker-review-20261005/startup-diagnostic/`의 실제 사용자 전용 ACL 내부다. private.dpapi는 일반 사용자 문맥에서만 복호화한다. `.local/studio-worker-review-20261005/decrypt-startup.mjs`에 비밀키를 표준입력 파이프로 전달하며 명령문/환경/로그로 보내지 않는다. 새 run의 startup-diagnostic 로그에서 report.sealed만 보호 기록으로 추출한 후 복호화한다. 암호문도 원래 실패 로그와 함께 보존한다. sandbox나 권한을 추측으로 변경하지 않는다.
+
 **최신 계속 요청:** 남은50%를 보존하며53~55%부터 정리한다. 과거20% 기준은 대체됐다. 사용자는 단계가 끝나도 계속 진행하도록 요청했으므로 완료된6개/10개 승인을 반복 질문하지 않는다. 이번 키 없는 진단 단계는 `.local/studio-worker-review-20261005/continuation-50-budget.json`과 dispatch-rehearsal.mjs로 최대4회 및 같은 SHA 중복/활성 실행 중복을 차단한다. 현재1/4회 사용, 전체 누적5회다.
 
 PR #5 병합 완료: branch codex/studio-sandbox-diagnostic, HEAD1fee8b5, main85f740249109159aa899bac6baa8315616b124f9, Production dpl_FA2MYNJ5yKnQEbv2W77hti6vbffh READY. run37326412392는 격리/삭제·소스 통과 뒤 브라우저 시작 실패(RUNTIME_BROWSER_LAUNCH_FAILED, runtime not_run,827ms,requests0,cleanup confirmed). Playwright 요약 문구 보완으로도 원인이 확정되지 않았다. 실제 sandbox 원인이라고 단정하지 않는다. 다음 변경은 원문 대신14개 고정 오류 표식 추가, 관련13/13 PASS. 사용자 사용량 기준도 OWNER_INPUT에 갱신했다. 실제 Linux 재검사 전이며 다음 PR로 반영한다. 운영 DB/환경값/유료AI/학생용 게시 변경0회, 사용량73% 남음.

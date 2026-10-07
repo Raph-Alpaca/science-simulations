@@ -8,6 +8,8 @@ import {runRuntimeContainer,dockerEnvironment} from '../../automation/runner/run
 import {checkedSeccomp,createBuildContext,CONTAINER_FILES} from '../../automation/runner/container/build-context.mjs';
 import {runtimeFixture} from './runtime-fixture.mjs';
 import {runtimeSubmission} from '../../packages/contracts/runtime-report.js';
+import {generateKeyPairSync} from 'node:crypto';
+import {sealStartupError} from '../../automation/runner/startup-diagnostic.mjs';
 
 const image='sha256:'+'a'.repeat(64),id='b'.repeat(64),seccomp=await checkedSeccomp(),profile=JSON.parse(await readFile(seccomp,'utf8'));
 const f=runtimeFixture(),packet={inputText:f.inputText,candidateText:f.candidateText,expected:f.expected};
@@ -67,6 +69,18 @@ test('fresh Docker context contains only trusted allowlisted files and no candid
   assert.ok((await readFile(path.join(folder,'Dockerfile'),'utf8')).includes('USER pwuser'));
   // Resolve the actual copied entrypoint/import graph, including workspace
   // contracts, so an omitted transitive file cannot hide behind the allowlist.
-  await build({entryPoints:[path.join(folder,'automation/runner/runtime-child.mjs')],bundle:true,platform:'node',format:'esm',write:false,packages:'external',alias:{'@science/contracts':path.join(folder,'packages/contracts/index.js')},logLevel:'silent'});
+  await build({entryPoints:['automation/runner/runtime-child.mjs','automation/runner/container/startup-probe.mjs'].map(file=>path.join(folder,file)),outdir:path.join(folder,'unused-output'),bundle:true,platform:'node',format:'esm',write:false,packages:'external',alias:{'@science/contracts':path.join(folder,'packages/contracts/index.js')},logLevel:'silent'});
  }finally{assert.equal(path.dirname(path.resolve(parent)),path.resolve(base));await rm(parent,{recursive:true,force:true});}
+});
+
+test('encrypted startup probe receives only its public key and keeps isolation and cleanup mandatory',async()=>{
+ const key=generateKeyPairSync('rsa',{modulusLength:3072}).publicKey.export({type:'spki',format:'der'}).toString('base64');
+ const diagnostic={mode:'startup-only',started:false,stopped:true,sealed:sealStartupError(Error('private'),key)};
+ const change=c=>{c.Config.Entrypoint=['node'];c.Config.Cmd=['automation/runner/container/startup-probe.mjs'];};
+ const docker=mock({change,start:()=>JSON.stringify(diagnostic)});
+ assert.deepEqual(await runRuntimeContainer(null,{image,command:docker.command,startupPublicKey:key}),diagnostic);
+ assert.deepEqual(JSON.parse(docker.calls[2].options.input),{publicKey:key});assert.equal(docker.calls.at(-1).args[0],'rm');
+ const blocked=mock();await assert.rejects(runRuntimeContainer(packet,{image,command:blocked.command,startupPublicKey:key}),/CONTAINER_CONFIGURATION/);assert.equal(blocked.calls.length,0);
+ const wrongEntrypoint=mock({start:()=>JSON.stringify(diagnostic)});await assert.rejects(runRuntimeContainer(null,{image,command:wrongEntrypoint.command,startupPublicKey:key}),/CONTAINER_ENTRYPOINT_REJECTED/);assert.equal(wrongEntrypoint.calls.some(c=>c.args[0]==='start'),false);
+ const cleanupFailed=mock({change,start:()=>JSON.stringify(diagnostic),remove:()=>{throw Error('private');}});await assert.rejects(runRuntimeContainer(null,{image,command:cleanupFailed.command,startupPublicKey:key}),/CONTAINER_CLEANUP_UNCONFIRMED/);
 });

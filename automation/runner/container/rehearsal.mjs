@@ -1,6 +1,8 @@
 import {runRuntimeContainer} from '../runtime-container.mjs';
 import {runtimeFixture} from '../../../tests/studio/runtime-fixture.mjs';
 import {runtimeDiagnostic} from '../runtime-diagnostics.mjs';
+import {startupPublicKey as checkStartupKey,assertStartupProbe} from '../startup-diagnostic.mjs';
+import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
@@ -9,7 +11,7 @@ import {pathToFileURL} from 'node:url';
 const codes=new Set(['CONTAINER_CONFIGURATION','CONTAINER_INSPECTION_FAILED','CONTAINER_ISOLATION_REJECTED','CONTAINER_RESOURCE_REJECTED','CONTAINER_CREDENTIAL_REJECTED','CONTAINER_ENTRYPOINT_REJECTED','CONTAINER_ID_INVALID','CONTAINER_REPORT_MISMATCH','CONTAINER_BROWSER_NOT_STOPPED','CONTAINER_VERIFICATION_FAILED','CONTAINER_CLEANUP_UNCONFIRMED','CONTAINER_COMMAND_UNAVAILABLE','CONTAINER_COMMAND_FAILED','CONTAINER_SECCOMP_CHANGED','CONTAINER_REHEARSAL_REPORT_INVALID','RUNTIME_CANCELLED']);
 const stages=new Set(['configuration','create','inspect','execute','report','cleanup']);
 const cleanupStates=new Set(['not_needed','confirmed','unconfirmed']);
-export async function runRehearsal({image,run=runRuntimeContainer,log=console.log,error=console.error}){
+export async function runRehearsal({image,run=runRuntimeContainer,log=console.log,error=console.error,startupPublicKey}){
  let stage='isolation',diagnostic;
  try{
  await run(null,{image,probe:true});
@@ -30,7 +32,23 @@ export async function runRehearsal({image,run=runRuntimeContainer,log=console.lo
  }catch(cause){
   const code=codes.has(cause?.code)?cause.code:codes.has(cause?.message)?cause.message:'CONTAINER_REHEARSAL_FAILED';
   error(JSON.stringify({result:'CONTAINER_REHEARSAL_FAILED',stage,code,containerStage:stages.has(cause?.containerStage)?cause.containerStage:'unknown',cleanup:cleanupStates.has(cause?.cleanup)?cause.cleanup:'unknown',...(diagnostic?{runtimeReport:diagnostic}:{})}));
+  // At most one extra infrastructure probe after a launch failure. The probe
+  // receives only a public key; even the reviewed fixture is not transmitted.
+  if(startupPublicKey&&diagnostic?.contract==='pass'&&diagnostic.runtime==='not_run'&&!diagnostic.browserStarted){
+   try{
+    checkStartupKey(startupPublicKey);
+    const report=assertStartupProbe(await run(null,{image,startupPublicKey}));
+    log(JSON.stringify({name:'startup-diagnostic',cleanup:'confirmed',report}));
+   }catch{error(JSON.stringify({result:'STARTUP_DIAGNOSTIC_UNAVAILABLE'}));}
+  }
   return 1;
  }
 }
-if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href)process.exitCode=await runRehearsal({image:process.env.STUDIO_CHECKER_IMAGE});
+if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
+ try{
+  let key;
+  try{const config=JSON.parse(await readFile(new URL('./startup-public-key.json',import.meta.url),'utf8'));if(config.version!==1||Object.keys(config).sort().join(',')!=='publicKey,version')throw Error();checkStartupKey(config.publicKey);key=config.publicKey;}
+  catch(error){if(error.code!=='ENOENT')throw Error();}
+  process.exitCode=await runRehearsal({image:process.env.STUDIO_CHECKER_IMAGE,startupPublicKey:key});
+ }catch{console.error('STARTUP_DIAGNOSTIC_CONFIGURATION_INVALID');process.exitCode=1;}
+}
