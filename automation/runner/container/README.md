@@ -1,5 +1,9 @@
 # 폐기 가능한 실행 검사 이미지
 
+2026-10-07 run37620220753의 후보 없는 암호화 시작 진단을 로컬 복호화하여 Chromium의 `sys_chroot` 검사 실패를 확인했다. 기존 프로필의 chroot 허용은 컨테이너 CAP_SYS_CHROOT 선택 조건에 묶여 있으나 실행은 cap-drop ALL이므로 해당 허용 규칙이 제외된다. [Chromium 구현](https://chromium.googlesource.com/chromium/src/sandbox/+/refs/heads/main/linux/services/credentials.cc)은 자체 sandbox의 파일 접근 축소에 이 호출을 사용한다. Crashpad의 CPU 파일 누락은 이후에 출력됐으며 별도 근본 원인으로 취급하지 않는다.
+
+`seccomp.json`은 비교용 공식 원문으로 보존하고 실제 선택은 `seccomp-chromium.json`이다. 파생본은 chroot 한 규칙의 `includes.caps` 조건만 제거한다. syscall 허용 범위의 명시적인 변경이며 경로 문자열까지 제한하는 필터라고 주장하지 않는다. 컨테이너 capability를 추가하지 않고 비특권 사용자·Chromium sandbox·no-new-privileges·네트워크 없음·읽기 전용·호스트 마운트 금지는 유지한다. 초기 probe는 effective뿐 아니라 inherited/permitted/bounding/ambient capability도 모두0인지 검사한다. 파생본 SHA-256은 `f922c7c9bfc1ece0b72b244e56dc85756ded002c837fb46054cfd8b275c74b6b`이며 바이트 핀과 원문 대비 단일 변경 검사를 적용한다. 관련15개 로컬 검사는 통과했다. 실제 Linux 재검사 전이며 통과는 다음 실행 증거로 판정한다.
+
 한시적인 상세 시작 진단: `startup-public-key.json`이 존재하면 fixture의 브라우저 시작 실패 뒤 후보 없는 startup-probe 컨테이너를 최대1회 실행한다. 이미지·권한·네트워크·읽기 전용·자원 상한·삭제 검증은 동일하며 공개키만 stdin으로 전달한다. 원문 최대32KiB는 AES-256-GCM(키 식별자를 AAD로 결합), RSA3072-OAEP-SHA256으로 봉인한다. 출력은 엄격한 암호문 형식만 허용하고 원래 rehearsal 실패를 유지한다. 비밀키는 로컬 DPAPI에만 보관한다. 이 공개 구성 파일을 제거하면 추가 진단이 꺼지며, 진단 결과를 실제2D/3D 통과로 취급하지 않는다.
 
 2026-10-05 네 번째 실제 Linux rehearsal(run37318625336, main6e186b6)은 이미지 빌드·격리/삭제와 소스 검사를 통과했지만 Chromium 시작에 실패했다. runtime not_run / RUNTIME_BROWSER_LAUNCH_FAILED / browserStarted false / browserStopped true / requests0 / cleanup confirmed다. 2D/3D 실제 조작과 고장 fixture는 실행하지 못했다. 누적4회 이후 재실행하지 않았다.

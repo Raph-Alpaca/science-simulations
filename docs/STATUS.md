@@ -1,5 +1,14 @@
 # 구현 현황
 
+## 2026-10-07 21:21 KST — 시작 실패의 chroot 지점 확인·수정 준비
+
+[PR #7](https://github.com/Raph-Alpaca/science-simulations/pull/7)은 미리보기 검사 SUCCESS 확인 후 병합했다. main16be52e559ec5eeab9a1eac283fed9f00046861d, Production dpl_8GRwfYb8SabbrhoemN2PUzFKks7N READY다. [run37620220753](https://github.com/Raph-Alpaca/science-simulations/actions/runs/37620220753)은 격리/삭제 통과 후 2D 브라우저 시작 실패(runtime not_run,656ms,requests0,cleanup confirmed). 생성/검토 jobs skipped, 누적7회/이번 단계3/4회. 후보 없는 암호화 진단도 정상 반환·삭제했고 기존 DPAPI 키로 로컬 복호화했다. 원문10,431bytes와 암호문/실패 로그를 보호 폴더에 보존했다.
+
+확인된 최초 실패는 Chromium 내부 sys_chroot 호출이다. 공식 Chromium 구현의 sandbox 축소 경로와 일치한다. 기존 공식 Playwright 프로필의 chroot 허용은 CAP_SYS_CHROOT 조건부인데 컨테이너는 cap-drop ALL이라 제외된다. 이 근거로 파생 프로필의 chroot 한 규칙만 조건 없이 허용하는 보완을 준비했다. 컨테이너 capability/host namespace/마운트/쓰기/네트워크 권한과 Chromium sandbox는 유지한다. syscall 하나의 허용 범위 변경임을 명시하며 막연한 보안 동일성이나 실제 Linux 해결 완료로 주장하지 않는다. 원문/파생본을 별도 보존·해시 고정하고 차이 검사를 추가했다. 실제 probe도 capability5종0을 요구한다.
+
+관련15/15 PASS(exit0,868ms), diff check PASS. 최초 sandbox 계정 검사에서는 esbuild의 상위 폴더 읽기 거부로1개 실패했고 같은15개를 일반 사용자 문맥에서 다시 실행하여 모두 통과했다. 실패를 삭제하지 않는다. 다음은 이 수정 PR의 검사/병합 후 기존 상한의 네 번째 Linux 실행이다. 추가 무조건 재시도는 없다. 운영 DB/환경값·유료AI·학생용 게시 변경0회. 사용량96% 남음,50% 보존 기준 유지.
+
+
 ## 2026-10-07 재개 — 보관된 암호화 시작 진단 반영
 
 사용자가 단계 완료 후에도 계속 진행하고 남은50%를 보존하도록 재개를 요청했다. 중단 체크포인트의12개 파일 해시와 경로가 모두 일치하고 staging은 비어 있다. 원격 main4cfa44a와 마지막 run37327477053의 완료/failure 상태도 일치한다. 기존 DPAPI 키의 합성 암호문 복호화와 공개키 대응을 실제 사용자 문맥에서 다시 확인했다. 키를 교체하지 않았다. 사용량97% 남음이며53~55%부터 정리한다. 기존17개·Chrome8개 검사는 소스가 그대로이므로 반복하지 않는다. 준비된12개를 새 PR로 반영하고 기존 최대4회 제한의 세 번째 키 없는 진단으로 계속한다. 아래 중단 지시는 이 재개 요청으로 해제됐다.

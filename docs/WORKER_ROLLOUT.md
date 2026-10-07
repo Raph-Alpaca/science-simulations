@@ -1,5 +1,8 @@
 # 실제 제작 연결을 위한 적용 순서
 
+**현재 2026-10-07:** PR #7 병합/main16be52e, Production READY. run37620220753 실패를 보존하고 암호화 오류를 실제 DPAPI 키로 복호화했다. Chromium 내부 sys_chroot 실패가 확인돼 단일 syscall 허용 파생 프로필을 로컬 준비했고 관련15개 검사 통과했다. 현재 branch codex/studio-chromium-chroot, 아직 미커밋. capability 추가 없이 초기5종 capability0을 검사한다. STATUS 맨 위/컨테이너 README의 근거와 변경 범위를 따른다. 다음은 수정 PR 검사/병합→기존 dispatch helper로 이번 단계4/4번째 실제 Linux 검사. 이번 단계3/4회 사용·누적7회이며 모두 실패, 유료0회다. 이전 중단/승인 대기는 이력이다. 사용량96% 남음·50% 보존. 기존 private.dpapi와 run37620220753 원문은 보호 폴더에 보존하며 공개하지 않는다.
+
+
 **2026-10-05 22:45 KST:** 진단10개는 PR #4로 병합되어 main/Production6e186b6에 반영됐다. 추가1회 run37318625336에서 이미지 빌드·격리/삭제·소스 검사는 통과했지만 Chromium 시작이 실패했다(runtime not_run, RUNTIME_BROWSER_LAUNCH_FAILED, requests0, cleanup confirmed). 실제2D/3D는 미실행이며 누적 원격4회다. Playwright가 다시 쓴 sandbox 오류 요약 문구의 분류 누락을 로컬에서 보완했다(관련7개 PASS). 이번 실제 오류가 sandbox인지 아직 확정하지 않는다. 새6개 공개/병합·추가 키 없는1회가 다음 검토 범위이며 권한/runner/환경 설정은 변경하지 않았다. 실제 브라우저 검사 통과 전3단계 DB 적용은 계속 대기한다.
 
 **2026-10-05 22:33 KST:** 읽기 권한5개는 PR #3으로 병합되어 main/Production f5e58f4에 반영됐다. 추가1회 run37316382745는 이미지 빌드·pwuser 소스 읽기·실제 Linux 격리 probe와 삭제를 통과한 뒤 2D 반환 보고서 기대값 확인에서 실패했다. 상세 issue는 미확정, 3D/고장 fixture는 미실행이다. 누적3회이며 추가 dispatch는 없다. 새 로컬 진단10개는 보고서 허용 issue/제한된 수치 및 브라우저 시작 오류 분류를 제공한다. 관련12개·실제 로컬 Chrome8개 PASS, Linux 재검사는 미실행이다. 검토 파일/해시를 고정한10개 공개/병합·추가 키 없는1회가 다음 범위다. 원격2D/3D가 모두 통과하기 전3단계 운영 DB 적용으로 넘어가지 않는다. 아래14:36 이전 상태는 이력이다.
