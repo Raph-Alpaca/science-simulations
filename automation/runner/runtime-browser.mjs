@@ -12,6 +12,10 @@ export function browserEnvironment(env){
  const result={};for(const key of ['SystemRoot','SYSTEMROOT','WINDIR','TEMP','TMP','TMPDIR','PATH','HOME','USERPROFILE','LOCALAPPDATA','PROGRAMFILES','PROGRAMFILES(X86)'])if(typeof env[key]==='string')result[key]=env[key];
  return result;
 }
+export function runtimeLaunchOptions({channel='chrome',environment=process.env}={}){
+ return {channel,headless:true,chromiumSandbox:true,env:browserEnvironment(environment),timeout:10000,
+  args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-pings','--force-webrtc-ip-handling-policy=disable_non_proxied_udp']};
+}
 const wait=ms=>new Promise(ok=>setTimeout(ok,ms));
 async function until(fn,code){for(let i=0;i<12;i++){if(await fn())return;await wait(100);}throw new RuntimeCheckError(code);}
 async function one(page,attribute){const element=page.locator('['+attribute+']');need(await element.count()===1&&await element.isVisible(),'RUNTIME_REQUIRED_CONTROL');return element;}
@@ -53,8 +57,7 @@ export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',envir
   async function execute(){
    try{await checkRuntimeSource(bundle.candidate);result.checks.contract='pass';}catch(error){result.checks.contract='fail';throw error;}finally{result.checksExecuted.push('contract');}
    stop();
-   try{browser=await chromium.launch({channel,headless:true,chromiumSandbox:true,env:browserEnvironment(environment),timeout:10000,
-    args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-pings','--force-webrtc-ip-handling-policy=disable_non_proxied_udp']});}
+   try{browser=await chromium.launch(runtimeLaunchOptions({channel,environment}));}
    catch(error){stop();const [code,...markers]=browserLaunchIssues(error);result.issues.push(...markers);throw new RuntimeCheckError(code);}
    stop();result.browserVersion=browser.version();result.checksExecuted.push('runtime');result.checks.runtime='fail';
    const files=new Map(bundle.candidate.files.map(f=>['/'+f.path,f.content]));let requests=0;

@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {prepareRuntimeBundle,RuntimeCheckError} from './runtime-contract.mjs';
 import {assertRuntimeReport} from '../../packages/contracts/runtime-report.js';
 import {checkedSeccomp} from './container/build-context.mjs';
+import {startupPublicKey as checkStartupKey,assertStartupProbe} from './startup-diagnostic.mjs';
 
 const need=(v,code)=>{if(!v)throw new RuntimeCheckError(code);};
 const canonical=value=>JSON.stringify(value&&typeof value==='object'?(Array.isArray(value)?value.map(v=>JSON.parse(canonical(v))):Object.fromEntries(Object.keys(value).sort().map(k=>[k,JSON.parse(canonical(value[k]))]))):value);
@@ -29,15 +30,17 @@ export function dockerCommand(args,{input,signal,timeout=10000,maxBytes=64000,en
   child.stdin.end(input);
  });
 }
-export function containerCreateArgs({name,image,seccomp,probe=false}){
+export function containerCreateArgs({name,image,seccomp,probe=false,startupProbe=false}){
  need(/^studio-verify-[a-f0-9-]{36}$/.test(name)&&/^sha256:[a-f0-9]{64}$/.test(image)&&path.isAbsolute(seccomp),'CONTAINER_CONFIGURATION');
  const args=['create','--name',name,'--platform','linux/amd64','--init','--interactive','--network','none','--read-only','--cap-drop','ALL',
   '--security-opt','no-new-privileges=true','--security-opt','seccomp='+seccomp,'--user','pwuser','--ipc','private',
   '--shm-size','1g','--tmpfs','/tmp:rw,noexec,nosuid,nodev,size=512m,mode=1777','--memory','2g','--memory-swap','2g','--cpus','2','--pids-limit','128',
   '--ulimit','nofile=1024:1024','--log-driver','none','--env','HOME=/tmp'];
- if(probe)args.push('--entrypoint','node');args.push(image);if(probe)args.push('automation/runner/container/isolation-probe.mjs');return args;
+ need(!(probe&&startupProbe),'CONTAINER_CONFIGURATION');
+ if(probe||startupProbe)args.push('--entrypoint','node');args.push(image);
+ if(probe||startupProbe)args.push('automation/runner/container/'+(probe?'isolation-probe.mjs':'startup-probe.mjs'));return args;
 }
-export function assertContainerConfiguration(value,{image,profile,probe=false}){
+export function assertContainerConfiguration(value,{image,profile,probe=false,startupProbe=false}){
  need(Array.isArray(value)&&value.length===1,'CONTAINER_INSPECTION_FAILED');
  const c=value[0],h=c.HostConfig,env=c.Config?.Env||[],security=h?.SecurityOpt||[];
  need(c.Image===image&&c.Config?.User==='pwuser'&&c.Config?.WorkingDir==='/app'&&h?.ReadonlyRootfs&&h.NetworkMode==='none'&&h.IpcMode==='private'&&!h.Privileged&&h.Init===true,
@@ -48,23 +51,27 @@ export function assertContainerConfiguration(value,{image,profile,probe=false}){
  need(h.Memory===CONTAINER_LIMITS.memory&&h.MemorySwap===CONTAINER_LIMITS.memory&&h.NanoCpus===2_000_000_000&&h.PidsLimit===128&&h.ShmSize===CONTAINER_LIMITS.shm&&
   JSON.stringify(h.Tmpfs)==='{"/tmp":"rw,noexec,nosuid,nodev,size=512m,mode=1777"}'&&h.LogConfig?.Type==='none','CONTAINER_RESOURCE_REJECTED');
  need(env.includes('HOME=/tmp')&&env.every(v=>!/(?:TOKEN|SECRET|KEY|GITHUB|ACTIONS|SUPABASE|OPENAI)/i.test(v.split('=')[0])),'CONTAINER_CREDENTIAL_REJECTED');
- const command=probe?['node','automation/runner/container/isolation-probe.mjs']:['node','automation/runner/runtime-child.mjs','--container'];
+ const command=probe||startupProbe?['node','automation/runner/container/'+(probe?'isolation-probe.mjs':'startup-probe.mjs')]:['node','automation/runner/runtime-child.mjs','--container'];
  need(JSON.stringify([...(c.Config.Entrypoint||[]),...(c.Config.Cmd||[])])===JSON.stringify(command),'CONTAINER_ENTRYPOINT_REJECTED');
  return c.Id;
 }
-export async function runRuntimeContainer(packet,{image,signal,command=dockerCommand,seccomp,probe=false}={}){
- const bundle=probe?null:prepareRuntimeBundle(packet);seccomp??=await checkedSeccomp();
+export async function runRuntimeContainer(packet,{image,signal,command=dockerCommand,seccomp,probe=false,startupPublicKey}={}){
+ const startupProbe=startupPublicKey!==undefined;
+ need(!(probe&&startupProbe)&&(!startupProbe||packet===null),'CONTAINER_CONFIGURATION');
+ if(startupProbe)checkStartupKey(startupPublicKey);
+ const bundle=probe||startupProbe?null:prepareRuntimeBundle(packet);seccomp??=await checkedSeccomp();
  const profile=JSON.parse(await readFile(seccomp,'utf8'));
  const name='studio-verify-'+randomUUID();let started=false,result,failure,stage='configuration',cleanup='not_needed';
  try{
   need(!signal?.aborted,'RUNTIME_CANCELLED');started=true;stage='create';cleanup='unconfirmed';
-  const id=(await command(containerCreateArgs({name,image,seccomp,probe}),{signal})).trim();
+  const id=(await command(containerCreateArgs({name,image,seccomp,probe,startupProbe}),{signal})).trim();
   need(/^[a-f0-9]{64}$/.test(id),'CONTAINER_ID_INVALID');
   stage='inspect';const state=JSON.parse(await command(['inspect',id],{signal}));
-  need(assertContainerConfiguration(state,{image,profile,probe})===id,'CONTAINER_ID_INVALID');
-  stage='execute';const raw=await command(['start','--attach','--interactive',id],{input:probe?'':JSON.stringify(packet),signal,timeout:CONTAINER_LIMITS.seconds*1000});
+  need(assertContainerConfiguration(state,{image,profile,probe,startupProbe})===id,'CONTAINER_ID_INVALID');
+  stage='execute';const raw=await command(['start','--attach','--interactive',id],{input:probe?'':JSON.stringify(startupProbe?{publicKey:startupPublicKey}:packet),signal,timeout:CONTAINER_LIMITS.seconds*1000});
   stage='report';
   if(probe){result=JSON.parse(raw);need(JSON.stringify(result)==='{"isolated":true}','CONTAINER_ISOLATION_REJECTED');}
+  else if(startupProbe){result=assertStartupProbe(JSON.parse(raw));if(result.sealed)need(result.sealed.keyId===checkStartupKey(startupPublicKey).keyId,'CONTAINER_REPORT_MISMATCH');}
   else{
    result=assertRuntimeReport(JSON.parse(raw),bundle.generationKind);
    need(['candidateHash','sourceSnapshotHash','baselineSha','attempt'].every(k=>result[k]===bundle[k]),'CONTAINER_REPORT_MISMATCH');
