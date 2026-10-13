@@ -1,5 +1,11 @@
 # 실제 제작 연결을 위한 적용 순서
 
+**현재 2026-10-07 21:48 KST:** Linux 격리/2D/3D/고장 감지 완료 후, 최신 운영 읽기 전용 백업·로컬 복원과 worker DB 증분13개 호환 검증을 완료했다. CLI dry-run은20261007123947_studio_worker_foundation.sql1개만 대상이다. 새6개 파일은 로컬 미커밋, 운영 미적용. WORKER_MIGRATION_REVIEW.md의 정확한 hash/10개 테이블·37개 함수/비활성 gate 범위에 대한 공개·병합·운영 적용 승인이 다음 단계다. backup/migration 보고서와 로컬 비밀번호 DPAPI는 보호된 worker-preflight-20261007-d893b4507d214aba935495dbf711032f에 있다. 서버 종료, 사용량95% 남음. 원격 rehearsal4/4회 상한 도달이므로 새 dispatch를 하지 않는다.
+
+
+**2026-10-07 21:34 KST 실제 Linux 통과:** 사용자 명시 승인 후 PR #8을 병합했다. HEAD98f86b29836b86335470ba8bf101feb849bcfedc, main17c744785952e3f370928018c605a9ff5c2d490b, Production dpl_CkEi38s8gQyXKr4kZxSunfuDrNFS READY. run37621641105에서 isolation/2D/3D 통과, broken-reset은 의도대로 fail로 감지됐으며 모든 브라우저 종료·컨테이너 삭제 확인, 전체 conclusion success다. 이번 단계4/4회·누적8회이며 추가 dispatch 금지. 초기 PR #8 병합 자동 승인 거부는 사용자의 정확한 보안 필터 변경·병합/검사1회 승인으로 해결됐다. 다음은 운영 데이터 최신 백업/별도 로컬 복원본에 신규8SQL 호환 적용 시험이다. 운영 SQL/환경값/유료AI/학생용 게시 변경은 아직 없다.
+
+
 **현재 2026-10-07:** PR #7 병합/main16be52e, Production READY. run37620220753 실패를 보존하고 암호화 오류를 실제 DPAPI 키로 복호화했다. Chromium 내부 sys_chroot 실패가 확인돼 단일 syscall 허용 파생 프로필을 로컬 준비했고 관련15개 검사 통과했다. 현재 branch codex/studio-chromium-chroot, 아직 미커밋. capability 추가 없이 초기5종 capability0을 검사한다. STATUS 맨 위/컨테이너 README의 근거와 변경 범위를 따른다. 다음은 수정 PR 검사/병합→기존 dispatch helper로 이번 단계4/4번째 실제 Linux 검사. 이번 단계3/4회 사용·누적7회이며 모두 실패, 유료0회다. 이전 중단/승인 대기는 이력이다. 사용량96% 남음·50% 보존. 기존 private.dpapi와 run37620220753 원문은 보호 폴더에 보존하며 공개하지 않는다.
 
 

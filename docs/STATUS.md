@@ -1,5 +1,17 @@
 # 구현 현황
 
+## 2026-10-07 21:48 KST — 운영 백업 복원본에서 worker DB 증분 검증 완료
+
+운영 변경 전 최신 studio 백업/새 로컬 복원 PASS다. 원격은 읽기 전용2연결·verify-full이며 데이터/메타데이터 지문 일치, RLS/기존 RPC/직접 쓰기 차단과 서버 종료를 확인했다. 원본은 보호 폴더 worker-preflight-20261007-d893b4507d214aba935495dbf711032f에 있다.
+
+CLI가 만든20261007123947_studio_worker_foundation.sql은 기존8개 제안을 단일 트랜잭션으로 묶은10개 테이블/37개 함수 증분이다. LF SHA256 d683387b09003dbe56a63e839d5991cfd3feffe50cc454730021bfa1c6a79a24. 위 복원본에만 적용한13개 확인 모두 PASS(21:43:39~41 KST). 기존 모든 행/기존 함수·ACL 보존, 신규 RLS/공개 역할 차단, 비활성 gate4개, 기존 RPC, 유료 PT412 차단, 중복 적용42P07 거부와 검사 후 무변경을 확인했다. 로컬 서버는 종료했다. Supabase CLI dry-run도 read-only/verify-full/skip-vault로 실행했고 이 파일1개만 대기, seed/role 변경0개를 확인했다. 운영 적용은 아직0회다.
+
+검토 문서 WORKER_MIGRATION_REVIEW.md가 현재 구체적 적용 범위다. 이전 PR #8 승인은 운영 DB를 제외했으므로 새6개 공개/병합과 운영 DB 단일 증분 적용 승인을 별도로 확인한다. budget/worker/dispatch/삭제는 모두 비활성 유지하며 키·환경값·유료AI·학생용 게시 변경은 포함하지 않는다. 현재 branch codex/studio-worker-db-preflight / HEAD17c7447. 사용량95% 남음,50% 보존 기준 유지. 기존 Auth 유출 비밀번호 보호 비활성 경고1개는 검토 문서에 링크했으며 Auth 설정은 바꾸지 않았다.
+
+
+**2026-10-07 21:34 KST 실제 Linux 통과:** 사용자 명시 승인 후 PR #8을 병합했다. HEAD98f86b29836b86335470ba8bf101feb849bcfedc, main17c744785952e3f370928018c605a9ff5c2d490b, Production dpl_CkEi38s8gQyXKr4kZxSunfuDrNFS READY. run37621641105에서 isolation/2D/3D 통과, broken-reset은 의도대로 fail로 감지됐으며 모든 브라우저 종료·컨테이너 삭제 확인, 전체 conclusion success다. 이번 단계4/4회·누적8회이며 추가 dispatch 금지. 초기 PR #8 병합 자동 승인 거부는 사용자의 정확한 보안 필터 변경·병합/검사1회 승인으로 해결됐다. 다음은 운영 데이터 최신 백업/별도 로컬 복원본에 신규8SQL 호환 적용 시험이다. 운영 SQL/환경값/유료AI/학생용 게시 변경은 아직 없다.
+
+
 ## 2026-10-07 21:21 KST — 시작 실패의 chroot 지점 확인·수정 준비
 
 [PR #7](https://github.com/Raph-Alpaca/science-simulations/pull/7)은 미리보기 검사 SUCCESS 확인 후 병합했다. main16be52e559ec5eeab9a1eac283fed9f00046861d, Production dpl_8GRwfYb8SabbrhoemN2PUzFKks7N READY다. [run37620220753](https://github.com/Raph-Alpaca/science-simulations/actions/runs/37620220753)은 격리/삭제 통과 후 2D 브라우저 시작 실패(runtime not_run,656ms,requests0,cleanup confirmed). 생성/검토 jobs skipped, 누적7회/이번 단계3/4회. 후보 없는 암호화 진단도 정상 반환·삭제했고 기존 DPAPI 키로 로컬 복호화했다. 원문10,431bytes와 암호문/실패 로그를 보호 폴더에 보존했다.
