@@ -9,8 +9,8 @@ import {createResultReviewService} from '../../apps/studio/lib/result-review.mjs
 
 // Signed HTTP + actual local SQL; model opinions and browser measurements are
 // deliberately synthetic. No actual AI, source validation or browser execution.
-export async function resultFixture({missing=false,repair=false,finish=true}={}){
- const f=await setup();
+export async function resultFixture({missing=false,repair=false,finish=true,metadata=null}={}){
+ const f=await setup({metadata});
  try{
   await f.db.exec('reset role');await f.db.exec(await readFile('supabase/proposals/studio_result_review_v1.sql','utf8'));await f.db.exec('set role service_role');
   const service=createResultReviewService({db:f.client.schema('studio'),ownerId:f.ownerId,enabled:true});

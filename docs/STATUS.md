@@ -1,5 +1,26 @@
 # 구현 현황
 
+## 2026-10-13 23:08 KST — 최종 버전 승인·철회 로컬 연결 검증
+
+[승인 저장 SQL·서비스·화면](RELEASE_APPROVAL.md)을 구현했다. 교사가 확인한 준비/후보/배포 버전에 승인을 결합하고, 응답 유실 재전송은 같은 기록을 반환한다. 수정 의견·기준 변경 후 효력 차단, 승인 중지 중 조회·철회를 확인했다. 학생용 게시나 운영 승인 SQL/환경 스위치 적용은 아직 없다.
+
+실행 결과: 관련 제작·비용·인증51/51, 자료실·게시 단위55/55, 실행 규격4/4, 컨테이너 모의/실제 복사 import 검사12/12, 실제 Chrome 승인/기존 결과 화면5/5, 자료실 합성2D/3D×390/1440 관찰4개 PASS다. 빌드/TypeScript PASS, 배포 추적7개에서 .local/.env/.git/esbuild 포함0개. 최초 빌드의 esbuild 포함 실패는 순수 검사/카드/로컬 저장 분리로 해결했고 실행기 제한 목록에도 새 순수 파일을 추가했다. 컨테이너 권한·보안 필터는 바꾸지 않았고 새 원격 Linux 실행은0회다.
+
+실제 PG17 별도 연결 경쟁9/9 PASS: 중복/다른 승인 요청, 수정 의견 양방향, 철회 재전송, 기준 변경, 준비 철회/교체, 대화 삭제. 최초 검사는 합성 과거 행 복원 때 수명주기 트리거가 거부해 경합 실행 전 실패했다. 합성 스냅샷 복원에만 트리거 복원 모드를 사용하고 실제 검사는 origin/non-superuser 서비스 연결로 수행했다. 두 번째 검사의 종료 대기는20초 초과(exit1); 27.8초 체크포인트 후 서버가 종료됐으며 후속 status3/pid 없음으로 종료를 확인했다. 원래 실패 보고서는 보존했다. 미래 검사 종료 대기는 별도40초로 제한했다.
+
+보호 증거: `.local/release-postgres17-c3bc7d85-3a56-40d3-a65c-0d3794d9a403/`(준비 실패), `.local/release-postgres17-46389ca6-1fce-4f77-bfc6-438308240b94/`(9개 PASS/원래 종료 실패/별도 shutdown-followup.json), `.local/release-artifacts/96f5ec92-fe0d-4fa1-845f-79b00b35a5b7/browser-check.json`, `.local/evidence/worker/release-approval-*.png`. 실제 교과서·원문·모델·로그인 사용자는 합성이며 실제 원문 검토나 운영 승인으로 기록하지 않는다. 모든 이 검사 서버/브라우저 종료 확인. 공개 후보272개, 금지 경로/키 패턴 문제0개. 사용량90% 남음,50% 보존. 다음은 검토된 코드 PR과 신뢰된 원문 검토/준비 발급·게시 접수 연결이다.
+
+
+## 2026-10-13 22:35 KST — PR #9 병합·worker 기반 운영 DB 적용 완료
+
+사용자가 재개와 검증 후 자율 진행을 위임했다. 중단 기록24개 바이트 일치, 새 운영 읽기 전용 백업·로컬 복원 PASS, 새 복원본에서 worker 증분13개 확인 PASS를 확인했다. 검토한6개만 commit185d145로 공개하고 [PR #9](https://github.com/Raph-Alpaca/science-simulations/pull/9)를 검사 통과 후 병합했다. main985cf541d567cdffa07d217956ad3791ac30b760, GitHub의 Production deployment7039831440/success(22:30:41 KST)다. Vercel MCP는 해당 scope403, 설치된 CLI 없음이므로 직접 상세 조회는 미확인이다. 운영 홈200, 비활성 worker503/WORKER_SETUP_REQUIRED 및 no-store를 확인했다. 최초 잘못된 /api/session 경로404를 보존했고, 실제 /api/studio/session 경로의401/LOGIN_REQUIRED 및 no-store를 추가 확인했다. 로그인 이후 운영 UI는 아직 미검증이다.
+
+운영 SQL 적용은 처음 자동 승인 검토가 포괄 위임의 범위 불명확을 이유로 거부했다. 사용자가 별도로 **운영 DB worker 증분1개 적용 승인**을 명시해 해결했다. 이후 첫 실행은 읽기 전용 dry-run의 일반 텍스트 출력을 JSON으로 기대해 UNEXPECTED_PLAN으로 중단됐고 쓰기는0회였다. --output-format json을 명시하고 실패 증거를 보존한 다음, 승인한20261007123947 증분을 정확히1회 적용했다(22:34:26~35 KST). 기존 전체 데이터 지문 일치, 실제 스키마/권한과 로컬 검증본 지문 일치, 총18개 테이블 RLS, 이력3개와 worker/dispatch/budget/delete=false를 확인했다. 유료 AI·학생용 게시·환경값 변경0회다.
+
+보호 증거: `.local/studio-v1-backup-20260916/worker-preflight-20261013-e266b6ff16c8440d8a96536b387a3739/`의 backup-result.json, worker-migration-result.json, production-migration-result.json(읽기 전용 실패), production-migration-result-2.json(PASS). 적용 전후 데이터는 이 경로에만 보존한다. 보안 advisor의 새 INFO10개는 서버 전용 새 테이블에 RLS를 켜고 브라우저 역할 정책/권한을 주지 않은 의도한 구성이다([설명](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)). 기존 [유출 비밀번호 보호 비활성 경고](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)1개는 남아 있으며 설정은 변경하지 않았다.
+
+다음은 별도 승인 저장 SQL·서비스·검사와 신뢰된 원문 검토/게시 기능 연결이다. 새 승인 proposal은 이번 운영 migration에 포함하지 않았다. 월1만 원/약10건과 최종 버전별 교사 승인 정책을 유지한다. 사용량94% 남음,50% 보존. 이전 원격 Linux진단4/4회 상한은 유지하고 추가 dispatch하지 않았다.
+
 ## 2026-10-07 21:48 KST — 운영 백업 복원본에서 worker DB 증분 검증 완료
 
 운영 변경 전 최신 studio 백업/새 로컬 복원 PASS다. 원격은 읽기 전용2연결·verify-full이며 데이터/메타데이터 지문 일치, RLS/기존 RPC/직접 쓰기 차단과 서버 종료를 확인했다. 원본은 보호 폴더 worker-preflight-20261007-d893b4507d214aba935495dbf711032f에 있다.

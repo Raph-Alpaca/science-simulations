@@ -15,7 +15,11 @@ export function assertMetadata(meta, folderId, config, sources) {
 export function assertPublicationEvidence(meta, approval) {
   // v1 retains its historical year binding. New revision-scoped approvals must
   // use v2 with explicit original-source evidence; a year is never invented.
-  if (meta.stage !== 'ready' || !meta.curriculumRevision || (approval?.schemaVersion !== 2 && !meta.schoolYear)) throw new Error(`PUBLICATION_NOT_READY: ${meta.id}`);
+  // v2 keeps the reviewed candidate bytes (including its editorial stage).
+  // Authority comes from a trusted external approval and original-source receipts,
+  // never by rewriting draft metadata after the candidate was checked.
+  const allowedStage = approval?.schemaVersion === 2 ? ['draft','in_review','ready'].includes(meta.stage) : meta.stage === 'ready';
+  if (!allowedStage || !meta.curriculumRevision || (approval?.schemaVersion !== 2 && !meta.schoolYear)) throw new Error(`PUBLICATION_NOT_READY: ${meta.id}`);
   const sha = /^[a-f0-9]{64}$/;
   if (!approval || ![1,2].includes(approval.schemaVersion) || approval.contentId !== meta.id ||
       !sha.test(approval.candidateHash) || !sha.test(approval.artifactHash) ||

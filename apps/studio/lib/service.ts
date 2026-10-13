@@ -8,6 +8,7 @@ import { createInputReviewService } from './input-review.mjs';
 import { createDispatchService } from './dispatch-service.mjs';
 import { createResultReviewService } from './result-review.mjs';
 import { createRevisionService } from './revision.mjs';
+import { createReleaseApprovalService } from './release-approval.mjs';
 
 function dbError(error: { code?: string } | null) {
   if (!error) return;
@@ -56,6 +57,7 @@ type Session = Awaited<ReturnType<typeof session>>;
 const inputReviews=(s:Session)=>createInputReviewService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_INPUT_REVIEW_ENABLED==='true'});
 const dispatchService=(s:Session)=>createDispatchService({db:s.db,ownerId:s.userId,env:process.env});
 const resultReviews=(s:Session)=>createResultReviewService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_RESULT_REVIEW_ENABLED==='true'});
+const releaseApprovals=(s:Session)=>createReleaseApprovalService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_RELEASE_APPROVAL_ENABLED==='true'});
 const revisions=(s:Session)=>createRevisionService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_REVISION_ENABLED==='true'&&process.env.STUDIO_INPUT_REVIEW_ENABLED==='true'&&process.env.STUDIO_RESULT_REVIEW_ENABLED==='true'});
 async function conversation(s: Session, conversationId: string) {
   id(conversationId);
@@ -68,6 +70,7 @@ async function job(s: Session, jobId: string) {
   dbError(error); const row=owner(data,s.userId); await conversation(s,row.conversation_id); return row;
 }
 export async function read(s: Session, parts: string[]) {
+  if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='publication-review')return releaseApprovals(s).read(parts[1]);
   if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='result')return resultReviews(s).read(parts[1]);
   if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='dispatch')return dispatchService(s).read(parts[1]);
   if(parts.length===2&&parts[0]==='input-reviews')return inputReviews(s).read(parts[1]);
@@ -94,6 +97,8 @@ export async function read(s: Session, parts: string[]) {
   throw new StudioError('NOT_FOUND', 404);
 }
 export async function write(s: Session, parts: string[], body: unknown) {
+  if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='publication-approval')return releaseApprovals(s).approve(parts[1],body);
+  if(parts.length===3&&parts[0]==='publication-approvals'&&parts[2]==='revoke')return releaseApprovals(s).revoke(parts[1],body);
   if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='revision-input')return revisions(s).prepare(parts[1],body);
   if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='result-file')return resultReviews(s).file(parts[1],body);
   if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='feedback')return resultReviews(s).feedback(parts[1],body);
@@ -157,8 +162,8 @@ async function submit(s: Session, envelope: ReturnType<typeof requestEnvelope>, 
 
 export async function capabilities(s: Session) {
   const {data,error}=await s.db.rpc('studio_capabilities_v2');
-  if(error?.code==='PGRST202')return {conversationEditing:false,requestV2:false,inputReviews:false,realExecution:false,resultReview:false,revisions:false};
+  if(error?.code==='PGRST202')return {conversationEditing:false,requestV2:false,inputReviews:false,realExecution:false,resultReview:false,revisions:false,releaseReview:false};
   dbError(error);
-  const inputReady=data===2&&await inputReviews(s).capability(),resultReady=data===2&&await resultReviews(s).capability();
-  return {conversationEditing:data===2,requestV2:data===2,inputReviews:inputReady,realExecution:inputReady&&await dispatchService(s).capability(),resultReview:resultReady,revisions:inputReady&&resultReady&&await revisions(s).capability()};
+  const [inputReady,resultReady,releaseReady]=data===2?await Promise.all([inputReviews(s).capability(),resultReviews(s).capability(),releaseApprovals(s).availability()]):[false,false,false];
+  return {conversationEditing:data===2,requestV2:data===2,inputReviews:inputReady,realExecution:inputReady&&await dispatchService(s).capability(),resultReview:resultReady,releaseReview:resultReady&&releaseReady,revisions:inputReady&&resultReady&&await revisions(s).capability()};
 }

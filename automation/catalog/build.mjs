@@ -1,3 +1,5 @@
+import {toCard} from './card.mjs';
+export {toCard} from './card.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -21,9 +23,7 @@ export async function bundleCatalog(output, config, cards, fixture = false) {
   await fs.writeFile(path.join(output,'catalog.json'),JSON.stringify({ schemaVersion: 1, ...config, note: undefined, cards }));
 }
 
-export function toCard({ meta }, basePath) {
-  return { id: meta.id, title: meta.title, grade: meta.grade, unit: meta.unit, summary: meta.summary, concepts: meta.concepts, href: `${basePath}simulations/${meta.id}/${meta.entry}` };
-}
+
 
 export async function buildCatalog() {
   const input = await productionInputs();

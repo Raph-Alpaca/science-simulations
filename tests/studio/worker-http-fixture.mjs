@@ -16,8 +16,8 @@ export async function token(role='generation',runId='101'){
   workflow_ref:WORKER_TRUST.workflowRef,workflow_sha:sha,job_workflow_ref:role==='generation'?WORKER_TRUST.generationWorkflow:WORKER_TRUST.reportWorkflow,job_workflow_sha:sha,
   run_id:runId,run_attempt:'1',event_name:'workflow_dispatch',runner_environment:'github-hosted',repository_visibility:'public'}).setProtectedHeader({alg:'RS256',typ:'JWT',kid:jwk.kid}).sign(privateKey);
 }
-export async function setup(){
- const f=await workerFixture({auth:true});await f.enable();await f.submit();await f.bind();
+export async function setup(options={}){
+ const f=await workerFixture({...options,auth:true});await f.enable();await f.submit();await f.bind();
  const handler=createWorkerHttpHandler({verifyToken:createWorkerTokenVerifier(config,{keyResolver:createLocalJWKSet({keys:[jwk]})}),gateway:createWorkerGateway(f.client)});
  const request=async(action,payload={},options={})=>{
   const auth=options.token??await token(options.role),body=options.body??JSON.stringify({jobId:options.jobId??f.jobId,requestId:options.requestId??randomUUID(),payload});
