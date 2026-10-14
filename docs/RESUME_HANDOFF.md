@@ -1,5 +1,13 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 20:06 KST:** 새 App 키 ID4859387(19:56 발급/공개 지문0LfdDps7…)를 사용자 파일 경로에서 받아 GitHub 지문 대조·RSA2048·DPAPI 복원 검증 PASS, 평문 제거까지 완료했다. `github-app-private-key.dpapi`/`github-app-key-status.json`이 보호 폴더에 있다. **App 메타데이터 조회1회도20:04:33KST에 GET6회/약3초 PASS**: `app-check-attempt.json`/`app-check-result.json` 존재, 절대 반복하지 않는다. 전체 executionReady는 false다.
+
+**남은 사용자 입력:** GitHub 탭971977200의 이전 키 ID4858748(위쪽19:05/SEAoRuJ…)만 직접 삭제하고 새 키는 유지하도록 요청했다. 아직 삭제 확인 전이다. Vercel의 기존 요청 오류 응답 후 새 로그인3을20:03 시작, session13197/보호 로그vercel-login-3.log/Chrome3 탭971977304.20:06 실측 session live, auth.json 없음, Allow Access 비활성. 새 요청 화면을 직접 확인하도록 질문했다. 탭을 handoff로 유지하며 코드/URL을 문서나 공개 로그에 넣지 않는다. 종료 여부를 실제 handle로 확인하고, 사용자 준비 없이 새 요청을 자동 반복하지 않는다.
+
+**다음 실제 실행:** 오래된 키 삭제 확인, CLI 로그인 성공 확인→기존 project inspect와 env ls로 alpaca-t/science-simulations-studio/프로젝트ID/Production/설정3개 이름 부재를 확인한다. JSON은 읽을 수 있는 환경값도 포함하므로 원문 출력 금지, 메모리에서 이름/타입/target만 추린다. 실제 검증 결과로10분 이내 preflight 파일을 작성한 뒤 준비된 `register-vercel-app-env.ps1`을1회 사용한다. 등록 후 이름/Secret 타입/Production만 확인하며 재배포·활성화는 아직 범위에 없다. App 검사/OpenAI 인증/Actions secret 등록은 완료됐으므로 반복하지 않는다.
+
+**도구 보완/한도:** protect-app-key.ps1의 UTC 비교와3개 래퍼의 Node 경로 선택을 수정했다. 초기 보호 실패는 모두 저장 전이며 자세한 증거는 STATUS 최신 절/비공개 diagnostic 기록에 있다. 지금 사용량46% 사용/54% 남음이므로 정리 중이며50%를 보존한다. 이하 ‘App 키/조회 미완료’는 과거 이력이다.
+
 **최신 2026-10-14 19:22 KST — 입력 대기 중단:** 아래 CLI session89016은 이번 실측에서 exit1로 종료됐고 인증 파일은 없다. 로그에 구체적인 종료 원인은 없어 만료라고 단정하지 않는다. Vercel 확인 탭971977298은 닫았으며 옛 URL/코드를 재사용하거나 로그인 완료로 간주하지 않는다. 사용자가 준비됐다고 응답하면 새 CLI 로그인 요청을 시작해 동일 계정 확인을 받는다. GitHub 탭971977200의 새 키 다운로드/경로 응답도 계속 필요하다. PEM·App DPAPI 개인키 모두 미확인, App 메타데이터 검사와 Vercel 환경 등록은 아직 미실행이다. 동일 입력 대기3개 턴을 확인해 목표를 blocked로 전환하며 실제 시스템 완료가 아니다. 사용량45% 사용/55% 남음, 검사/로그인 프로세스는 종료됐다. 완료된 App 설치/Actions secret 등록을 반복하지 않고 아래 준비 헬퍼와 증거를 그대로 사용한다.
 
 **최신 2026-10-14 19:18 KST:** App/키 등록 범위를 구체적으로 제시한 뒤 사용자가 계속 진행을 승인했다. 이전 App 접근 승인 질문을 반복하지 않는다. `Science Studio Raph Alpaca`는 생성·저장소1개 설치 완료(선택 저장소 화면 검증, Actions write/Contents read/Metadata read). `OPENAI_API_KEY`, `STUDIO_TRANSFER_KEY`는 Actions에 실제 등록·이름/시각 검증 완료다. 기존 OpenAI 인증 GET과 secret 등록을 다시 실행하지 않는다. Production App 환경값은 아직0개 추가, 실행 gate 변경 없음.
