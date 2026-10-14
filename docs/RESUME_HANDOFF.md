@@ -1,5 +1,7 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 사용자 한도 변경(2026-10-14):** ‘사용량30%까지 사용 가능’ 응답에 따라 남은30% 보존,33~35%부터 정리하는 기준을 사용자에게 명시했다. 아래 과거50% 기준을 적용하지 않는다. Vercel Production App 설정3개 전송 승인 질문은 별도로 대기 중이다. 이 사용량 응답만으로 비밀키를 전송하지 않는다. 직전 연결 상태 문서4개는 로컬 커밋6d445e6에 저장됐으며 원격 업로드는 없다.
+
 **최신 2026-10-14 20:15 KST:** 이전 App 키 ID4858748 삭제를 실제 GitHub Key pairs 목록(새4859387 하나)으로 확인했다. Vercel 로그인 session13197 exit0, 보호된 인증 파일과 기존 프로젝트/Production 조회 성공까지 확인했다. 키 입력·삭제·로그인 요청은 완료됐으므로 반복하지 않는다. App 조회1회/Actions secret2개 등록/OpenAI 인증도 완료 상태다.
 
 **현재 유일한 연결 차단:** 자동 승인 검토가 새 App 개인키와 식별자3개를 Vercel Production에 실제 전송하는 구체적 사용자 승인이 없다고 거절했다. 실제 등록은 시작되지 않았고 vercel-app-env-attempt/result 파일도 없다. 검토 문서는 `.local/studio-setup-20261014/vercel-app-registration-review.md`. 대상은 기존 alpaca-t/science-simulations-studio (`prj_sneEZSgi9cWcn6Ryg7WBZDcyi4tR`), Production에 Secret 형식으로 STUDIO_GITHUB_APP_CLIENT_ID / STUDIO_GITHUB_INSTALLATION_ID / STUDIO_GITHUB_APP_PRIVATE_KEY 세 개다. 새 명시 승인 전에는 다른 경로로 전송하지 않는다.
