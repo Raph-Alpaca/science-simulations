@@ -21,6 +21,7 @@ const errors: Record<string,string> = {
   REAL_COMMAND_NOT_ALLOWED:'실제 작업에서는 중단 요청만 사용할 수 있습니다.',
   RELEASE_SETUP_REQUIRED:'새 게시 승인은 아직 활성화되지 않았습니다.',
   RELEASE_CHANGED:'게시 준비나 승인 상태가 바뀌었습니다. 최신 결과와 게시 승인 상태를 확인하세요.',
+  PUBLICATION_STARTED:'공개 전송 준비가 시작돼 승인 철회로 중단할 수 없습니다. 게시 상태를 확인한 뒤 수정·내리기를 별도로 요청해 주세요.',
   RELEASE_RECORD_INVALID:'게시 준비와 검토 기록의 버전이 일치하지 않습니다. 확인 전에는 승인할 수 없습니다.',
   RELEASE_UNAVAILABLE:'게시 승인 상태를 확인하지 못했습니다. 같은 요청으로 다시 확인할 수 있습니다.',
   PUBLICATION_DISABLED:'새 게시 요청이 아직 활성화되지 않았거나 일시 중지됐습니다.',

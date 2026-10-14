@@ -1,5 +1,13 @@
 # 구현 현황
 
+## 2026-10-14 11:11 KST — 보고 단계 배포·공개 전송 전 승인 소비 검증
+
+자율 진행 위임에 따라 검토17개/manifest7a03df356ae1ebab4431466011c9127eaf443a18eb10ccf20950a281eba0dc9d를 head a2ce1fca9efbdc6429f71dc7505ad35f01d4372e로 공개했다. [PR #15](https://github.com/Raph-Alpaca/science-simulations/pull/15)의 정확한 head 검사2개 SUCCESS 뒤10:57:10 KST 병합했다. main ccd0cfbb1665d1e791794aa2217c75cb27fbddca, Production7054819984/success.10:58:48 홈200/session401/worker503/publication manifest·file·check-report503 및 private,no-store PASS. `.local/studio-publication-report-review-20261014/production-http.json`. 이번 공개/병합의 자동 승인 차단이나 추가 사용자 질문은 없었다.
+
+`codex/studio-publication-completion`에서 [공개 전송 전 승인 소비](PUBLICATION_AUTHORITY.md)를 구현했다. 전용 환경 인증과 현재 승인·출처·같은 산출물의 통과 보고서를 확인해 승인당 한 번만 전송 준비를 허용한다. 철회가 먼저면 거부하고 소비가 먼저면 일반 철회를 차단하며 화면에 경계를 설명한다. 응답 유실은 공개용 평문을 준비하지 않고 중단한다. 자료실 기준은 검증 완료 release 전까지 고정한다. 아직 미커밋이고 실제 전송/완료 처리는 후속이다.
+
+관련35/35, 실제 PG17 경합7/7·종료, Chrome3/3, Next build/TypeScript·추적8개/금지0·비활성 HTTP4개 PASS. 초기 합성 구문 오류와 Windows 샌드박스 경로 실패는 보호 기록에 보존했다. 운영 SQL/환경/키·유료 제작·학생용 게시 변경0회이며 deploy gate 기본 false다. 기존 Linux 새1/1·제작4/4·누적8 상한과 OpenAI 인증1회 완료를 유지한다. 남은71%,50% 보존. 다음은 같은 파일의 고정 Pages 전송·원격 확인·완료/불확실 상태 처리다.
+
 ## 2026-10-14 10:55 KST — PR #14 배포·Linux 검사 성공, 결과 저장 연결 검증
 
 사용자가 검토된29개 공개·검사 후 병합·재배포 및 새 Linux 검사1회를 명시 승인했다. [PR #14](https://github.com/Raph-Alpaca/science-simulations/pull/14)의 head3324d9fb554b8571a757f669630c48b7551a59b5, manifest a2933182fe91425896c374d298179eb176a9da730e73cfd5b4973d670ff021df를10:37:26 KST 병합했다. main dbc3aaa053f4763eca835ab1ad8c1b962e568ce9, Production7054505971/success.10:40:49 실제 운영 홈200/session401/worker503/publication manifest·file503 및 private,no-store PASS. 최초 SELF_SIGNED_CERT_IN_CHAIN 실패는 보존하고 OS CA 사용 후 TLS/호스트 검증을 유지해 확인했다. 보호 증거 `.local/studio-publication-check-review-20261014/production-http.json`. 이전 자동 승인 차단은 해결됐고 재승인하지 않는다.

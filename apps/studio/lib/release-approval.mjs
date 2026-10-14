@@ -23,7 +23,8 @@ export function inspectReleaseReview(snapshot,ownerId){
  need(r.job_id===result.jobId&&sha(r.proposal_hash)&&hash(r.proposal_text)===r.proposal_hash);
  const summary={id:r.id,jobId:r.job_id,proposalHash:r.proposal_hash,candidateHash:r.candidate_hash,artifactHash:r.artifact_hash,
   contentId:candidate?.contentId??null,title:candidate?.meta.title??null,createdAt:r.created_at,current:snapshot.current,
-  approval:receipt(snapshot.approval,false),approvalAllowed:false,blockers:snapshot.current?[]:['RELEASE_CHANGED']};
+  approval:receipt(snapshot.approval,false),publicationStartedAt:snapshot.publicationStartedAt??null,approvalAllowed:false,blockers:snapshot.current?[]:['RELEASE_CHANGED']};
+ need(summary.publicationStartedAt===null||typeof summary.publicationStartedAt==='string'&&Number.isFinite(Date.parse(summary.publicationStartedAt)));
  if(!snapshot.current)return {summary,record:r,current:null};
  try{
   const p=JSON.parse(r.proposal_text);fields(p,proposalKeys);need(Object.keys(p).length===proposalKeys.length&&p.schemaVersion===1);
@@ -47,7 +48,7 @@ export function inspectReleaseReview(snapshot,ownerId){
   if(snapshot.approval?.invalidated_at===null){
    need(snapshot.approval.release_review_id===r.id);
    assertCatalogReleaseApproval({artifactText:r.artifact_text,proposalText:r.proposal_text,proposalHash:r.proposal_hash,approval:approvalFor(r,snapshot.approval),current});
-   summary.approval=receipt(snapshot.approval,true);
+   summary.approval=receipt(snapshot.approval,!summary.publicationStartedAt);
   }
   summary.approvalAllowed=!snapshot.approval;
   if(snapshot.approval?.invalidated_at)summary.blockers.push('APPROVAL_REVOKED');
@@ -59,7 +60,7 @@ export function createReleaseApprovalService({db,ownerId,enabled=false}){
  id(ownerId);
  const rpc=async(name,args)=>{
   let response;try{response=await db.rpc(name,args).abortSignal(AbortSignal.timeout(10000));}catch{throw new StudioError('RELEASE_UNAVAILABLE',503);}
-  if(response.error){const c=response.error.code;throw new StudioError(({PT400:'INVALID_REQUEST',PT403:'TEACHER_NOT_ALLOWED',PT404:'NOT_FOUND',PT409:'RELEASE_CHANGED',23505:'RELEASE_CHANGED'})[c]||'RELEASE_UNAVAILABLE',({PT400:400,PT403:403,PT404:404,PT409:409,23505:409})[c]||503);}
+  if(response.error){const c=response.error.code;throw new StudioError(({PT400:'INVALID_REQUEST',PT403:'TEACHER_NOT_ALLOWED',PT404:'NOT_FOUND',PT409:'RELEASE_CHANGED',PT423:'PUBLICATION_STARTED',23505:'RELEASE_CHANGED'})[c]||'RELEASE_UNAVAILABLE',({PT400:400,PT403:403,PT404:404,PT409:409,PT423:409,23505:409})[c]||503);}
   return response.data;
  };
  const configured=()=>need(enabled,'RELEASE_SETUP_REQUIRED',503);
