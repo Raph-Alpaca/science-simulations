@@ -1,5 +1,11 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 10:13 KST:** PR #12의 명시 승인·병합·운영 배포/HTTP 확인 완료. main dc277c232f369c861534e9e4245942a999ba1606, deployment7053737818. API 키 인증도 완료이므로 기존 병합 승인/키 입력/GET 인증을 반복하지 않는다. 이전 미커밋/승인 대기는 이력이다.
+
+현재 branch codex/studio-publication-auth에는 별도 게시 OIDC/SQL 원자 읽기·분할 파일 전달·암호화 준비 래퍼·비활성 워크플로가 미커밋으로 있다. [PUBLICATION_ARTIFACT](PUBLICATION_ARTIFACT.md)의29개 검사+실제 PG17 경쟁5개/build/추적8개/비활성 HTTP2개/actionlint PASS를 확인했다. PG/로컬 앱 종료 확인. `.local/studio-publication-auth-review-20261014/`와 `.local/release-postgres17-ab44381d-471c-410d-a2d8-7dd03c40b5ea/`가 증거다. 내용이 변하지 않으면 이미 통과한 검사를 반복하지 않는다.
+
+다음은 변경을 고정/검토해 PR로 공개하고 격리 게시 검사, 배포 직전 버전 승인 소비, 동일 바이트 배포, 불확실한 원격 상태 조정, 실제 게시 확인을 연결하는 것이다. 현재 워크플로는 암호화 파일 준비까지만 하며 Pages 권한/게시 완료 기능은 없다. 운영 SQL/환경/키 등록·유료 호출·학생 공개는 실행하지 않았다. 전체 활성화 전에 GitHub App/전달 키/운영 승인·준비·게시 SQL 준비가 필요하다. 남은77%,50% 보존(53~55%부터 정리). 이전 Linux rehearsal 상한4/4·누적8을 늘리거나 재실행하지 않는다. 개인 에이전트는 같은 백엔드를 사용하되 최종 교사 승인을 대행하지 않는다.
+
 **최신 2026-10-14 09:37 KST:** 실제 OpenAI 키는 DPAPI/사용자 전용 ACL/Git 제외 확인 완료.09:30 GET/models1회 HTTP200/PASS, 유료 추론0회. `.local/studio-worker-secrets-20261014/auth-check-result.json`에 안전한 결과만 저장했다. **키 입력 질문과 인증 요청을 반복하지 않는다.** 이전 입력 실패/대기 기록은 이력이다. 아직 서버/Actions secret 등록은 없다.
 
 branch codex/studio-publication-dispatch에는 게시 접수 proposal/서비스·고정 GitHub 전송·GET/POST API·상태 화면·검사가 미커밋으로 있다. 관련17/17·새 Chrome2/2·기존 승인2/2·Next build/타입/배포 추적 PASS. 실제 PG17 최신5개 PASS, 최초 종료 대기 초과exit1은 보존했고 `.local/release-postgres17-831d8bdb-ddd3-4ab4-b4c9-7cbdd7bd01f2/shutdown-followup.json`에서 종료 확인. 초기 Chrome2개 실패는 테스트 라우터 method() 누락을 수정했으며 재검사 전용 출력 폴더와 기존 trace 둘 다 보존했다. 실행 중 검사 프로세스는 없다. PUBLICATION_DISPATCH/STATUS 맨 위를 따른다.09:21 비공개 checkpoint는 이후 변경/키 입력 전의 이력이므로 최신 스냅샷으로 사용하지 않는다.

@@ -1,0 +1,48 @@
+name: Studio publication artifact read and encrypted transfer
+on:
+  workflow_call:
+    inputs:
+      publication_id:
+        required: true
+        type: string
+    secrets:
+      STUDIO_TRANSFER_KEY:
+        required: true
+    outputs:
+      artifact_hash:
+        description: Exact approved artifact hash; preparation does not publish
+        value: ${{ jobs.prepare.outputs.artifact_hash }}
+permissions: {}
+jobs:
+  prepare:
+    if: github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1 && vars.STUDIO_PUBLICATION_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      artifact_hash: ${{ steps.artifact.outputs.artifact_hash }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Read exact approved bytes without executing them
+        id: artifact
+        env:
+          STUDIO_PUBLICATION_ID: ${{ inputs.publication_id }}
+          STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+        run: node automation/publish/prepare-cli.mjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: studio-publication-${{ github.run_id }}
+          path: ${{ runner.temp }}/studio-publication-${{ inputs.publication_id }}/artifact.sealed.json
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 0

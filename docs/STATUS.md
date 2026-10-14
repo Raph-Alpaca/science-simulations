@@ -1,5 +1,13 @@
 # 구현 현황
 
+## 2026-10-14 10:13 KST — PR #12 배포 완료·승인 파일 인증/전달 검증
+
+사용자의 **PR #12 병합·제작실 재배포 승인** 후 검토한20개/head24af062a71f7d39300af5bf9b07a72f836a89f85를 병합했다. [PR #12](https://github.com/Raph-Alpaca/science-simulations/pull/12)09:44:33 KST merged, main dc277c232f369c861534e9e4245942a999ba1606. Production deployment7053737818/success,09:47 홈200·session401/LOGIN_REQUIRED·worker503/WORKER_SETUP_REQUIRED 및 private,no-store를 확인했다. 보호 증거 `.local/studio-publication-review-20261014/production-http.json`. 이전 자동 승인 차단은 해결됐고 재승인/재병합하지 않는다. API 키의09:30 인증도 완료돼 입력/인증 GET을 반복하지 않는다.
+
+`codex/studio-publication-auth`에서 [실행별 승인 파일 인증·암호화 전달](PUBLICATION_ARTIFACT.md)을 구현했다. 별도 OIDC audience·검토 SHA·실행/승인 결합·JWT 재사용 방지·철회 잠금과, 최대101요청/180초/파일2MiB/합계10MiB를 적용한다. 기본 비활성인 준비 워크플로만 추가했으며 Pages 권한은 없다. 관련29/29, 실제 PG17 경쟁5/5 및 종료 확인, build/TypeScript, 배포 추적8개, 로컬 비활성 HTTP2개, actionlint2개 PASS다. 합성 자료 초기 오류와 샌드박스 경로 권한 실패는 보호 기록에 남겼다.
+
+현재 main 기준 새 단계는 미커밋이며 운영 SQL·환경값·Actions 변수/키·유료 AI·학생용 게시 변경0회다. 다음은 검토된 변경 공개와 격리 게시 검사·게시 직전 권한 소비·동일 바이트 Pages 배포/원격 확인 연결이다. 준비 성공만으로 published 처리하지 않는다. GitHub App/전달 키 등록과 운영 승인/준비/게시 proposal 적용도 남았다. 사용량23% 사용/77% 남음,50% 보존 조건 유지.
+
 ## 2026-10-14 09:37 KST — 실제 API 키 인증 성공·게시 접수 연결 검증
 
 사용자의 입력 완료 후 현재 Windows 사용자 전용 DPAPI 저장·보호 ACL·Git 제외를 확인했다. 공식 OpenAI `GET /v1/models`에 단1회 요청해09:30:08 KST HTTP200/목록 형식/PASS를 확인했다. 모델 생성·유료 추론0회이며 서버/Actions 비밀값 등록은 아직 하지 않았다. 보호 증거 `.local/studio-worker-secrets-20261014/auth-check-result.json`. auth-check-attempt.json이 있으므로 이 인증 helper를 다시 실행하지 않는다. API 키 입력을 다시 요청할 필요가 없다. 인증 성공은 모델별 권한·청구 설정·제작 성공 확인과 구분한다.

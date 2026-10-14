@@ -1,0 +1,23 @@
+name: Studio approved artifact preparation
+on:
+  workflow_dispatch:
+    inputs:
+      publication_id:
+        description: Server-bound publication request UUID
+        required: true
+        type: string
+permissions: {}
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.run_attempt == 1 && vars.STUDIO_PUBLICATION_ENABLED == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/studio-publication-prepare.yml
+    with:
+      publication_id: ${{ inputs.publication_id }}
+    secrets:
+      STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
