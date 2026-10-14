@@ -1,5 +1,14 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14:** branch codex/studio-release-preparation, main4f774ebb 유지. 원문 근거/준비 발급 로컬8/8와 실제 PG17 경합7/7 PASS·종료 확인. RELEASE_PREPARATION.md와 STATUS 맨 위를 따른다. 새 SQL은 proposal이며 운영 미적용이다. 실제 원문/교사 행위는 아직 없다. 사용자 API 키 준비 답변은 완료됐고 숨김 입력 도구를 합성 문자열로 검사한 뒤 VS Code PowerShell 명령을 안내했다. 입력 완료 응답과 DPAPI 저장 상태 확인은 대기 중이다. 키를 채팅으로 받거나 출력하지 않는다. .local/studio-setup-20261014/receive-api-key.ps1이 고정 보호 폴더에 저장하며 기존 키는 덮어쓰지 않는다. 실제 유료 호출0회, 다음은 키 상태 확인 및 게시 중복/철회 경쟁 연결. 남은86%,50% 보존. PR #9 DB/PR #10 병합 승인 완료는 반복하지 않는다.
+
+## 2026-10-13 23:20 KST — PR #10 병합·제작실 재배포 확인
+
+검토된38개를7b8d294ca4cf15cdfefeff4f6babe21901c59896으로 공개하고 [PR #10](https://github.com/Raph-Alpaca/science-simulations/pull/10)을 생성했다. 정확한 head의 Vercel 검사2개 SUCCESS. 자동 승인 검토는 포괄 위임만으로 main 병합/재배포 권한이 불명확하다며 첫 시도를 차단했고, 사용자의 **PR #10 병합·제작실 재배포 승인** 후 같은 head를 병합했다. main4f774ebb4f9db20edfa077441a50bd8992e7017a,23:17:01 KST 병합. GitHub Production deployment7040960009/success(23:17:52 KST)를 확인했다. 운영 홈200·정확한 session401/LOGIN_REQUIRED·worker503/WORKER_SETUP_REQUIRED와 private,no-store 확인. 보호 증거 .local/studio-release-review-20261013/production-http.json. Vercel 직접 상세 조회/로그인 이후 운영 화면은 별도 미검증이다.
+
+이번에는 앱 코드만 반영됐다. release_approval proposal과 신규 source preparation SQL은 운영에 적용하지 않았고 환경값 변경·유료 AI·학생용 게시는0회다. 관련 병합 승인 대기는 해결됐으며 다시 묻지 않는다. 다음 작업은 신뢰된 원문 검토 기록의 철회/수정 경쟁 처리와 같은 산출물 게시 연결이다.
+
+
 **최신 2026-10-13 23:08 KST:** worker 운영 증분은 완료. 별도 최종 버전 승인 SQL/API/화면 로컬 검증과 실제 PG 동시성9개·Chrome5개·2D/3D4관찰을 완료했다. 검사의 종료20초 초과는 별도 확인으로 종료 확정했고 실패 보고서는 보존했다. RELEASE_APPROVAL/STATUS 맨 위를 따른다. 현재 추가 변경은 미커밋이며 다음은 파일 검토 후 코드 PR, 신뢰된 원문 검토/준비 발급과 게시 연결이다. 새로운 승인 SQL은 운영 미적용, 제작/비용/게시 비활성. 사용량90% 남음,50% 보존.
 
 **최신 2026-10-13 22:35 KST:** 사용자 재개·자율 진행 후 PR #9 병합/main985cf54와 명시 승인한 worker 기반 운영 DB 증분20261007123947 적용을 완료했다. 기존 데이터와 로컬 검증 스키마/권한 일치,18개 테이블 RLS,worker/dispatch/budget/delete 비활성,이력3개 확인. STATUS 맨 위와 `.local/studio-worker-review-20261013/` 및 새 보호 백업 worker-preflight-20261013-e266b6ff16c8440d8a96536b387a3739를 확인한다. 운영 DB 승인 대기는 해결됐으므로 이전 요청을 다시 묻거나 증분을 재적용하지 않는다. 별도 release_approval proposal과 fixture3개는 아직 미검증으로 후속 로컬 작업 중이다. 유료0회/학생용 게시0회/기능 활성화 없음,남은94%,50% 보존. 아래10월8일 이전 대기 상태는 이력이다.
