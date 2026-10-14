@@ -1,5 +1,21 @@
 # 구현 현황
 
+## 2026-10-14 09:37 KST — 실제 API 키 인증 성공·게시 접수 연결 검증
+
+사용자의 입력 완료 후 현재 Windows 사용자 전용 DPAPI 저장·보호 ACL·Git 제외를 확인했다. 공식 OpenAI `GET /v1/models`에 단1회 요청해09:30:08 KST HTTP200/목록 형식/PASS를 확인했다. 모델 생성·유료 추론0회이며 서버/Actions 비밀값 등록은 아직 하지 않았다. 보호 증거 `.local/studio-worker-secrets-20261014/auth-check-result.json`. auth-check-attempt.json이 있으므로 이 인증 helper를 다시 실행하지 않는다. API 키 입력을 다시 요청할 필요가 없다. 인증 성공은 모델별 권한·청구 설정·제작 성공 확인과 구분한다.
+
+게시 접수 SQL/서버에 고정 GitHub 전송기와 제작실 API·상태 화면을 연결했다. 승인 버전별1회 접수, 응답 유실/시간 초과의 불확실 상태 보존, 기능 중지 중 조회, 승인 철회 후 실제 게시 전 재검증 경계를 유지한다. 관련17/17, Chrome 신규2/2·기존 승인2/2, Next build/TypeScript·배포 추적7개 PASS. 최초 Chrome 실패2개는 합성 라우터 method() 누락을 수정했으며 실패 trace를 보존했다. 실제 PG17 최신 SQL 경쟁5개 PASS이나 종료 대기 초과로 명령exit1; 별도 status3/PID 없음으로 종료 확인했다. 상세 증거와 한계는 [PUBLICATION_DISPATCH](PUBLICATION_DISPATCH.md)에 기록했다.
+
+현재 branch codex/studio-publication-dispatch, main0252157a7bf42a3f2ee7971907fe39a275a1add8 기준 미커밋이다. 공개 후보286개 감사 문제0개. 실제 게시 워크플로·별도 인증/파일 전달·게시 권한 소비·원격 조정/공개 확인은 남아 있어 모든 게시 접수 응답은 published=false다. 새 SQL은 검토용 proposal이며 운영 DB/환경값·학생용 게시 변경0회다. OpenAI 인증 GET1회와 합성 게시 전송 검사를 구분한다. 사용량19% 사용/81% 남음,50% 보존 조건 유지.
+
+## 2026-10-14 09:20 KST — PR #11 운영 배포 확인·게시 실행 접수 로컬 검증
+
+사용자가 **PR #11 병합·제작실 재배포 승인**을 명시했다. 자동 승인 검토의 이전 차단은 해결됐고, 검토한9개 파일의9d98ebbdcb57953dc052e9b56ceccd3ab47f0c90을 정확히 병합했다. [PR #11](https://github.com/Raph-Alpaca/science-simulations/pull/11)은09:11:19 KST 병합, main0252157a7bf42a3f2ee7971907fe39a275a1add8이다. Production deployment7053256420/success,09:13 실제 홈200·session401/LOGIN_REQUIRED·worker503/WORKER_SETUP_REQUIRED 및 private,no-store를 확인했다. 보호 증거 `.local/studio-preparation-review-20261014/production-http.json`, 검토 manifest7819aec69690aa76a37319fa9a63498965a99adf0c0f40635c1f8369a18de7be. 승인/준비 SQL은 proposal만 배포됐고 운영 적용·환경값 변경·유료 호출·학생용 게시0회다.
+
+별도 `codex/studio-publication-dispatch`에서 [게시 검사 실행의 중복 접수 방지](PUBLICATION_DISPATCH.md)를 로컬 구현했다. 반복 클릭·전송/DB 응답 유실·시간 초과와 철회를 검사했고 서비스8개 및 실제 PG17 동시성5개 PASS, DB 종료 확인. 아직 미커밋이며 실제 GitHub 전송기·워크플로·배포 권한/확인 연결은 남아 있다. claimed/uncertain을 자동 재전송하지 않고 전체 자료실 접수를 보류한다. 모든 응답은 published=false다.
+
+API 키 입력은 아직 성공 확인 전이다. 첫 명령 복사의 경로 구분자 누락, 실행 기호 누락으로 본문만 표시됨, 이후 INPUT_FORMAT_INVALID를 각각 구분했다. 키 저장 도구는 전체 경로에 /를 쓰고 `.Invoke()`로 실행하도록 안내했으며 숨김 입력의 길이/공백·제어문자/접두사 오류를 값 없이 표시하도록 보완했다. 합성 키 DPAPI 왕복·중복·불일치 검사 PASS. 실제 키나 오류 원문에 포함된 비밀값은 수집하지 않았다. 다음은 전체 키 숨김 입력 완료 확인과 ACL/DPAPI 상태 검사, 공식 모델 목록 GET1회 인증 확인이다. 인증 helper는 구문 검사만 했고 실제 API 요청은0회다.
+
 ## 2026-10-14 — 원문 검토 연결·준비 발급 로컬 검증, API 키 숨김 입력 준비
 
 PR #10 이후 `codex/studio-release-preparation`에서 [원문 검토 연결/준비 발급](RELEASE_PREPARATION.md)을 구현했다. 실제 저장된 근거에서만 준비를 발급하고 원문 철회·기준 변경·미해결 수정 요청으로 기존 승인 효력을 차단한다. 앱/브라우저 역할은 근거 발급 권한이 없다. 관련8/8와 실제 PG17 독립 연결 경쟁7/7 PASS, 검사 DB 종료 확인. 초기 두 경합 검사의 JSON 변환 누락 실패는 보존하고 검사 쿼리만 수정했다. 새 코드/SQL은 아직 미커밋·운영 미적용이다. 실제 원문 검토·교사 승인·학생용 게시로 간주하지 않는다.

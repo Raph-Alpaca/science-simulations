@@ -1,5 +1,15 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 09:37 KST:** 실제 OpenAI 키는 DPAPI/사용자 전용 ACL/Git 제외 확인 완료.09:30 GET/models1회 HTTP200/PASS, 유료 추론0회. `.local/studio-worker-secrets-20261014/auth-check-result.json`에 안전한 결과만 저장했다. **키 입력 질문과 인증 요청을 반복하지 않는다.** 이전 입력 실패/대기 기록은 이력이다. 아직 서버/Actions secret 등록은 없다.
+
+branch codex/studio-publication-dispatch에는 게시 접수 proposal/서비스·고정 GitHub 전송·GET/POST API·상태 화면·검사가 미커밋으로 있다. 관련17/17·새 Chrome2/2·기존 승인2/2·Next build/타입/배포 추적 PASS. 실제 PG17 최신5개 PASS, 최초 종료 대기 초과exit1은 보존했고 `.local/release-postgres17-831d8bdb-ddd3-4ab4-b4c9-7cbdd7bd01f2/shutdown-followup.json`에서 종료 확인. 초기 Chrome2개 실패는 테스트 라우터 method() 누락을 수정했으며 재검사 전용 출력 폴더와 기존 trace 둘 다 보존했다. 실행 중 검사 프로세스는 없다. PUBLICATION_DISPATCH/STATUS 맨 위를 따른다.09:21 비공개 checkpoint는 이후 변경/키 입력 전의 이력이므로 최신 스냅샷으로 사용하지 않는다.
+
+다음은 변경 목록/해시를 고정해 코드 PR로 검토한 뒤 게시 워크플로·별도 실행 인증·동일 파일 전달/검사·게시 권한 소비·실제 공개 확인을 연결하는 것이다. GitHub App 설정/전송 키·운영 승인/원문/게시 SQL 적용도 남았다. 기존 worker DB와 PR #11 병합 승인은 완료됐으며 재요청하지 않는다. 새 활성화/유료 제작/학생용 공개는 수행하지 않았다. 남은81%,50% 보존/53~55% 정리 기준이 과거20% 기준보다 우선한다.
+
+**최신 2026-10-14 09:20 KST:** PR #11은 명시 승인 후 병합·Production 성공·HTTP 확인 완료. main0252157a7bf42a3f2ee7971907fe39a275a1add8, 새 로컬 branch codex/studio-publication-dispatch. 게시 실행 접수 proposal/서비스/fixture/검사와 native --publication 모드를 미커밋 상태로 추가했다. 로컬8개(7+추가1), 실제 PG17 경쟁5개 PASS·종료 확인. PUBLICATION_DISPATCH/STATUS 맨 위를 따른다. 아직 실제 전송기·워크플로·게시 권한·확인은 연결하지 않았다. 운영 SQL·환경값·유료·학생용 게시 변경0회. PR #11 승인 차단은 해결됐으므로 재질문하지 않는다.
+
+API 키는 준비 답변 완료지만 숨김 입력 저장 성공은 대기 중이다. 경로/실행 기호 누락 후 마지막 INPUT_FORMAT_INVALID였다. `.local/studio-setup-20261014/receive-api-key.ps1`을 전체 / 경로와 `[scriptblock]::Create(...).Invoke()`로 실행하고 오른쪽 버튼 붙여넣기로 전체 키를 입력하도록 안내했다. 도구는 안전한 INPUT_TOO_SHORT/INPUT_WHITESPACE_OR_CONTROL/INPUT_PREFIX_INVALID를 추가 표시한다. 동일 명령을 & 없이 실행하면 스크립트 본문만 표시됐던 문제를 반복하지 않는다. 성공 뒤 보호 폴더 studio-worker-secrets-20261014의 상태/ACL/DPAPI를 값 출력 없이 확인한다. `check-api-auth.ps1`은 GET/models1회·15초·응답512KiB·리다이렉트 금지·모델 호출0의 준비 helper이며 구문 검사만 했다. auth-check-attempt.json이 있으면 재실행하지 않는다. 키는 채팅/환경값/명령문/로그에 넣지 않는다. 다음은 이 키 입력 결과 대응과 게시 전송 연결이다.
+
 **최신 2026-10-14:** branch codex/studio-release-preparation, main4f774ebb 유지. 원문 근거/준비 발급 로컬8/8와 실제 PG17 경합7/7 PASS·종료 확인. RELEASE_PREPARATION.md와 STATUS 맨 위를 따른다. 새 SQL은 proposal이며 운영 미적용이다. 실제 원문/교사 행위는 아직 없다. 사용자 API 키 준비 답변은 완료됐고 숨김 입력 도구를 합성 문자열로 검사한 뒤 VS Code PowerShell 명령을 안내했다. 입력 완료 응답과 DPAPI 저장 상태 확인은 대기 중이다. 키를 채팅으로 받거나 출력하지 않는다. .local/studio-setup-20261014/receive-api-key.ps1이 고정 보호 폴더에 저장하며 기존 키는 덮어쓰지 않는다. 실제 유료 호출0회, 다음은 키 상태 확인 및 게시 중복/철회 경쟁 연결. 남은86%,50% 보존. PR #9 DB/PR #10 병합 승인 완료는 반복하지 않는다.
 
 ## 2026-10-13 23:20 KST — PR #10 병합·제작실 재배포 확인
