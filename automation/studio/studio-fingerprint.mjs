@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-const tables=['approvals','conversations','job_events','jobs','messages','releases','reviews','teachers'];
+import {LEGACY_TABLES,fingerprintScope} from './backup-scope.mjs';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 export const metadataSql=`select json_build_object(
  'schema',(select json_build_object('owner',pg_get_userbyid(nspowner),'acl',(select json_agg(v order by v) from unnest(nspacl::text[])v)) from pg_namespace where nspname='studio'),
@@ -9,9 +9,13 @@ export const metadataSql=`select json_build_object(
  'policies',(select json_agg(x order by tablename,policyname) from(select tablename,policyname,permissive,roles,cmd,qual,with_check from pg_policies where schemaname='studio')x),
  'functions',(select json_agg(x order by name,args) from(select p.proname name,pg_get_function_identity_arguments(p.oid) args,pg_get_functiondef(p.oid) definition,pg_get_userbyid(p.proowner) owner,(select json_agg(v order by v) from unnest(p.proacl::text[])v) acl from pg_proc p where p.pronamespace='studio'::regnamespace)x),
  'indexes',(select json_agg(x order by indexname) from(select indexname,indexdef from pg_indexes where schemaname='studio')x))::text;`;
-export async function fingerprint(session){
+export async function fingerprint(session,{tables=LEGACY_TABLES,excludeColumns={}}={}){
+  ({tables,excludeColumns}=fingerprintScope(tables,excludeColumns));
   const data={};
-  for(const table of tables)data[table]=await session.json(`select json_build_object('rows',count(*),'md5',md5(coalesce(string_agg(row::text,E'\\n' order by row::text collate "C"),'[]')))::text from(select to_jsonb(t) row from studio.${table} t)x;`);
+  for(const table of tables){
+    const excluded=excludeColumns[table]??[],projection='to_jsonb(t)'+(excluded.length?' - array['+excluded.map(c=>"'"+c+"'").join(',')+']::text[]':'');
+    data[table]=await session.json(`select json_build_object('rows',count(*),'md5',md5(coalesce(string_agg(row::text,E'\\n' order by row::text collate "C"),'[]')))::text from(select ${projection} row from studio.${table} t)x;`);
+  }
   const metadata=await session.json(metadataSql);
   return {data,metadata,dataHash:digest(JSON.stringify(data)),metadataHash:digest(JSON.stringify(metadata))};
 }
