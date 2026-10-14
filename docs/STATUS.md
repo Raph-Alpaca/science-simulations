@@ -1,5 +1,23 @@
 # 구현 현황
 
+## 2026-10-14 12:25 KST — 실행 연결을 위한 사용자 로그인 대기
+
+Chrome에서 Raph-Alpaca 계정의 GitHub Apps 화면에 **No GitHub Apps**를 확인했다. New GitHub App 진입은 Confirm access/sudo 본인 확인이 필요해 사용자에게 GitHub Mobile/인증 앱 확인을 요청했다. `🔧 제작실 연결` 그룹의 해당 탭을 handoff로 유지했다. Vercel 기존 alpaca-t 프로젝트 설정은 로그인 화면으로 이동해 기존 계정 로그인을 함께 요청했다. App 생성·권한 부여·키 발급/업로드·환경 변경은 하지 않았다. 이 두 사용자 응답은 아직 대기 중이다.
+
+독립적인 로컬 준비로32바이트 전달 키를 기존 사용자 전용 ACL/Git 제외 폴더에 DPAPI CurrentUser로 생성·저장·복원 일치 검증했다. `.local/studio-worker-secrets-20261014/transfer-key.dpapi`, transfer-key-status.json의 STORED_AND_VERIFIED/remoteRegistered=false. 키 값은 채팅·명령·로그에 출력하지 않았으며 OpenAI 키 인증을 반복하지 않았다. `prepare-transfer-key.ps1`은 중복 생성을 거부하므로 다시 실행하지 않는다.
+
+현재 추가 변경은 완료·재개 기록4개이며 기능 코드는 main1f4df40과 같다. 실제 DB 증분/PR #18은 완료했고 재적용하지 않는다. 새 제작/게시/유료 실행은0회다. 최근 사용량37% 사용/63% 남음으로50% 보존 기준보다 여유가 있다. 이후 작업의 실제 실행 연결은 사용자 본인 확인/로그인 뒤 이어간다.
+
+## 2026-10-14 12:18 KST — PR #18 배포·승인/게시 DB 증분 운영 적용 완료
+
+사용자가 검토11개 공개/병합/재배포와 운영 증분1개를 명시 승인했다. [PR #18](https://github.com/Raph-Alpaca/science-simulations/pull/18), head6d513785af9a5a0e4726e38fb92eaee59cf15cd8/manifesta6d4faa0738e0751a0dd4932613676821284526033326b53e09f760c0c49e10a의 검사2개 SUCCESS 후12:15:27 병합. main1f4df407298b72a104ec0abcc0303eaf7ce434cf, Production7055900789/success.12:17:58 실제 홈200/session401/worker503/publication5개503·private,no-store PASS. `.local/studio-publication-migration-20261014/production-http.json`. 공개 범위 차단은 해소됐고 이11개/DB 적용 승인을 반복하지 않는다.
+
+12:15:45~12:15:58 KST 해시38665dc7590464e199a6864468b033bb86e9e35c568b8def2524a38aaa24af27의 `20261014025610_studio_publication_foundation.sql`을 운영에1회 적용하고 검증했다. 최신 백업/데이터/스키마/이력·main SQL·단일 dry-run을 재확인하고 durable write marker 뒤 실행했다. 기존18개 테이블의 모든 기존 값이 보존됐고 운영 스키마는 검증한 복원본과 정확히 일치한다. migration 이력4개,26테이블/79함수, 새8개 테이블 행0개, worker/dispatch/budget/delete/publication/artifact/deploy 모두false. 보호 백업 폴더의 `publication-production-apply.json`은 applied/verified/PASS이며 write.claim을 삭제하거나 적용을 반복하지 않는다.
+
+적용 후 보안 advisor INFO18은 서버 전용 RLS/브라우저 무권한 테이블이며 기존 Auth 유출 비밀번호 보호 WARN1은 그대로다. 새 오류는 없다. 유료 AI·학생용 게시·환경/키 변경·추가 Linux 실행0회. 원격 실행용 GitHub 저장소 secrets는0개, 현재 변수는 과거 PAGES_DEPLOY_ENABLED=true뿐이며 PR #17 이후 빈 목록 workflow는 게시 기능이 없다. 로컬 GitHub App 설정3개도 미등록이다. GitHub App 설치 목록 조회는 현재 CLI 토큰 종류 때문에403, Vercel 환경 메타데이터 도구는 alpaca-t 범위 권한403이라 원격 App 설정 유무까지 확정하지 못했다. Vercel CLI는 PATH/보호 tools 최상위에서 발견하지 못했다.
+
+현재 새 branch `codex/studio-live-connection`에서 다음 연결 준비를 진행한다. 필요한 일은 GitHub App/전달 키·OpenAI 키 등록, 제한된 실행 활성화, 실제 제작·원문 검토·교사 최종 승인·게시 확인이다. 불확실 게시의 후속 관찰/조정도 남았다. 키 입력/인증 GET1회 및 Linux 새1/1·제작4/4·누적8을 반복하지 않는다. 남은 사용량50% 보존 조건을 유지한다.
+
 ## 2026-10-14 12:08 KST — PR #17 배포 완료·운영 DB 증분 적용 전 검사
 
 사용자가 검토32개/manifest75968f12204d1ff432dd20a9fb731a0b9e790f867d4651002c14c495459dfe22의 공개·검사 후 병합·재배포를 명시 승인했다. [PR #17](https://github.com/Raph-Alpaca/science-simulations/pull/17) headdb99e4425e431c115c7fe547bf71cc22c3961235 검사2개 SUCCESS 뒤11:54:55 KST 병합. main12001d2c3b5b90a62f7c2eec8962ba77cf45c1a0, Production7055622915/success.11:59:27 실제 홈200/session401/worker503/publication5개503·private,no-store PASS. `.local/studio-publication-deploy-review-20261014/production-http.json`. 앞선32개 공개 범위 차단은 해결됐으므로 승인을 반복하지 않는다.

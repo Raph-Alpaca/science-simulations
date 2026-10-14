@@ -1,5 +1,21 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 12:25 KST:** DB/PR #18 완료 후 실행 연결 단계에서 사용자 본인 확인/로그인을 기다린다. Chrome `🔧 제작실 연결` 그룹의 GitHub 탭971976955는 https://github.com/settings/apps/new 의 Confirm access이고 Raph-Alpaca 계정으로 로그인되어 있다. 현재 계정에 GitHub App이 없음을 실제 확인했다. Vercel 탭971976956은 기존 alpaca-t/science-simulations-studio 설정으로 돌아가는 로그인 화면이다. 두 탭은 handoff 표시했으며 임의로 다시 탐색/새 계정 생성하지 않는다. 다음 턴에는 cua 문서를 다시 읽고 실제 화면을 확인한 뒤 필요한 handoff를 다시 표시한다. 인증 코드/비밀번호를 채팅에 요청하지 않는다.
+
+사용자에게 GitHub 본인 확인 완료와 Vercel 기존 계정 로그인 완료를 각각 물었으며 아직 응답이 없다. App 생성/설치 권한은 아직 부여하지 않았다. 생성할 App은 저장소1개 한정 Actions write/Contents read/Metadata read, webhook·OAuth 사용자 인증 불필요를 기준으로 폼/설치를 검토한다. 실제 보안 접근 권한 부여 전 정확한 범위를 확인해야 한다. App private key는 서버(Vercel) 전용이며 생성 코드/Actions 후보 컨테이너에 제공하지 않는다.
+
+전달 키는 **이미 로컬 준비 완료**: `.local/studio-worker-secrets-20261014/transfer-key.dpapi`와 transfer-key-status.json(STORED_AND_VERIFIED,remoteRegistered=false), 사용자 전용 ACL/Git 제외/DPAPI 왕복PASS. 값 출력 없이 외부 등록 단계에서 사용하며 생성 스크립트를 재실행하지 않는다. OpenAI 키도 기존 저장/GET 인증 완료다. GitHub repo secrets0 확인, Vercel 환경 유무는 연결 권한403과 브라우저 로그인 때문에 아직 미확인이다. 두 키를 원격에 올리거나 기능을 활성화하지 않았다.
+
+진행/실패/다음 단계는 STATUS 최신 두 절과 PUBLICATION_MIGRATION_REVIEW를 따른다. Git local checkpoint로 문서4개만 추가 저장할 예정이며 공개 main 기능 코드는1f4df40과 같다. 최근 사용량63% 남음,50% 보존. 대기 중 테스트/DB/서버 프로세스 없음. 아래는 앞선 단계 이력이다.
+
+**최신 2026-10-14 12:18 KST:** PR #18의11개·운영 증분1개 명시 승인 후 모두 완료. main1f4df407298b72a104ec0abcc0303eaf7ce434cf/deployment7055900789.12:15:58 운영 적용·데이터/스키마/이력 검증PASS,12:17:58 실제HTTP PASS. 운영은 이제26테이블/79함수·migration4개이며 모든 실행 gate false/새게시행0이다. 아래 foundation만 적용됐다는 문구는 과거 이력이다.
+
+**반복 금지:** `.local/studio-v1-backup-20260916/publication-preflight-20261014-4d422ff8d2ab4850ae82b617f6ba6875/publication-production-apply.json` applied/verified/PASS와 `publication-production-write.claim`이 있다. SQL 해시38665dc7590464e199a6864468b033bb86e9e35c568b8def2524a38aaa24af27 적용을 다시 하지 않는다. PR #16~#18 및19/32/11개 승인을 다시 묻지 않는다. OpenAI 키 저장/인증GET1회·Linux 새1/1·제작4/4·누적8도 완료 상태다. 초기 실패/모든 백업 증거는 보존했다.
+
+현재 branch `codex/studio-live-connection`, HEAD는 위 main, 최신 상태 문서 갱신만 로컬에 있다. 프로세스/DB/브라우저 검사 모두 종료. 다음은 실제 실행용 GitHub App/전달 키·OpenAI secret 연결이다. GitHub repo secret0, 로컬 App client ID/install ID/private key3개 없음. 원격 Vercel 환경은 MCP403(alpaca-t 범위), App 목록은 gh 토큰 종류403으로 미확인. 403을 다른 범위/키로 우회하거나 없다고 단정하지 않는다. 기존 API키 입력은 다시 요청하지 않는다. 새 활성화/유료·학생 게시 승인과 혼동하지 않는다.
+
+실제 원문 검토와 최종 버전별 교사 승인은 남아 있고, 불확실 게시의 별도 관찰/조정도 미구현이다. 사용량53~55% 남음부터 정리해50% 보존한다. 이전 DB 적용 대기/차단은 아래 이력이다.
+
 **최신 2026-10-14 12:08 KST:** PR #17의32개 명시 승인/검사/병합·운영 배포·HTTP 확인 완료. main12001d2c3b5b90a62f7c2eec8962ba77cf45c1a0/deployment7055622915. 기존19개/32개 차단은 모두 해결돼 재질문하지 않는다. 새 Pages workflow는 비활성이며 실제 게시/추가 Linux는 실행하지 않았다.
 
 현재 branch `codex/studio-publication-migration`, 운영 증분/백업 범위/검사/문서가 미커밋이다. [PUBLICATION_MIGRATION_REVIEW](PUBLICATION_MIGRATION_REVIEW.md)의 SQL 해시38665dc7590464e199a6864468b033bb86e9e35c568b8def2524a38aaa24af27을 따른다. 새 테이블8/함수34·기존 함수2만 변경, gate 전부 false. 로컬11개·운영18개 읽기 전용 백업/복원·복원본 증분13개·운영 dry-run 단1개 PASS. 백업/복원 서버 종료. `.local/studio-publication-migration-20261014/latest-backup-run.json`이 보호 폴더를 가리킨다.

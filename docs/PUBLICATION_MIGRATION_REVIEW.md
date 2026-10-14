@@ -1,5 +1,7 @@
 # 승인·게시 DB 증분 적용 검토
 
+**2026-10-14 12:18 KST 완료:** 사용자 명시 승인 후 PR #18을 병합했고12:15:58 운영 적용/검증을 마쳤다. 기존 데이터 보존·복원본과 스키마 일치·이력4개·새 행0·모든 gate false PASS. `publication-production-apply.json` applied/verified/PASS와 write.claim이 있으므로 재적용하지 않는다. 아래는 적용 전 검토 이력이다. 적용 후 advisor는 의도된 RLS INFO18·기존 Auth WARN1이며 설정은 바꾸지 않았다.
+
 2026-10-14 12:08 KST. **운영 미적용**이며 검증된 적용 후보1개다. 실제 적용·활성화·유료 제작·학생용 게시는 서로 다른 단계다.
 
 대상은 기존 science-studio의 `studio` 스키마다. Supabase CLI2.119.0의 `migration new`로 만든 `20261014025610_studio_publication_foundation.sql`의 LF SHA256은 `38665dc7590464e199a6864468b033bb86e9e35c568b8def2524a38aaa24af27`이다. 기존 v1/v2/worker migration을 다시 적용하지 않는다.
