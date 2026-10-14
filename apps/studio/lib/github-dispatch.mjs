@@ -7,18 +7,27 @@ import {TARGET} from './dispatcher.mjs';
 import {WORKER_TRUST,workerTrustConfig} from './worker-auth.mjs';
 
 const API='https://api.github.com',repoPath='/repos/'+TARGET.repository;
-const path='.github/workflows/'+TARGET.workflow;
+export const PUBLICATION_TARGET=Object.freeze({...TARGET,workflow:'studio-publication.yml'});
 const need=(ok)=>{if(!ok)throw new StudioError('RUNNER_CONNECTION_REQUIRED',503);};
 const numeric=value=>typeof value==='string'&&/^[1-9][0-9]{0,15}$/.test(value)&&Number.isSafeInteger(Number(value));
 export function githubDispatchConfig(env){
  need(env.STUDIO_DISPATCH_ENABLED==='true'&&env.STUDIO_INPUT_REVIEW_ENABLED==='true');
  let trust;try{trust=workerTrustConfig(env);}catch{need(false);}
+ return appConfig(env,trust.trustedShas);
+}
+export function publicationGitHubDispatchConfig(env){
+ need(env.STUDIO_PUBLICATION_DISPATCH_ENABLED==='true');
+ const trustedShas=(env.STUDIO_PUBLICATION_TRUSTED_SHAS||'').split(',').map(s=>s.trim());
+ need(trustedShas.length>=1&&trustedShas.length<=2&&trustedShas.every(s=>/^[a-f0-9]{40}$/.test(s))&&new Set(trustedShas).size===trustedShas.length);
+ return appConfig(env,Object.freeze(trustedShas));
+}
+function appConfig(env,trustedShas){
  need(typeof env.STUDIO_GITHUB_APP_CLIENT_ID==='string'&&/^[A-Za-z0-9_.-]{1,100}$/.test(env.STUDIO_GITHUB_APP_CLIENT_ID));
  need(numeric(env.STUDIO_GITHUB_INSTALLATION_ID));
  need(typeof env.STUDIO_GITHUB_APP_PRIVATE_KEY==='string'&&env.STUDIO_GITHUB_APP_PRIVATE_KEY.length<=16384);
  let key;try{key=createPrivateKey(env.STUDIO_GITHUB_APP_PRIVATE_KEY.replace(/\\n/g,'\n'));}catch{need(false);}
  need(key.asymmetricKeyType==='rsa'&&key.asymmetricKeyDetails.modulusLength>=2048);
- return Object.freeze({appClientId:env.STUDIO_GITHUB_APP_CLIENT_ID,installationId:env.STUDIO_GITHUB_INSTALLATION_ID,key,trustedShas:trust.trustedShas});
+ return Object.freeze({appClientId:env.STUDIO_GITHUB_APP_CLIENT_ID,installationId:env.STUDIO_GITHUB_INSTALLATION_ID,key,trustedShas});
 }
 
 function abortable(promise,signal){
@@ -37,8 +46,17 @@ async function responseJson(response,signal){
 const trustedRepository=value=>value?.id===Number(WORKER_TRUST.repositoryId)&&value?.full_name===TARGET.repository&&value?.owner?.id===Number(WORKER_TRUST.ownerId)&&value?.owner?.login===WORKER_TRUST.owner;
 function permissionsMatch(value){return value?.actions==='write'&&value?.contents==='read'&&Object.entries(value).every(([key,v])=>key==='actions'||key==='contents'||(key==='metadata'&&v==='read'));}
 
-export function createGitHubDispatcher(config,{transport=fetch,now=()=>Date.now()}={}){
+// Targets and input schemas are fixed by these two entry points. No caller can
+// provide a repository, branch, workflow path or arbitrary workflow inputs.
+export function createGitHubDispatcher(config,options={}){
+ return dispatcher(config,options,TARGET,id=>({mode:'generate',job_id:id}));
+}
+export function createGitHubPublicationDispatcher(config,options={}){
+ return dispatcher(config,options,PUBLICATION_TARGET,id=>({publication_id:id}));
+}
+function dispatcher(config,{transport=fetch,now=()=>Date.now()},target,inputs){
  need(config?.key?.type==='private'&&numeric(config.installationId)&&config.trustedShas?.length>=1&&config.trustedShas.length<=2&&config.trustedShas.every(s=>/^[a-f0-9]{40}$/.test(s)));
+ const path='.github/workflows/'+target.workflow;
  return Object.freeze({async dispatch(jobId,{signal}={}){
   id(jobId);let token,posted=false,verifiedRun=null;
   const overall=AbortSignal.any([AbortSignal.timeout(30000),...(signal?[signal]:[])]);
@@ -60,13 +78,13 @@ export function createGitHubDispatcher(config,{transport=fetch,now=()=>Date.now(
    if(minted.status!==201||!token||!permissionsMatch(minted.body?.permissions)||!Array.isArray(minted.body?.repositories)||minted.body.repositories.length!==1||!trustedRepository(minted.body.repositories[0])||!(expires>now()+60000&&expires<=now()+3660000))throw new Error('APP_TOKEN_REJECTED');
    const repo=await request(repoPath);
    if(repo.status!==200||!trustedRepository(repo.body)||repo.body.archived||repo.body.disabled||repo.body.default_branch!=='main')throw new Error('REPOSITORY_REJECTED');
-   const workflow=await request(repoPath+'/actions/workflows/'+TARGET.workflow);
+   const workflow=await request(repoPath+'/actions/workflows/'+target.workflow);
    if(workflow.status!==200||workflow.body?.path!==path||workflow.body.state!=='active'||!Number.isSafeInteger(workflow.body.id)||workflow.body.id<1)throw new Error('WORKFLOW_REJECTED');
    const ref=await request(repoPath+'/git/ref/heads/main');
    const sha=ref.body?.object?.sha;
    if(ref.status!==200||ref.body?.ref!=='refs/heads/main'||ref.body.object?.type!=='commit'||!config.trustedShas.includes(sha))throw new Error('HEAD_REJECTED');
    overall.throwIfAborted();posted=true;
-   const sent=await request(repoPath+'/actions/workflows/'+TARGET.workflow+'/dispatches',{method:'POST',body:{ref:'main',inputs:{mode:'generate',job_id:jobId}}});
+   const sent=await request(repoPath+'/actions/workflows/'+target.workflow+'/dispatches',{method:'POST',body:{ref:'main',inputs:inputs(jobId)}});
    // Even rejection/timeout after POST is retained. This avoids guessing that
    // an intermediary or provider definitely did not accept an execution.
    const run=sent.body?.workflow_run_id;

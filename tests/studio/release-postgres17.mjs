@@ -8,18 +8,21 @@ import net from 'node:net';
 import {runProcess,PrivatePgSession,sqlString as q} from '../../automation/studio/postgres-client.mjs';
 import {releaseFixture} from './release-approval-fixture.mjs';
 import {prepareReleaseReview} from '../../automation/publish/prepare-review.mjs';
+import {publicationFixture} from './publication-dispatch-fixture.mjs';
 
-assert.ok(process.argv.length===2||(process.argv.length===3&&process.argv[2]==='--preparation'),'INVALID_TEST_MODE');
+assert.ok(process.argv.length===2||(process.argv.length===3&&['--preparation','--publication'].includes(process.argv[2])),'INVALID_TEST_MODE');
 const preparationMode=process.argv[2]==='--preparation';
+const publicationMode=process.argv[2]==='--publication';
 const root=resolve('.local/release-postgres17-'+randomUUID()),data=join(root,'cluster');
 const bin=resolve('.local/pg17-ad1839ec7ba749b4b13fbecf799f1e55/tools-native/pgsql/bin');
 const password=randomBytes(36).toString('base64url'),env={...process.env};
 for(const key of Object.keys(env))if(key.startsWith('PG'))delete env[key];
 Object.assign(env,{PGHOST:'127.0.0.1',PGDATABASE:'postgres',PGUSER:'release_test_admin',PGPASSWORD:password,PGSSLMODE:'disable',PGCONNECT_TIMEOUT:'5',PGCLIENTENCODING:'UTF8',PGTZ:'UTC',PGOPTIONS:'-c statement_timeout=15000 -c lock_timeout=10000'});
 const files=['studio_v1','studio_v2','studio_runner_v1','studio_budget_v1','studio_worker_v1','studio_worker_auth_v1','studio_input_review_v1','studio_dispatch_v1','studio_result_review_v1','studio_revision_v1','studio_release_approval_v1'].map(n=>'supabase/proposals/'+n+'.sql');
-if(preparationMode)files.push('supabase/proposals/studio_release_preparation_v1.sql');
+if(preparationMode||publicationMode)files.push('supabase/proposals/studio_release_preparation_v1.sql');
+if(publicationMode)files.push('supabase/proposals/studio_publication_dispatch_v1.sql');
 const digest=value=>createHash('sha256').update(value).digest('hex');
-const report={startedAt:new Date().toISOString(),mode:preparationMode?'preparation':'approval',sql:files.map(file=>({file,hash:digest(readFileSync(file))})),cases:[]};
+const report={startedAt:new Date().toISOString(),mode:publicationMode?'publication':preparationMode?'preparation':'approval',sql:files.map(file=>({file,hash:digest(readFileSync(file))})),cases:[]};
 const sessions=[];let started=false,f;const deadline=Date.now()+180000;
 const timer=setTimeout(()=>{for(const s of sessions)s.child.kill();},180000);
 const native=async(name,args,timeout=30000)=>{assert.ok(Date.now()<deadline,'TOTAL_TIME_LIMIT');const r=await runProcess(join(bin,name+'.exe'),args,{env,timeout:Math.min(timeout,deadline-Date.now())});assert.equal(r.code,0,'NATIVE_'+name.toUpperCase()+'_FAILED');return r.stdout;};
@@ -51,7 +54,9 @@ async function race(label,first,second,{firstRole='service_role',secondRole='ser
 }
 try{
  mkdirSync(root,{recursive:true});env.PGPORT=String(await freePort());report.port=Number(env.PGPORT);
- f=await releaseFixture();await f.db.exec('reset role');
+ f=publicationMode?await publicationFixture():await releaseFixture();
+ if(publicationMode)await f.enable();
+ await f.db.exec('reset role');
  let sourceId,preparation;
  if(preparationMode){
   await f.db.exec(readFileSync(files.at(-1),'utf8'));sourceId=randomUUID();
@@ -70,6 +75,7 @@ try{
   for(const {row} of rows){const columns=Object.keys(row).map(k=>'"'+k+'"').join(',');seed+='insert into studio.'+table+'('+columns+') overriding system value select '+columns+' from json_populate_record(null::studio.'+table+','+q(JSON.stringify(row))+'::json);';}
  }
  const owner=f.ownerId,job=f.jobId,review=f.row.id,proposal=f.row.proposal_hash,version=f.row;
+ const publicationApproval=f.approval?.id,publicationSource=f.sourceId;
  await f.db.close();f=null;
  const pwfile=join(root,'init-password.tmp');writeFileSync(pwfile,password,{flag:'wx'});
  try{await native('initdb',['-D',data,'-U','release_test_admin','--pwfile='+pwfile,'--auth=scram-sha-256','--encoding=UTF8','--locale=C','--data-checksums']);}finally{unlinkSync(pwfile);}
@@ -84,11 +90,25 @@ try{
  // triggers here only; every tested connection below uses origin and real locks.
  report.stage='RESTORE_SYNTHETIC_SNAPSHOT';await base.sql('set session_replication_role=replica;'+seed+'set session_replication_role=origin;');
  await base.sql("create or replace function studio.conversation_delete_enabled_v2() returns boolean language sql security invoker set search_path='' as $$select true$$;");
+ if(publicationMode)await base.sql("create or replace function studio.publication_dispatch_enabled() returns boolean language sql security invoker set search_path='' as $$select true$$;");
  await new Promise(ok=>{base.child.once('exit',ok);base.close();});
  report.stage='CONCURRENT_COMMANDS';const client=randomUUID(),approve=rpc('approve_release_review',[owner,review,client,proposal]);
  const feedback=rpc('record_result_feedback',[owner,job,randomUUID(),version.state_version,version.source_hash,version.candidate_hash,version.evidence_hash,'request_changes','Synthetic concurrent feedback']);
  const current=rpc('release_review_current',[owner,review]);
- if(preparationMode){
+ if(publicationMode){
+  const request=rpc('request_publication_dispatch',[owner,publicationApproval,randomUUID()]);
+  const intent="(select id from studio.publication_dispatches where approval_id="+q(publicationApproval)+")";
+  const claimId=randomUUID();
+  const claim=other=>"select studio.claim_publication_dispatch("+q(owner)+","+intent+","+q(other)+")";
+  const before=admin=>checked(admin,request);
+  await race('publication-request-vs-duplicate',request,request,{after:async(_admin,a,b)=>assert.equal(a.id,b.id)});
+  await race('publication-claim-vs-duplicate',claim(claimId),claim(randomUUID()),{before,after:async(_admin,a,b)=>{assert.equal(a.claimed,true);assert.equal(b.claimed,false);assert.equal(b.dispatch.state,'claimed');}});
+  await race('publication-withdraw-vs-claim',rpc('revoke_release_approval',[owner,publicationApproval]),claim(claimId),{before,after:async(_admin,_a,b)=>{assert.equal(b.claimed,false);assert.equal(b.dispatch.state,'cancelled');}});
+  const revokeSource="with changed as (update studio.source_reviews set revoked_at=clock_timestamp() where id="+q(publicationSource)+" returning id) select to_jsonb(count(*)) from changed";
+  await race('publication-source-revoke-vs-request',revokeSource,request,{firstRole:'release_test_admin',secondCode:'PT409'});
+  const finish="select studio.finish_publication_dispatch("+q(owner)+","+intent+","+q(claimId)+",'uncertain',null,null)";
+  await race('publication-finish-vs-duplicate',finish,finish,{before:async admin=>{await before(admin);await checked(admin,claim(claimId));},after:async(_admin,a,b)=>{assert.deepEqual(a,b);assert.equal(a.state,'uncertain');}});
+ }else if(preparationMode){
   const issue=rpc('issue_release_review',[owner,job,randomUUID(),sourceId,preparation.record]);
   const adminRole='release_test_admin';
   const revokeSource="with changed as (update studio.source_reviews set revoked_at=clock_timestamp() where id="+q(sourceId)+" returning id) select to_jsonb(count(*)) from changed";

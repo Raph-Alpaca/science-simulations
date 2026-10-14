@@ -1,11 +1,12 @@
 'use client';
 import {useState} from 'react';
+import PublicationDispatch from './publication-dispatch';
 
 type Receipt={id:string;approvedAt:string;invalidatedAt:string|null;effective:boolean};
 type Review={id:string;proposalHash:string;candidateHash:string;artifactHash:string;title:string|null;current:boolean;approvalAllowed:boolean;approvalPaused:boolean;approval:Receipt|null;blockers:string[]};
-type Props={jobId:string;disabled:boolean;api:(path:string,body?:unknown)=>Promise<any>;run:(fn:()=>Promise<void>)=>Promise<void>};
+type Props={jobId:string;disabled:boolean;dispatchReady:boolean;api:(path:string,body?:unknown)=>Promise<any>;run:(fn:()=>Promise<void>)=>Promise<void>};
 
-export default function PublicationApproval({jobId,disabled,api,run}:Props){
+export default function PublicationApproval({jobId,disabled,dispatchReady,api,run}:Props){
  const [review,setReview]=useState<Review|null>(null),[loaded,setLoaded]=useState(false),[confirmed,setConfirmed]=useState(false);
  async function load(){
   try{const data=await api('jobs/'+jobId+'/publication-review');setReview(data.publicationReview);setLoaded(true);setConfirmed(false);}
@@ -33,6 +34,7 @@ export default function PublicationApproval({jobId,disabled,api,run}:Props){
     <p role="status">{review.approval.invalidatedAt?'이 버전의 게시 승인을 철회했습니다.':review.approval.effective?'이 버전의 게시 승인이 저장됐습니다. 아직 게시 완료는 아닙니다.':'이전 승인 기록은 보존되며 현재 게시에는 사용할 수 없습니다.'}</p>
     <p className="muted">승인 저장: {new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',dateStyle:'medium',timeStyle:'short'}).format(new Date(review.approval.approvedAt))}</p>
     {!review.approval.invalidatedAt&&<button type="button" disabled={disabled} onClick={()=>void run(revoke)}>이 버전의 게시 승인 철회</button>}
+    <PublicationDispatch key={review.approval.id} approvalId={review.approval.id} effective={review.approval.effective} enabled={dispatchReady} disabled={disabled} api={api} run={run}/>
    </>:review.approvalAllowed?<fieldset disabled={disabled}>
     <legend className="sr-only">최종 버전 공개 승인</legend>
     <label><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/> 위 결과와 검토 기록을 확인했으며 이 버전의 공개 게시를 승인합니다.</label>
