@@ -1,4 +1,4 @@
-name: Studio approved artifact preparation isolated check and report
+name: Studio approved artifact check and publication
 on:
   workflow_dispatch:
     inputs:
@@ -38,6 +38,20 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/studio-publication-report.yml
+    with:
+      publication_id: ${{ inputs.publication_id }}
+      artifact_hash: ${{ needs.prepare.outputs.artifact_hash }}
+    secrets:
+      STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+  deploy:
+    needs: [prepare, verify, report]
+    if: needs.verify.result == 'success' && needs.report.result == 'success' && vars.STUDIO_PUBLICATION_DEPLOY_ENABLED == 'true'
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/studio-publication-deploy.yml
     with:
       publication_id: ${{ inputs.publication_id }}
       artifact_hash: ${{ needs.prepare.outputs.artifact_hash }}

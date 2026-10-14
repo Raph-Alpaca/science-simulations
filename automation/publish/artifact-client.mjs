@@ -51,13 +51,13 @@ export function createPublicationTokenProvider(env,{transport=fetch}={}){
  };
 }
 export function createPublicationApiClient({publicationId,runId,workflowSha,getToken,transport=fetch,totalMs,purpose='prepare'}){
- const reporting=purpose==='report',claiming=purpose==='deploy',short=reporting||claiming;totalMs??=short?60000:PUBLICATION_CLIENT_LIMITS.totalMs;
- need(['prepare','report','deploy'].includes(purpose)&&uuid(publicationId)&&Number.isSafeInteger(runId)&&runId>0&&sha(workflowSha)&&typeof getToken==='function'&&Number.isInteger(totalMs)&&totalMs>0&&totalMs<=(short?60000:PUBLICATION_CLIENT_LIMITS.totalMs),'PUBLICATION_CLIENT_INVALID');
+ const reporting=purpose==='report',claiming=purpose==='deploy',completing=purpose==='complete',short=reporting||claiming||completing;totalMs??=short?60000:PUBLICATION_CLIENT_LIMITS.totalMs;
+ need(['prepare','report','deploy','complete'].includes(purpose)&&uuid(publicationId)&&Number.isSafeInteger(runId)&&runId>0&&sha(workflowSha)&&typeof getToken==='function'&&Number.isInteger(totalMs)&&totalMs>0&&totalMs<=(short?60000:PUBLICATION_CLIENT_LIMITS.totalMs),'PUBLICATION_CLIENT_INVALID');
  const deadline=Date.now()+totalMs,tokens=new Set();let requests=0;
  return Object.freeze({get requests(){return requests;},async post(action,payload={}, {signal}={}){
-  need((reporting?['check-report']:claiming?['claim']:['manifest','file']).includes(action),'PUBLICATION_ACTION_REJECTED');exact(payload,reporting?['report']:claiming?['artifactHash','reportHash']:action==='file'?['path']:[]);
+  need((completing?['complete']:reporting?['check-report']:claiming?['claim']:['manifest','file']).includes(action),'PUBLICATION_ACTION_REJECTED');exact(payload,completing?['outcome']:reporting?['report']:claiming?['artifactHash','reportHash']:action==='file'?['path']:[]);
   if(claiming)need([payload.artifactHash,payload.reportHash].every(v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v)),'PUBLICATION_REQUEST_INVALID');
-  const body=JSON.stringify({publicationId,payload});need(Buffer.byteLength(body)<=(reporting?20000:4096),'PUBLICATION_REQUEST_LIMIT');
+  const body=JSON.stringify({publicationId,payload});need(Buffer.byteLength(body)<=(completing?24000:reporting?20000:4096),'PUBLICATION_REQUEST_LIMIT');
   need(Date.now()<deadline,'PUBLICATION_TIME_LIMIT');need(requests<(short?1:PUBLICATION_CLIENT_LIMITS.requests),'PUBLICATION_REQUEST_LIMIT');requests++;
   const token=await timed(s=>getToken({signal:s}),Math.min(5000,deadline-Date.now()),signal,'PUBLICATION_OIDC_TIMEOUT');
   need(typeof token==='string'&&token.length<=20000&&tokenPattern.test(token),'PUBLICATION_OIDC_INVALID');
@@ -65,11 +65,12 @@ export function createPublicationApiClient({publicationId,runId,workflowSha,getT
   need(Date.now()<deadline,'PUBLICATION_TIME_LIMIT');
   const result=await json(PUBLICATION_TRUST.origin+'/api/publication/'+action,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',Accept:'application/json'},body},
    {transport,signal,ms:Math.min(short?25000:PUBLICATION_CLIENT_LIMITS.requestMs,deadline-Date.now()),bytes:short?8192:PUBLICATION_CLIENT_LIMITS.responseBytes});
-  const b=result.binding;need(result.published===false&&b?.publicationId===publicationId&&b.runId===runId&&b.runAttempt===1&&b.workflowSha===workflowSha,'PUBLICATION_BINDING_CHANGED');
+  const b=result.binding;need((completing?typeof result.published==='boolean':result.published===false)&&b?.publicationId===publicationId&&b.runId===runId&&b.runAttempt===1&&b.workflowSha===workflowSha,'PUBLICATION_BINDING_CHANGED');
   exact(b,['publicationId','approvalId','reviewId','runId','runAttempt','workflowSha','proposalHash','artifactHash']);
   need(uuid(b.approvalId)&&uuid(b.reviewId)&&/^[a-f0-9]{64}$/.test(b.proposalHash)&&/^[a-f0-9]{64}$/.test(b.artifactHash));
   if(reporting){exact(result,['binding','reportHash','passed','recordedAt','published']);need(result.reportHash===hash(JSON.stringify(payload.report))&&result.passed===(payload.report.runtime?.checks?.runtime==='pass')&&typeof result.recordedAt==='string'&&Number.isFinite(Date.parse(result.recordedAt)),'PUBLICATION_REPORT_RECEIPT_INVALID');}
-  if(claiming){exact(result,['binding','claim','published']);exact(result.claim,['id','claimedAt','reportHash']);need(uuid(result.claim.id)&&result.claim.reportHash===payload.reportHash&&b.artifactHash===payload.artifactHash&&typeof result.claim.claimedAt==='string'&&Number.isFinite(Date.parse(result.claim.claimedAt)),'PUBLICATION_CLAIM_RECEIPT_INVALID');}return result;
+  if(claiming){exact(result,['binding','claim','published']);exact(result.claim,['id','claimedAt','reportHash']);need(uuid(result.claim.id)&&result.claim.reportHash===payload.reportHash&&b.artifactHash===payload.artifactHash&&typeof result.claim.claimedAt==='string'&&Number.isFinite(Date.parse(result.claim.claimedAt)),'PUBLICATION_CLAIM_RECEIPT_INVALID');}
+  if(completing){exact(result,['binding','outcomeHash','published','releaseId','recordedAt']);const expected=payload.outcome?.deployment?.status==='succeeded'&&payload.outcome?.verification?.status==='pass';need(result.outcomeHash===hash(JSON.stringify(payload.outcome))&&result.published===expected&&(expected?uuid(result.releaseId):result.releaseId===null)&&typeof result.recordedAt==='string'&&Number.isFinite(Date.parse(result.recordedAt)),'PUBLICATION_OUTCOME_RECEIPT_INVALID');}return result;
  }});
 }
 

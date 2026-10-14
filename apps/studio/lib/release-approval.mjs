@@ -23,8 +23,9 @@ export function inspectReleaseReview(snapshot,ownerId){
  need(r.job_id===result.jobId&&sha(r.proposal_hash)&&hash(r.proposal_text)===r.proposal_hash);
  const summary={id:r.id,jobId:r.job_id,proposalHash:r.proposal_hash,candidateHash:r.candidate_hash,artifactHash:r.artifact_hash,
   contentId:candidate?.contentId??null,title:candidate?.meta.title??null,createdAt:r.created_at,current:snapshot.current,
-  approval:receipt(snapshot.approval,false),publicationStartedAt:snapshot.publicationStartedAt??null,approvalAllowed:false,blockers:snapshot.current?[]:['RELEASE_CHANGED']};
+  approval:receipt(snapshot.approval,false),publicationStartedAt:snapshot.publicationStartedAt??null,publication:snapshot.publication??null,approvalAllowed:false,blockers:snapshot.current?[]:['RELEASE_CHANGED']};
  need(summary.publicationStartedAt===null||typeof summary.publicationStartedAt==='string'&&Number.isFinite(Date.parse(summary.publicationStartedAt)));
+ if(summary.publication){need(['checking','check_failed','transferring','unconfirmed','published'].includes(summary.publication.state));need(summary.publication.state==='published'?summary.publication.publicUrl==='https://raph-alpaca.github.io/science-simulations/simulations/'+candidate?.contentId+'/'+candidate?.meta.entry:summary.publication.publicUrl===null);}
  if(!snapshot.current)return {summary,record:r,current:null};
  try{
   const p=JSON.parse(r.proposal_text);fields(p,proposalKeys);need(Object.keys(p).length===proposalKeys.length&&p.schemaVersion===1);

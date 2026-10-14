@@ -17,7 +17,7 @@ export function createStudioPublicationDispatch({db,ownerId,env,transport=fetch}
  };
  return Object.freeze({
   async capability(){if(!dispatcher)return false;try{return await rpc('publication_dispatch_version')===1&&await rpc('publication_dispatch_enabled')===true;}catch{return false;}},
-  async read(approvalId){id(approvalId);return {dispatch:await rpc('read_publication_dispatch',{p_owner:ownerId,p_approval:approvalId}),published:false};},
+  async read(approvalId){id(approvalId);const dispatch=await rpc('read_publication_dispatch',{p_owner:ownerId,p_approval:approvalId});return {dispatch,published:dispatch?.publication?.state==='published'};},
   async start(approvalId,body){
    id(approvalId);fields(body,['clientRequestId']);if(Object.keys(body).length!==1)throw new StudioError('INVALID_REQUEST');id(body.clientRequestId);
    try{return await core.start({approvalId,requestId:body.clientRequestId});}catch(error){throw convert(error);}

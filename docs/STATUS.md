@@ -1,5 +1,15 @@
 # 구현 현황
 
+## 2026-10-14 11:52 KST — PR #16 배포 완료·게시 완료 처리 로컬 검증
+
+사용자가 검토19개/manifest2273aeea3393c4e50b7ddf5418169cb4a7aaed9551830b219a62ae39d68ed89c의 공개·검사 후 병합·재배포를 명시 승인했다. [PR #16](https://github.com/Raph-Alpaca/science-simulations/pull/16) head819676ff19ede249607f50a8a2f8676cf21e5897의 검사2개 SUCCESS 뒤11:49:00 KST 병합했다. main15f34bceca4f321abf7df233e08f017b913c9009, Production7055544849/success.11:51:04 실제 홈200/session401/worker503/publication manifest·file·check-report·claim503 및 private,no-store PASS. `.local/studio-publication-authority-review-20261014/production-http.json`. 앞선 자동 승인 검토의 공개 범위 차단은 해결됐으므로 이19개 승인을 반복하지 않는다.
+
+별도 `codex/studio-publication-deploy`에서 [같은 파일 게시·실제 공개 확인·완료 기록](PUBLICATION_COMPLETION.md)을 로컬 구현했다. 승인 소비 뒤 동일 파일 업로드, 배포 POST1회, 제한된 상태/공개 바이트 조회, 검증된 결과의 원자적 release·자료실 기준·작업 상태 갱신을 연결했다. 불확실 결과는 완료로 표시하지 않고 전역 슬롯을 유지한다. 후속 수정은 기존 공개본을 보존하며 새 비용 동의/버전 승인을 요구한다. 기존 빈 목록 workflow의 게시 경로는 제거해 검사 전용으로 준비했다. 새 게시 workflow는 별도 스위치와 DB gate가 기본 false이며 실제 실행하지 않았다.
+
+새 로컬21+공통25=46개, 실제 PG17 독립 연결 경합6개·서버 종료, Chrome4개, Next build/TypeScript·추적8개/금지0·비활성 HTTP5개, actionlint3개 PASS. `.local/studio-publication-deploy-review-20261014/`와 native `.local/release-postgres17-da92d32e-d6f0-4c31-9dee-9f37973a0bfd/result.json`이 증거다. 초기 SQL 변수/컬럼 충돌42702 실패를 보존하고 동일 조건으로 재검증했다. 새 단계는 아직 로컬 미커밋이다.
+
+운영 SQL/환경/키·유료 AI·학생용 게시 변경0회. 불확실 결과를 나중의 별도 실행에서 관찰·조정하는 운영 경로와 게시 내리기/복구는 미구현이다. 신규 workflow의 원격 인증·Pages 실제 전송도 미검증이다. 다음은 검토 가능한 변경을 고정하고 운영 적용용 SQL·백업/복원 검증을 준비한다. 기존 Linux 새1/1·제작4/4·누적8과 OpenAI 인증1회 완료는 반복하지 않는다. 사용량32% 사용/68% 남음,53~55%부터 정리해50% 보존한다.
+
 ## 2026-10-14 11:11 KST — 보고 단계 배포·공개 전송 전 승인 소비 검증
 
 자율 진행 위임에 따라 검토17개/manifest7a03df356ae1ebab4431466011c9127eaf443a18eb10ccf20950a281eba0dc9d를 head a2ce1fca9efbdc6429f71dc7505ad35f01d4372e로 공개했다. [PR #15](https://github.com/Raph-Alpaca/science-simulations/pull/15)의 정확한 head 검사2개 SUCCESS 뒤10:57:10 KST 병합했다. main ccd0cfbb1665d1e791794aa2217c75cb27fbddca, Production7054819984/success.10:58:48 홈200/session401/worker503/publication manifest·file·check-report503 및 private,no-store PASS. `.local/studio-publication-report-review-20261014/production-http.json`. 이번 공개/병합의 자동 승인 차단이나 추가 사용자 질문은 없었다.

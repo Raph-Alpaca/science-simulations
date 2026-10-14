@@ -7,7 +7,7 @@ import {StudioError,id,fields} from './domain.mjs';
 
 const need=(ok,code='RESULT_RECORD_INVALID',status=503)=>{if(!ok)throw new StudioError(code,status);};
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
-const terminal=['needs_input','failed','cancelled','awaiting_approval'];
+const terminal=['needs_input','failed','cancelled','awaiting_approval','published'];
 const text=(value,max=2000)=>typeof value==='string'?value.slice(0,max):'';
 const names=['curriculum','subject','design','developer','reviewer'];
 const sourceKinds=['curriculum','textbook','science'];

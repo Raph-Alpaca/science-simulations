@@ -27,16 +27,17 @@ export function createPublicationHttpHandler({verifyToken,gateway}){
    const url=new URL(request.url);publicationNeed(url.origin===PUBLICATION_TRUST.origin&&url.pathname==='/api/publication/'+action&&!url.search&&!url.hash,'PUBLICATION_ORIGIN_REJECTED',403);
    publicationNeed(!request.headers.has('cookie')&&!request.headers.has('origin'),'PUBLICATION_BROWSER_REJECTED',403);
    const identity=await verifyToken(request.headers.get('authorization'));
-   const reporting=action==='check-report',claiming=action==='claim';
-   publicationNeed(identity.purpose==='publication'&&identity.role===(reporting?'report':claiming?'deploy':'prepare'),'PUBLICATION_ROLE_REJECTED',403);
-   publicationNeed(['manifest','file','check-report','claim'].includes(action),'PUBLICATION_ACTION_REJECTED',404);
-   const text=await bodyText(request,reporting?PUBLICATION_REPORT_BODY_LIMIT:PUBLICATION_BODY_LIMIT);let body;try{body=JSON.parse(text);}catch{throw new PublicationAuthError('PUBLICATION_REQUEST_INVALID',400);}
+   const reporting=action==='check-report',claiming=action==='claim',completing=action==='complete';
+   publicationNeed(identity.purpose==='publication'&&identity.role===(reporting?'report':claiming||completing?'deploy':'prepare'),'PUBLICATION_ROLE_REJECTED',403);
+   publicationNeed(['manifest','file','check-report','claim','complete'].includes(action),'PUBLICATION_ACTION_REJECTED',404);
+   const text=await bodyText(request,completing?24000:reporting?PUBLICATION_REPORT_BODY_LIMIT:PUBLICATION_BODY_LIMIT);let body;try{body=JSON.parse(text);}catch{throw new PublicationAuthError('PUBLICATION_REQUEST_INVALID',400);}
    publicationExact(body,['publicationId','payload']);publicationNeed(publicationUuid(body.publicationId));
-   publicationExact(body.payload,reporting?['report']:claiming?['artifactHash','reportHash']:action==='file'?['path']:[]);if(action==='file')publicationNeed(publicationPath(body.payload.path));
+   publicationExact(body.payload,completing?['outcome']:reporting?['report']:claiming?['artifactHash','reportHash']:action==='file'?['path']:[]);if(action==='file')publicationNeed(publicationPath(body.payload.path));
+   if(completing)publicationNeed(body.payload.outcome&&typeof body.payload.outcome==='object'&&!Array.isArray(body.payload.outcome)&&Buffer.byteLength(JSON.stringify(body.payload.outcome))<=20000);
    if(claiming)publicationNeed(publicationSha(body.payload.artifactHash)&&publicationSha(body.payload.reportHash));
    if(reporting)publicationNeed(body.payload.report&&typeof body.payload.report==='object'&&!Array.isArray(body.payload.report)&&Buffer.byteLength(JSON.stringify(body.payload.report))<=16384);
    const common={identity,publicationId:body.publicationId,bodyHash:publicationHash(text)};
-   const data=reporting?await gateway.report({...common,report:body.payload.report}):claiming?await gateway.claim({...common,...body.payload}):await gateway.read({...common,action,path:body.payload.path??null});
+   const data=completing?await gateway.complete({...common,outcome:body.payload.outcome}):reporting?await gateway.report({...common,report:body.payload.report}):claiming?await gateway.claim({...common,...body.payload}):await gateway.read({...common,action,path:body.payload.path??null});
    // Each response carries at most one 2 MiB file as base64, below the host's
    // 4.5 MB payload limit. Full private snapshots never leave the gateway.
    publicationNeed(Buffer.byteLength(JSON.stringify(data))<=3_000_000,'PUBLICATION_RESPONSE_TOO_LARGE',503);
