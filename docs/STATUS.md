@@ -1,5 +1,15 @@
 # 구현 현황
 
+## 2026-10-14 10:55 KST — PR #14 배포·Linux 검사 성공, 결과 저장 연결 검증
+
+사용자가 검토된29개 공개·검사 후 병합·재배포 및 새 Linux 검사1회를 명시 승인했다. [PR #14](https://github.com/Raph-Alpaca/science-simulations/pull/14)의 head3324d9fb554b8571a757f669630c48b7551a59b5, manifest a2933182fe91425896c374d298179eb176a9da730e73cfd5b4973d670ff021df를10:37:26 KST 병합했다. main dbc3aaa053f4763eca835ab1ad8c1b962e568ce9, Production7054505971/success.10:40:49 실제 운영 홈200/session401/worker503/publication manifest·file503 및 private,no-store PASS. 최초 SELF_SIGNED_CERT_IN_CHAIN 실패는 보존하고 OS CA 사용 후 TLS/호스트 검증을 유지해 확인했다. 보호 증거 `.local/studio-publication-check-review-20261014/production-http.json`. 이전 자동 승인 차단은 해결됐고 재승인하지 않는다.
+
+새 Linux [run38496755442](https://github.com/Raph-Alpaca/science-simulations/actions/runs/38496755442)는10:39:07 KST success다. 같은 main에서 합성2D/3D 통과와 링크/초기화 고장 감지, 모든 브라우저 종료·컨테이너 삭제를 확인했다. **새 검사1/1 사용 완료**, 이전 제작 rehearsal4/4·누적8 상한도 유지한다. 추가 실행하지 않는다. 실제 OpenAI/DB/전달 키·학생용 자료는 사용하지 않았다.
+
+별도 `codex/studio-publication-report`에서 [검사 결과 저장](PUBLICATION_REPORT.md)을 구현·검증했다. 암호화 결과를 전용 report 인증으로1회 전송하고 SQL이 불변 보고서와 JWT 영수증을 함께 기록한다. 철회 뒤 결과는 이력이며 승인·게시 효력은 없다. 관련17/17, 실제 PG17 경쟁6/6·종료, Next build/TypeScript, 배포 추적8개·비활성 API3개·actionlint PASS. 초기3D 합성 관찰 누락 실패는 fixture만 수정하고 보존했다. 아직 미커밋/운영 미적용, Pages 쓰기 권한은 없다.
+
+운영 SQL/환경/키·유료 AI·학생용 게시 변경0회다. 다음은 보고 단계 공개와 게시 직전 권한 소비·동일 파일 배포/실제 게시 확인 연결이다. App/전달 키 등록·운영 승인/준비/게시 SQL 적용·실제 원문 검토·교사 승인도 남았다. OpenAI GET 인증1회 완료는 반복하지 않는다. 사용량27% 사용/73% 남음,50% 보존 조건 유지.
+
 ## 2026-10-14 10:33 KST — PR #13 배포 완료·동일 파일 게시 검사 로컬 검증
 
 사용자의 **PR #13 병합·제작실 재배포 승인** 후23개/headb55a82d4bc24b42ef99f81d7a5631bf812e56d4a를 병합했다. [PR #13](https://github.com/Raph-Alpaca/science-simulations/pull/13)10:16:47 KST merged, main b0885c2edc4803ea185793260bc43f241a6a0228. Production7054207561/success,10:18 실제 홈200·session401·worker503·publication manifest/file503 및 private,no-store 확인. 보호 증거 `.local/studio-publication-auth-review-20261014/production-http.json`. 자동 승인 차단은 해결됐으며 재승인하지 않는다.

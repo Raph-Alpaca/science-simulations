@@ -1,5 +1,11 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 10:55 KST:** PR #14의29개 명시 승인·병합·운영 배포/HTTP 및 새 Linux1회 성공 완료. main dbc3aaa053f4763eca835ab1ad8c1b962e568ce9. publication rehearsal run38496755442에서2D/3D·링크/초기화 고장 감지·정리를 확인했다. **새1/1 사용 완료, 기존 제작4/4·누적8 유지, 추가 실행 금지.** 기존 API 키 입력/GET 인증과 PR #12~#14 승인·병합은 반복하지 않는다. 이전 대기 문구는 이력이다.
+
+현재 branch codex/studio-publication-report에 검사 보고서 저장 SQL/HTTP/암호화 보고 job이 미커밋으로 있다. [PUBLICATION_REPORT](PUBLICATION_REPORT.md): 관련17개·실제 PG17 경합6개·Next build/타입·배포 추적8개·비활성 HTTP3개·actionlint PASS. 검사 프로세스 종료 확인. `.local/studio-publication-report-review-20261014/` 및 `.local/release-postgres17-75d91a31-1bbe-4cf7-896d-34bb58e9a549/result.json`이 증거다. 내용이 변하지 않으면 통과 검사를 반복하지 않는다. 역사적 보고는 철회 후에도 기록되지만 승인/게시 권한을 발급하지 않는다. 전송 유실은 자동 재시도하지 않는다.
+
+다음은 보고 변경 검토/공개와 게시 직전 승인 소비·같은 바이트 Pages 배포·확인·불확실 결과 조정 구현이다. DB와 외부 게시를 원자적이라고 가정하지 않는다. 공개 파일 업로드 전에 유효한 최종 교사 승인 권한을 확보하고, 전송 개시 후 철회 경계를 화면/DB에 일치시켜야 한다. 아직 정책 구현을 완료하지 않았다. 운영에는 worker foundation만 적용, 나머지 승인/준비/게시 SQL은 proposal이며 기능은 비활성이다. App/전달 키 준비·유료 제작·실제 원문 검토/최종 교사 승인도 남았다. 남은73%,53~55%부터 정리하여50% 보존.
+
 **최신 2026-10-14 10:33 KST:** PR #13 명시 승인·병합·운영 배포/HTTP 확인 완료, main b0885c2edc4803ea185793260bc43f241a6a0228. API 키 입력/인증과 PR #12·#13 병합은 다시 요청하지 않는다. 현재 branch codex/studio-publication-check, 새 게시 검사 미커밋이다. [PUBLICATION_CHECK](PUBLICATION_CHECK.md)의27개 로컬/Chrome13개/build/배포 추적/비활성 HTTP/워크플로 검사가 통과했다. 현재 실행 중 앱·브라우저·검사 프로세스는 없다.
 
 승인 설명은 manifest와 봉투v2로 전달하고 실제 자료실 하위 경로에서 같은 파일을 검사한다. 보안 프로필/권한 변화 없이 컨테이너 진입 모드와 allowlist/COPY 순수 파일만 추가했다. report.sealed.json은 암호문만 저장하며 아직 보고서 HTTP/DB 연결·게시 권한 소비·실제 Pages 배포/확인은 없다. 새 수동 publication rehearsal은 키 없는 합성4사례·job12분이며 아직0회, 구체적 승인 후1회 기록을 만들 예정이다. 기존 제작 rehearsal4/4·누적8 제한과 구분하고 자동 반복하지 않는다.

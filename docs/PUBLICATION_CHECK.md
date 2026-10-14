@@ -17,6 +17,8 @@ verify job에는 OIDC/Pages 권한·OpenAI/DB 키가 없다. 전달 키는 신�
 - 기존 Chrome 검사7개와 별도 프로세스 수정 흐름1개,8/8 PASS. 무응답 코드·위조 통과 표시도 실패 감지. `.local/evidence/worker/runtime-browser-527bb57b-5aa1-4f40-a294-511e8a1f535a.json`.
 - Next build/TypeScript,배포 추적8개/금지 파일0개,로컬 비활성 HTTP2개 PASS/서버 종료. `.local/studio-publication-check-review-20261014/local-result.json`. actionlint 통과(shellcheck/pyflakes 미실행). 현재 단계 SQL 변경은 없어 이전 실제 PG17 경쟁 증거를 재사용한다.
 
-새 Linux 컨테이너 모드의 실제 실행은 아직0회다. `studio-publication-rehearsal.yml`은 별도 수동 합성 검사이며, 지정된2D/3D·링크 고장·초기화 고장4개만 실행한다. 생성/API/DB/전달 키/OIDC/Pages 권한은 없다. 내부300초,각 컨테이너65초,job12분으로 제한했다. 이전 제작 rehearsal 상한4/4·누적8회는 변경하지 않고, 새 게시 검사1회는 구체적 승인 후 별도1회 기록으로 실행할 예정이다. 실패하면 자동 재시도하지 않는다.
+사용자의 29개 공개·병합·재배포와 새 Linux 검사1회 승인 후 [PR #14](https://github.com/Raph-Alpaca/science-simulations/pull/14)를 병합했다. main `dbc3aaa053f4763eca835ab1ad8c1b962e568ce9`의 [run38496755442](https://github.com/Raph-Alpaca/science-simulations/actions/runs/38496755442)가 실제 Linux에서 성공했다. 2D/3D 통과, 카드 링크 고장·초기화 고장의 의도한 실패 감지, 모든 브라우저 종료와 컨테이너 정리 확인. 지정된 합성4사례뿐이며 생성/API/DB/전달 키/OIDC/Pages 권한은 없었다. 내부300초,각 컨테이너65초,job12분 제한을 유지했다. **새 게시 검사1/1 사용 완료, 추가 실행 금지.** 이전 제작 rehearsal 상한4/4·누적8회도 변경하지 않는다. `.local/studio-publication-check-review-20261014/`의 실행 표식·로그·운영 HTTP 결과를 보존한다.
+
+Production7054505971/success와 실제 운영 홈200/session401/worker 및 publication503·private,no-store를 확인했다. 최초 HTTP 인증서 실패는 보존하고 OS 신뢰 CA를 쓰는 `--use-system-ca`로 재확인했다. 인증서/호스트 검증을 끄지 않았다. 이후 검사 결과 저장 연결은 [PUBLICATION_REPORT](PUBLICATION_REPORT.md)를 따른다.
 
 남은 연결은 보고서의 서버 검증/DB 보관, 배포 직전 승인 소비, 동일 파일 Pages 업로드, 불확실한 실행 복구, 실제 공개 바이트 확인과 완료 상태 기록이다. 워크플로 통과만으로 학생용 게시 완료를 표시하지 않는다.
