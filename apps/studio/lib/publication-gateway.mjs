@@ -45,5 +45,12 @@ export function createPublicationGateway(client){
   exact(receipt,['publicationId','reportHash','passed','recordedAt','published']);
   need(receipt.publicationId===publicationId&&receipt.reportHash===digest&&receipt.passed===(report.runtime.checks.runtime==='pass')&&receipt.published===false&&typeof receipt.recordedAt==='string'&&Number.isFinite(Date.parse(receipt.recordedAt)),'PUBLICATION_REPORT_RECEIPT_INVALID',503);
   return {binding:b,reportHash:digest,passed:receipt.passed,recordedAt:receipt.recordedAt,published:false};
+ },async claim({identity,publicationId,bodyHash,artifactHash,reportHash}){
+  need(identity.purpose==='publication'&&identity.role==='deploy','PUBLICATION_ROLE_REJECTED',403);
+  const result=await reportRpc('claim_publication_authority',{p_intent:publicationId,p_run:identity.runId,p_attempt:identity.runAttempt,p_sha:identity.workflowSha,p_jti_hash:identity.jtiHash,p_expires:identity.expiresAt,p_body_hash:bodyHash,p_artifact_hash:artifactHash,p_report_hash:reportHash});
+  exact(result,['binding','claim','published']);const b=result.binding,c=result.claim;
+  exact(b,['publicationId','approvalId','reviewId','runId','runAttempt','workflowSha','proposalHash','artifactHash']);exact(c,['id','claimedAt','reportHash']);
+  need(b.publicationId===publicationId&&b.runId===identity.runId&&b.runAttempt===1&&b.workflowSha===identity.workflowSha&&uuid(b.approvalId)&&uuid(b.reviewId)&&sha(b.proposalHash)&&b.artifactHash===artifactHash&&uuid(c.id)&&c.reportHash===reportHash&&typeof c.claimedAt==='string'&&Number.isFinite(Date.parse(c.claimedAt))&&result.published===false,'PUBLICATION_CLAIM_RECEIPT_INVALID',503);
+  return result;
  }});
 }

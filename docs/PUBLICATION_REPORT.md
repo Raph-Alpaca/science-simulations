@@ -1,6 +1,6 @@
 # 게시 검사 결과 저장
 
-2026-10-14 로컬 구현·검증. `studio_publication_report_v1.sql`은 artifact proposal 뒤에 적용하는 검토안이며 운영 미적용이다. 게시 권한 소비·Pages 배포·학생용 공개 기능을 포함하지 않는다.
+2026-10-14 [PR #15](https://github.com/Raph-Alpaca/science-simulations/pull/15)로 앱 배포 완료. main ccd0cfbb1665d1e791794aa2217c75cb27fbddca, Production7054819984/success와 실제 비활성 API/캐시 검사 PASS. `studio_publication_report_v1.sql`은 artifact proposal 뒤에 적용하는 검토안이며 운영 미적용이다. 후속 승인 소비는 [PUBLICATION_AUTHORITY](PUBLICATION_AUTHORITY.md)를 따른다. 이 보고 단계 자체는 Pages 배포·학생용 공개 기능을 포함하지 않는다.
 
 ## 흐름과 경계
 

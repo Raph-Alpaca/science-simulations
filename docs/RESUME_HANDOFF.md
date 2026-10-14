@@ -1,5 +1,11 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 11:11 KST:** PR #15 보고 단계17개 공개/검사/병합/운영 배포·HTTP 확인 완료. main ccd0cfbb1665d1e791794aa2217c75cb27fbddca, deployment7054819984. 이 단계는 자율 위임으로 승인 검토를 통과했으며 추가 질문/차단 없음. 이전 보고 미커밋 기록은 이력이다.
+
+현재 `codex/studio-publication-completion`에서 [PUBLICATION_AUTHORITY](PUBLICATION_AUTHORITY.md)의 전송 전 승인 소비/같은 바이트 준비·철회 경계 UI를 미커밋으로 구현했다. 관련35개·실제 PG17 경합7개·Chrome3개·Next build/타입·추적/비활성 API PASS, 모든 검사 종료. 증거 `.local/studio-publication-authority-review-20261014/`, native `.local/release-postgres17-273510ab-7211-4805-b9bf-7dd3caa0fa32/`. claim API는 소비 영수증을 재발급하지 않는다. 응답 유실 시 authority-send.claim을 지우거나 다시 실행하지 않는다. 아직 실제 업로드·deploy workflow·완료 처리는 없다.
+
+다음은 변경 검토/공개 뒤 고정 Pages 전송기와 원격 바이트 검사·완료/불확실 결과 기록을 연결한다. 완료 후 기존 자료실 기준을 같은 트랜잭션에서 갱신하고 전역 슬롯을 풀어야 한다. DB와 외부 게시를 원자적이라고 취급하지 않는다. 실제 운영 SQL은 foundation만, 새 SQL/키·기능 활성화는 대기다. OpenAI 인증 GET1회와 Linux 새1/1·기존4/4/누적8은 완료했으니 반복하지 않는다. 사용량71% 남음,53~55% 정리 시작/50% 보존.
+
 **최신 2026-10-14 10:55 KST:** PR #14의29개 명시 승인·병합·운영 배포/HTTP 및 새 Linux1회 성공 완료. main dbc3aaa053f4763eca835ab1ad8c1b962e568ce9. publication rehearsal run38496755442에서2D/3D·링크/초기화 고장 감지·정리를 확인했다. **새1/1 사용 완료, 기존 제작4/4·누적8 유지, 추가 실행 금지.** 기존 API 키 입력/GET 인증과 PR #12~#14 승인·병합은 반복하지 않는다. 이전 대기 문구는 이력이다.
 
 현재 branch codex/studio-publication-report에 검사 보고서 저장 SQL/HTTP/암호화 보고 job이 미커밋으로 있다. [PUBLICATION_REPORT](PUBLICATION_REPORT.md): 관련17개·실제 PG17 경합6개·Next build/타입·배포 추적8개·비활성 HTTP3개·actionlint PASS. 검사 프로세스 종료 확인. `.local/studio-publication-report-review-20261014/` 및 `.local/release-postgres17-75d91a31-1bbe-4cf7-896d-34bb58e9a549/result.json`이 증거다. 내용이 변하지 않으면 통과 검사를 반복하지 않는다. 역사적 보고는 철회 후에도 기록되지만 승인/게시 권한을 발급하지 않는다. 전송 유실은 자동 재시도하지 않는다.
