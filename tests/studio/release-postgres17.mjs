@@ -7,15 +7,19 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import {runProcess,PrivatePgSession,sqlString as q} from '../../automation/studio/postgres-client.mjs';
 import {releaseFixture} from './release-approval-fixture.mjs';
+import {prepareReleaseReview} from '../../automation/publish/prepare-review.mjs';
 
+assert.ok(process.argv.length===2||(process.argv.length===3&&process.argv[2]==='--preparation'),'INVALID_TEST_MODE');
+const preparationMode=process.argv[2]==='--preparation';
 const root=resolve('.local/release-postgres17-'+randomUUID()),data=join(root,'cluster');
 const bin=resolve('.local/pg17-ad1839ec7ba749b4b13fbecf799f1e55/tools-native/pgsql/bin');
 const password=randomBytes(36).toString('base64url'),env={...process.env};
 for(const key of Object.keys(env))if(key.startsWith('PG'))delete env[key];
 Object.assign(env,{PGHOST:'127.0.0.1',PGDATABASE:'postgres',PGUSER:'release_test_admin',PGPASSWORD:password,PGSSLMODE:'disable',PGCONNECT_TIMEOUT:'5',PGCLIENTENCODING:'UTF8',PGTZ:'UTC',PGOPTIONS:'-c statement_timeout=15000 -c lock_timeout=10000'});
 const files=['studio_v1','studio_v2','studio_runner_v1','studio_budget_v1','studio_worker_v1','studio_worker_auth_v1','studio_input_review_v1','studio_dispatch_v1','studio_result_review_v1','studio_revision_v1','studio_release_approval_v1'].map(n=>'supabase/proposals/'+n+'.sql');
+if(preparationMode)files.push('supabase/proposals/studio_release_preparation_v1.sql');
 const digest=value=>createHash('sha256').update(value).digest('hex');
-const report={startedAt:new Date().toISOString(),sql:files.map(file=>({file,hash:digest(readFileSync(file))})),cases:[]};
+const report={startedAt:new Date().toISOString(),mode:preparationMode?'preparation':'approval',sql:files.map(file=>({file,hash:digest(readFileSync(file))})),cases:[]};
 const sessions=[];let started=false,f;const deadline=Date.now()+180000;
 const timer=setTimeout(()=>{for(const s of sessions)s.child.kill();},180000);
 const native=async(name,args,timeout=30000)=>{assert.ok(Date.now()<deadline,'TOTAL_TIME_LIMIT');const r=await runProcess(join(bin,name+'.exe'),args,{env,timeout:Math.min(timeout,deadline-Date.now())});assert.equal(r.code,0,'NATIVE_'+name.toUpperCase()+'_FAILED');return r.stdout;};
@@ -25,11 +29,12 @@ async function session(user,db){const s=new PrivatePgSession(bin,{...env,PGUSER:
 const attempt=(s,sql)=>s.json('select public.test_call('+q(sql)+')::text;');
 const checked=async(s,sql)=>{const r=await attempt(s,sql);assert.equal(r.state,'00000');return r.value;};
 async function freePort(){for(let port=55443;port<=55449;port++){if(await new Promise(ok=>{const server=net.createServer();server.on('error',()=>ok(false));server.listen(port,'127.0.0.1',()=>server.close(()=>ok(true)));}))return port;}throw Error('NO_TEST_PORT');}
-async function race(label,first,second,{firstRole='service_role',secondCode='00000',before,after}={}){
+async function race(label,first,second,{firstRole='service_role',secondRole='service_role',secondCode='00000',before,after}={}){
+ report.activeCase=label;
  const db='release_case_'+(report.cases.length+1);await native('createdb',['-w','-T','release_template',db]);
  const admin=await session('release_test_admin',db);if(before)await before(admin);
- const left=await session(firstRole,db),right=await session('service_role',db);
- assert.notEqual(left.info.pid,right.info.pid);assert.equal(right.info.super,false);if(firstRole==='service_role')assert.equal(left.info.super,false);
+ const left=await session(firstRole,db),right=await session(secondRole,db);
+ assert.notEqual(left.info.pid,right.info.pid);assert.equal(right.info.super,secondRole==='release_test_admin');assert.equal(left.info.super,firstRole==='release_test_admin');
  assert.equal(await left.sql('show session_replication_role;'),'origin');assert.equal(await right.sql('show session_replication_role;'),'origin');
  await left.sql('begin;');await right.sql('begin;');const a=await checked(left,first),pending=attempt(right,second);
  let wait;
@@ -41,12 +46,19 @@ async function race(label,first,second,{firstRole='service_role',secondCode='000
  assert.equal(wait.wait,'Lock','PHYSICAL_LOCK_REQUIRED');assert.ok(wait.blockers.includes(left.info.pid));
  await left.sql('commit;');const b=await pending;assert.equal(b.state,secondCode,label);await right.sql('commit;');
  if(after)await after(admin,a,b.value);
- report.cases.push({label,firstPid:left.info.pid,secondPid:right.info.pid,firstRole,secondSuperuser:false,lockObserved:true,secondResult:b.state});
+ report.cases.push({label,firstPid:left.info.pid,secondPid:right.info.pid,firstRole,secondRole,firstSuperuser:left.info.super,secondSuperuser:right.info.super,lockObserved:true,secondResult:b.state});
  left.close();right.close();admin.close();
 }
 try{
  mkdirSync(root,{recursive:true});env.PGPORT=String(await freePort());report.port=Number(env.PGPORT);
  f=await releaseFixture();await f.db.exec('reset role');
+ let sourceId,preparation;
+ if(preparationMode){
+  await f.db.exec(readFileSync(files.at(-1),'utf8'));sourceId=randomUUID();
+  await f.db.query('insert into studio.source_reviews(id,job_id,owner_id,candidate_hash,source_hash,education_text,education_hash) values($1,$2,$3,$4,$5,$6,$7)',[sourceId,f.jobId,f.ownerId,f.row.candidate_hash,f.row.source_hash,f.row.education_text,f.row.education_hash]);
+  const sourceReview=(await f.db.query('select to_jsonb(s) row from studio.source_reviews s where id=$1',[sourceId])).rows[0].row;
+  preparation=prepareReleaseReview({snapshot:await f.rpc('read_worker_result',{p_owner:f.ownerId,p_job:f.jobId}),sourceReview,baseline:{enabled:true,artifact_text:f.base.artifactText,artifact_hash:f.base.artifactHash,lock_hash:f.row.lock_hash,policy_version:f.row.policy_version},ownerId:f.ownerId,reviewId:randomUUID()});
+ }
  // Copy the signed synthetic fixture, ordered by actual FK dependencies.
  const tables=(await f.db.query("select tablename from pg_tables where schemaname='studio' order by tablename")).rows.map(r=>r.tablename);
  const deps=(await f.db.query("select c.relname child,p.relname parent from pg_constraint k join pg_class c on c.oid=k.conrelid join pg_class p on p.oid=k.confrelid join pg_namespace n on n.oid=c.relnamespace join pg_namespace pn on pn.oid=p.relnamespace where k.contype='f' and n.nspname='studio' and pn.nspname='studio' and c.oid<>p.oid")).rows;
@@ -76,6 +88,20 @@ try{
  report.stage='CONCURRENT_COMMANDS';const client=randomUUID(),approve=rpc('approve_release_review',[owner,review,client,proposal]);
  const feedback=rpc('record_result_feedback',[owner,job,randomUUID(),version.state_version,version.source_hash,version.candidate_hash,version.evidence_hash,'request_changes','Synthetic concurrent feedback']);
  const current=rpc('release_review_current',[owner,review]);
+ if(preparationMode){
+  const issue=rpc('issue_release_review',[owner,job,randomUUID(),sourceId,preparation.record]);
+  const adminRole='release_test_admin';
+  const revokeSource="with changed as (update studio.source_reviews set revoked_at=clock_timestamp() where id="+q(sourceId)+" returning id) select to_jsonb(count(*)) from changed";
+  const latestCurrent="select to_jsonb(studio.release_review_current("+q(owner)+",(select id from studio.release_reviews where job_id="+q(job)+" order by created_at desc,id desc limit 1)))";
+  await race('issuer-vs-duplicate',issue,issue,{firstRole:adminRole,secondRole:adminRole,after:async(_admin,a,b)=>assert.equal(a.id,b.id)});
+  await race('issuer-vs-feedback',issue,feedback,{firstRole:adminRole,after:async admin=>assert.equal(await checked(admin,latestCurrent),false)});
+  await race('feedback-vs-issuer',feedback,issue,{secondRole:adminRole,secondCode:'PT409'});
+  await race('source-revoke-vs-issuer',revokeSource,issue,{firstRole:adminRole,secondRole:adminRole,secondCode:'PT404'});
+  await race('issuer-vs-source-revoke',issue,revokeSource,{firstRole:adminRole,secondRole:adminRole,after:async admin=>assert.equal(await checked(admin,latestCurrent),false)});
+  await race('baseline-change-vs-issuer',"with changed as (update studio.release_baseline set enabled=false returning singleton) select to_jsonb(count(*)) from changed",issue,{firstRole:adminRole,secondRole:adminRole,secondCode:'PT409'});
+  const approveLatest="select studio.approve_release_review("+q(owner)+",(select id from studio.release_reviews where job_id="+q(job)+" order by created_at desc,id desc limit 1),"+q(randomUUID())+","+q(proposal)+")";
+  await race('source-revoke-vs-teacher-approval',revokeSource,approveLatest,{firstRole:adminRole,secondCode:'PT409',before:admin=>checked(admin,issue)});
+ }else{
  await race('approval-vs-duplicate',approve,approve,{after:async(_admin,a,b)=>assert.equal(a.approval.id,b.approval.id)});
  await race('approval-vs-new-request',approve,rpc('approve_release_review',[owner,review,randomUUID(),proposal]),{secondCode:'PT409'});
  await race('feedback-vs-approval',feedback,approve,{secondCode:'PT409'});
@@ -90,8 +116,11 @@ try{
  await race('replacement-review-vs-approval','with changed as (insert into studio.release_reviews('+columns.join(',')+') select '+values+' from studio.release_reviews r where id='+q(review)+' returning id) select to_jsonb(count(*)) from changed',approve,{firstRole:'release_test_admin',secondCode:'PT409'});
  const remove="select studio.edit_conversation_v2("+q(owner)+",(select conversation_id from studio.jobs where id="+q(job)+"),'delete',null)";
  await race('conversation-delete-vs-approval',remove,approve,{secondCode:'PT404'});
+ }
  assert.deepEqual(files.map(file=>({file,hash:digest(readFileSync(file))})),report.sql);report.result='PASS';
-}catch(error){report.result='FAIL';report.error=/^[A-Z0-9_]+$/.test(error.message)?error.message:'REHEARSAL_ASSERTION_FAILED';report.errorCode=error.code??null;process.exitCode=1;}
+}catch(error){report.result='FAIL';report.error=/^[A-Z0-9_]+$/.test(error.message)?error.message:'REHEARSAL_ASSERTION_FAILED';report.errorCode=error.code??null;
+ const safe=v=>['boolean','number'].includes(typeof v)?v:typeof v==='string'&&/^[A-Z0-9_]{1,50}$/.test(v)?v:undefined;
+ report.assertion={actual:safe(error.actual),expected:safe(error.expected),operator:error.operator};process.exitCode=1;}
 finally{
  clearTimeout(timer);if(f)await f.db.close();for(const s of sessions)s.close();
  // Nine cloned test databases can require a longer checkpoint on Windows.
