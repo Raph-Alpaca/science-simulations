@@ -6,17 +6,18 @@ import {resolve,join,sep} from 'node:path';
 import {randomUUID,createHash,X509Certificate} from 'node:crypto';
 import net from 'node:net';
 import {assessBackupConnection} from './backup-checks.mjs';
+import {backupScope,LEGACY_TABLES,WORKER_TABLES} from './backup-scope.mjs';
 
 const project=resolve('.'), privateRoot=join(project,'.local','studio-v1-backup-20260916');
 const run=resolve(process.argv[2]||'INVALID');
 const bin=join(project,'.local','pg17-ad1839ec7ba749b4b13fbecf799f1e55','tools-native','pgsql','bin');
-const tables=['approvals','conversations','job_events','jobs','messages','releases','reviews','teachers'];
+const scope=process.argv[3]??'legacy',tables=backupScope(scope);
 const remotePassword=process.env.STUDIO_BACKUP_PASSWORD;
 const localPassword=process.env.STUDIO_RESTORE_PASSWORD;
 const q=value=>"'"+String(value).replaceAll("'","''")+"'";
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const started=Date.now(),deadline=started+300000;
-const report={schemaVersion:1,startedAt:new Date(started).toISOString(),maxDurationMs:300000,sourceScope:'studio',remoteReadOnly:true,remoteConnections:0,backupComplete:false,restoreComplete:false};
+const report={schemaVersion:1,startedAt:new Date(started).toISOString(),maxDurationMs:300000,sourceScope:'studio',schemaScope:scope,tableCount:tables.length,remoteReadOnly:true,remoteConnections:0,backupComplete:false,restoreComplete:false};
 let stage='private_inputs',remote,local,serverStarted=false,port;
 const sessions=[];
 const baseEnv={...process.env};
@@ -98,7 +99,7 @@ try {
   const actualTables=await remote.json("select json_agg(relname order by relname)::text from pg_class where relnamespace='studio'::regnamespace and relkind='r';");
   requireCheck(JSON.stringify(actualTables)===JSON.stringify(tables),'SOURCE_TABLES_CHANGED');
   const snapshot=await remote.sql('select pg_export_snapshot();');requireCheck(/^[0-9A-F]+-[0-9A-F]+-[0-9]+$/.test(snapshot),'INVALID_SNAPSHOT');
-  const before=await fingerprint(remote);writeFileSync(join(run,'source-fingerprint.json'),JSON.stringify(before),{flag:'wx'});
+  const before=await fingerprint(remote,{tables});writeFileSync(join(run,'source-fingerprint.json'),JSON.stringify(before),{flag:'wx'});
   const ownerRefs=await remote.json("select coalesce(json_agg(id order by id),'[]')::text from(select owner_id id from studio.teachers union select approver id from studio.approvals)x;");
   requireCheck(ownerRefs.every(id=>/^[0-9a-f-]{36}$/.test(id)),'INVALID_LOCAL_AUTH_REFERENCE');
   const activeOwner=await remote.sql('select owner_id from studio.teachers where active order by owner_id limit 1;');
@@ -122,21 +123,25 @@ try {
   if(ownerRefs.length)await local.sql('insert into auth.users(id) values '+ownerRefs.map(id=>'('+q(id)+')').join(',')+';');
   stage='restore';await localGuard(local);
   await native('pg_restore',['-w','--exit-on-error','--single-transaction','-d','studio_restore',archive],{timeout:120000});
-  stage='verify_restoration';const after=await fingerprint(local);writeFileSync(join(run,'restored-fingerprint.json'),JSON.stringify(after),{flag:'wx'});
+  stage='verify_restoration';const after=await fingerprint(local,{tables});writeFileSync(join(run,'restored-fingerprint.json'),JSON.stringify(after),{flag:'wx'});
   requireCheck(before.dataHash===after.dataHash,'RESTORE_DATA_MISMATCH');requireCheck(before.metadataHash===after.metadataHash,'RESTORE_METADATA_MISMATCH');
   report.dataMatch=true;report.metadataMatch=true;report.authDataCopied=false;report.authReferencesOnly=true;
   if(activeOwner){
     requireCheck(/^[0-9a-f-]{36}$/.test(activeOwner),'INVALID_LOCAL_OWNER');
     await local.sql(`begin;set local role authenticated;select set_config('request.jwt.claim.sub',${q(activeOwner)},true);`);
-    for(const table of tables)requireCheck(await local.sql(`select count(*) from studio.${table} where owner_id<>${q(activeOwner)};`)==='0','RESTORED_RLS_ISOLATION_FAILED');
+    for(const table of LEGACY_TABLES)requireCheck(await local.sql(`select count(*) from studio.${table} where owner_id<>${q(activeOwner)};`)==='0','RESTORED_RLS_ISOLATION_FAILED');
     await local.sql('rollback;');report.restoredRlsIsolation=true;
+    if(scope==='worker-foundation'){
+      const security=await local.json("select json_agg(json_build_object('name',relname,'rls',relrowsecurity,'anon',has_table_privilege('anon',oid,'SELECT,INSERT,UPDATE,DELETE'),'browser',has_table_privilege('authenticated',oid,'SELECT,INSERT,UPDATE,DELETE')) order by relname)::text from pg_class where relnamespace='studio'::regnamespace and relname in ("+WORKER_TABLES.map(q).join(',')+");");
+      requireCheck(security.length===WORKER_TABLES.length&&security.every(t=>t.rls&&!t.anon&&!t.browser),'RESTORED_WORKER_GRANTS_INVALID');report.restoredWorkerIsolation=true;
+    }
     await local.sql('begin;set local role service_role;');
     const created=await local.json(`select json_build_object('created',length(studio.new_conversation(${q(activeOwner)},'Local restore verification only')->>'id')=36)::text;`);
     requireCheck(created.created,'RESTORED_RPC_FAILED');await local.sql('rollback;');report.restoredRpc=true;
   }
   const denied=await native('psql',['-X','-qAt','-w','-v','ON_ERROR_STOP=1','-v','VERBOSITY=sqlstate'],{input:'begin;set local role authenticated;update studio.conversations set title=title where false;rollback;\n',allowFailure:true});
   requireCheck(denied.code!==0&&/42501/.test(denied.err),'RESTORED_DIRECT_WRITE_NOT_DENIED');report.restoredWriteDenied=true;
-  const final=await fingerprint(local);requireCheck(final.dataHash===before.dataHash,'RESTORE_CHECK_CHANGED_DATA');
+  const final=await fingerprint(local,{tables});requireCheck(final.dataHash===before.dataHash,'RESTORE_CHECK_CHANGED_DATA');
   report.restoreComplete=true;report.result='PASS';
 } catch(error){report.result='FAIL';report.stage=stage;report.error=safeError(error);process.exitCode=1;}
 finally {

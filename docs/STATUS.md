@@ -1,5 +1,15 @@
 # 구현 현황
 
+## 2026-10-14 12:08 KST — PR #17 배포 완료·운영 DB 증분 적용 전 검사
+
+사용자가 검토32개/manifest75968f12204d1ff432dd20a9fb731a0b9e790f867d4651002c14c495459dfe22의 공개·검사 후 병합·재배포를 명시 승인했다. [PR #17](https://github.com/Raph-Alpaca/science-simulations/pull/17) headdb99e4425e431c115c7fe547bf71cc22c3961235 검사2개 SUCCESS 뒤11:54:55 KST 병합. main12001d2c3b5b90a62f7c2eec8962ba77cf45c1a0, Production7055622915/success.11:59:27 실제 홈200/session401/worker503/publication5개503·private,no-store PASS. `.local/studio-publication-deploy-review-20261014/production-http.json`. 앞선32개 공개 범위 차단은 해결됐으므로 승인을 반복하지 않는다.
+
+새 `codex/studio-publication-migration`에서 [운영 DB 증분 검토](PUBLICATION_MIGRATION_REVIEW.md)를 준비했다. proposal7개를 CLI가 생성한 단일 migration으로 결합했다. LFhash38665dc7590464e199a6864468b033bb86e9e35c568b8def2524a38aaa24af27, 테이블+8/함수+34/기존 함수2개 변경이며 모든 실행 gate false다. 백업 도구는 현재18개 테이블의 데이터까지 검사하도록 명시 범위를 추가했고 초기8개 기본 모드는 유지한다.
+
+로컬11개 PASS, 실제 운영 읽기 전용 백업/새 로컬 복원 PASS, 해당 복원본의 증분 적용13개 PASS·서버 종료. 보호 폴더 `.local/studio-v1-backup-20260916/publication-preflight-20261014-4d422ff8d2ab4850ae82b617f6ba6875/`.12:07:38 운영 preflight는 백업 일치·정확히 증분1개/seed0/roles0 PASS, 쓰기0회다. 첫 preflight의 읽기 전용 상태 off 실패는 보존하고 각 조회를 명시적으로 read only 트랜잭션으로 고쳐1회 재검증했다. CLI 권한/합성 컬럼 실패도 보존했다.
+
+새 증분은 아직 미커밋/운영 미적용이다. 운영 advisors의 기존 Auth WARN1·의도된 서버 전용 RLS INFO10·성능 INFO30을 검토 문서에 기록했다. 다음은 변경 고정/공개 검토와 운영 증분1개 적용 범위 확인이다. 키·환경·유료 AI·학생용 게시·추가 Linux 실행0회. 새 workflow 실제 전송과 불확실 상태의 후속 조정은 미검증/미구현으로 유지한다. 남은66%,53~55% 정리/50% 보존.
+
 ## 2026-10-14 11:52 KST — PR #16 배포 완료·게시 완료 처리 로컬 검증
 
 사용자가 검토19개/manifest2273aeea3393c4e50b7ddf5418169cb4a7aaed9551830b219a62ae39d68ed89c의 공개·검사 후 병합·재배포를 명시 승인했다. [PR #16](https://github.com/Raph-Alpaca/science-simulations/pull/16) head819676ff19ede249607f50a8a2f8676cf21e5897의 검사2개 SUCCESS 뒤11:49:00 KST 병합했다. main15f34bceca4f321abf7df233e08f017b913c9009, Production7055544849/success.11:51:04 실제 홈200/session401/worker503/publication manifest·file·check-report·claim503 및 private,no-store PASS. `.local/studio-publication-authority-review-20261014/production-http.json`. 앞선 자동 승인 검토의 공개 범위 차단은 해결됐으므로 이19개 승인을 반복하지 않는다.

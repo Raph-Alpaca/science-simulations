@@ -1,5 +1,13 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 12:08 KST:** PR #17의32개 명시 승인/검사/병합·운영 배포·HTTP 확인 완료. main12001d2c3b5b90a62f7c2eec8962ba77cf45c1a0/deployment7055622915. 기존19개/32개 차단은 모두 해결돼 재질문하지 않는다. 새 Pages workflow는 비활성이며 실제 게시/추가 Linux는 실행하지 않았다.
+
+현재 branch `codex/studio-publication-migration`, 운영 증분/백업 범위/검사/문서가 미커밋이다. [PUBLICATION_MIGRATION_REVIEW](PUBLICATION_MIGRATION_REVIEW.md)의 SQL 해시38665dc7590464e199a6864468b033bb86e9e35c568b8def2524a38aaa24af27을 따른다. 새 테이블8/함수34·기존 함수2만 변경, gate 전부 false. 로컬11개·운영18개 읽기 전용 백업/복원·복원본 증분13개·운영 dry-run 단1개 PASS. 백업/복원 서버 종료. `.local/studio-publication-migration-20261014/latest-backup-run.json`이 보호 폴더를 가리킨다.
+
+다음은 파일 고정/공개 PR 검토·병합 뒤 정확한 운영 증분1개 적용 권한 확인이다. 운영은 아직 foundation18테이블/45함수다. private `rollout.mjs`는 preflight/apply 모드가 분리돼 있으며 apply는 main SQL/최신 백업1시간/데이터/이력을 재확인하고 쓰기 표식1회를 강제한다. **첫 preflight는 READ_ONLY_TARGET_REQUIRED로 쓰기0 중단, preflight-2는 성공**이다. 실패/시도 파일을 삭제해 재실행하지 않는다. 오래되면 새 백업·복원으로 준비한다.
+
+기존 `refresh-backup.ps1`(20261013)은 foundation 재적용을 포함하므로 쓰지 않는다. 새 20261014 helper는 worker-foundation 백업만 하고, 별도 rehearse.ps1은 복원본에만 적용한다. OpenAI 키 인증 GET1회, Linux 새1/1·제작4/4·누적8은 반복하지 않는다. 키 등록·실제 제작·원문 검토·교사 최종 승인·학생용 게시·불확실 게시 후속 조정은 남았다. 남은66%/50% 보존. 아래는 과거 이력이다.
+
 **최신 2026-10-14 11:52 KST:** PR #16의 검토19개 명시 승인·정확한 head 검사·병합·운영 배포·HTTP 확인 완료. main15f34bceca4f321abf7df233e08f017b913c9009/deployment7055544849. `.local/studio-publication-authority-review-20261014/production-http.json`. 이전 자동 승인 차단과 미커밋 표기는 이력이며 이19개 공개/병합 승인을 다시 묻지 않는다.
 
 현재 `codex/studio-publication-deploy`는 authority 커밋819676f에서 분기했고 같은 코드가 원격 main에 병합됐다. [PUBLICATION_COMPLETION](PUBLICATION_COMPLETION.md)의 동일 파일 전송·공개 바이트 검증·완료 SQL/UI/workflow는 로컬 미커밋이다. 새21+공통25=46개, native PG17 경합6개·종료, Chrome4개, Next build/타입·추적8개/금지0·HTTP5개·actionlint3개 PASS. `.local/studio-publication-deploy-review-20261014/`, `.local/release-postgres17-da92d32e-d6f0-4c31-9dee-9f37973a0bfd/result.json`. 실행 중 검사/DB/브라우저 없음. 변경이 없으면 검사를 반복하지 않는다.
