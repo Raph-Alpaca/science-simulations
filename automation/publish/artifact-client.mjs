@@ -50,22 +50,24 @@ export function createPublicationTokenProvider(env,{transport=fetch}={}){
   need(typeof data.value==='string'&&data.value.length<=20000&&tokenPattern.test(data.value),'PUBLICATION_OIDC_INVALID');return data.value;
  };
 }
-export function createPublicationApiClient({publicationId,runId,workflowSha,getToken,transport=fetch,totalMs=PUBLICATION_CLIENT_LIMITS.totalMs}){
- need(uuid(publicationId)&&Number.isSafeInteger(runId)&&runId>0&&sha(workflowSha)&&typeof getToken==='function'&&Number.isInteger(totalMs)&&totalMs>0&&totalMs<=PUBLICATION_CLIENT_LIMITS.totalMs,'PUBLICATION_CLIENT_INVALID');
+export function createPublicationApiClient({publicationId,runId,workflowSha,getToken,transport=fetch,totalMs,purpose='prepare'}){
+ const reporting=purpose==='report';totalMs??=reporting?60000:PUBLICATION_CLIENT_LIMITS.totalMs;
+ need(['prepare','report'].includes(purpose)&&uuid(publicationId)&&Number.isSafeInteger(runId)&&runId>0&&sha(workflowSha)&&typeof getToken==='function'&&Number.isInteger(totalMs)&&totalMs>0&&totalMs<=(reporting?60000:PUBLICATION_CLIENT_LIMITS.totalMs),'PUBLICATION_CLIENT_INVALID');
  const deadline=Date.now()+totalMs,tokens=new Set();let requests=0;
  return Object.freeze({get requests(){return requests;},async post(action,payload={}, {signal}={}){
-  need(['manifest','file'].includes(action),'PUBLICATION_ACTION_REJECTED');exact(payload,action==='file'?['path']:[]);
-  const body=JSON.stringify({publicationId,payload});need(Buffer.byteLength(body)<=4096,'PUBLICATION_REQUEST_LIMIT');
-  need(Date.now()<deadline,'PUBLICATION_TIME_LIMIT');need(requests<PUBLICATION_CLIENT_LIMITS.requests,'PUBLICATION_REQUEST_LIMIT');requests++;
+  need((reporting?['check-report']:['manifest','file']).includes(action),'PUBLICATION_ACTION_REJECTED');exact(payload,reporting?['report']:action==='file'?['path']:[]);
+  const body=JSON.stringify({publicationId,payload});need(Buffer.byteLength(body)<=(reporting?20000:4096),'PUBLICATION_REQUEST_LIMIT');
+  need(Date.now()<deadline,'PUBLICATION_TIME_LIMIT');need(requests<(reporting?1:PUBLICATION_CLIENT_LIMITS.requests),'PUBLICATION_REQUEST_LIMIT');requests++;
   const token=await timed(s=>getToken({signal:s}),Math.min(5000,deadline-Date.now()),signal,'PUBLICATION_OIDC_TIMEOUT');
   need(typeof token==='string'&&token.length<=20000&&tokenPattern.test(token),'PUBLICATION_OIDC_INVALID');
   const fingerprint=hash(token);need(!tokens.has(fingerprint),'PUBLICATION_TOKEN_REUSED');tokens.add(fingerprint);
   need(Date.now()<deadline,'PUBLICATION_TIME_LIMIT');
   const result=await json(PUBLICATION_TRUST.origin+'/api/publication/'+action,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',Accept:'application/json'},body},
-   {transport,signal,ms:Math.min(PUBLICATION_CLIENT_LIMITS.requestMs,deadline-Date.now()),bytes:PUBLICATION_CLIENT_LIMITS.responseBytes});
+   {transport,signal,ms:Math.min(reporting?25000:PUBLICATION_CLIENT_LIMITS.requestMs,deadline-Date.now()),bytes:reporting?8192:PUBLICATION_CLIENT_LIMITS.responseBytes});
   const b=result.binding;need(result.published===false&&b?.publicationId===publicationId&&b.runId===runId&&b.runAttempt===1&&b.workflowSha===workflowSha,'PUBLICATION_BINDING_CHANGED');
   exact(b,['publicationId','approvalId','reviewId','runId','runAttempt','workflowSha','proposalHash','artifactHash']);
-  need(uuid(b.approvalId)&&uuid(b.reviewId)&&/^[a-f0-9]{64}$/.test(b.proposalHash)&&/^[a-f0-9]{64}$/.test(b.artifactHash));return result;
+  need(uuid(b.approvalId)&&uuid(b.reviewId)&&/^[a-f0-9]{64}$/.test(b.proposalHash)&&/^[a-f0-9]{64}$/.test(b.artifactHash));
+  if(reporting){exact(result,['binding','reportHash','passed','recordedAt','published']);need(result.reportHash===hash(JSON.stringify(payload.report))&&result.passed===(payload.report.runtime?.checks?.runtime==='pass')&&typeof result.recordedAt==='string'&&Number.isFinite(Date.parse(result.recordedAt)),'PUBLICATION_REPORT_RECEIPT_INVALID');}return result;
  }});
 }
 
