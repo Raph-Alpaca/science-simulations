@@ -17,7 +17,7 @@ export async function preparePublicationWorker({env=process.env,client,signal}={
  const output=await lstat(env.GITHUB_OUTPUT);need(output.isFile()&&!output.isSymbolicLink()&&output.nlink===1);
  client??=createPublicationApiClient({...run,getToken:createPublicationTokenProvider(env)});
  const artifact=await downloadPublicationArtifact(client,{signal});need(Object.keys(run).every(k=>artifact.binding[k]===run[k]));
- const sealed=sealPublicationArtifact(artifact.artifactText,artifact.binding,env.STUDIO_TRANSFER_KEY);
+ const sealed=sealPublicationArtifact(artifact.artifactText,artifact.binding,env.STUDIO_TRANSFER_KEY,artifact.inspection);
  need(!signal?.aborted);const folder=path.join(env.RUNNER_TEMP,'studio-publication-'+run.publicationId);
  await assertNoLinks(folder);await mkdir(folder,{mode:0o700});
  await writeFile(path.join(folder,'artifact.sealed.json'),sealed,{flag:'wx',mode:0o600});

@@ -3,6 +3,7 @@ import {PUBLICATION_TRUST} from '../../apps/studio/lib/publication-auth.mjs';
 import {LIMITS} from '../../packages/contracts/content-source.js';
 import {snapshotArtifactManifest} from './verify-artifact.mjs';
 import {encodeArtifactBundle} from './artifact-bundle.mjs';
+import {publicationInspection,preparePublicationBundle} from './publication-packet.mjs';
 const hash=x=>createHash('sha256').update(x).digest('hex');
 const uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(x);
 const sha=x=>typeof x==='string'&&/^[a-f0-9]{40}$/.test(x);
@@ -73,7 +74,7 @@ export function createPublicationApiClient({publicationId,runId,workflowSha,getT
 export async function downloadPublicationArtifact(client,{signal}={}){
  const controller=new AbortController(),bounded=AbortSignal.any([controller.signal,...(signal?[signal]:[])]);
  try{
-  const info=await client.post('manifest',{}, {signal:bounded});exact(info,['binding','manifest','bytes','published']);
+  const info=await client.post('manifest',{}, {signal:bounded});exact(info,['binding','manifest','bytes','inspection','published']);publicationInspection(info.inspection,info.binding);
   const manifest=snapshotArtifactManifest(info.manifest,info.binding.artifactHash);
   need(Number.isSafeInteger(info.bytes)&&info.bytes>=0&&info.bytes<=LIMITS.bytes);const files=Array(manifest.length);let next=0,total=0;
   await Promise.all(Array.from({length:Math.min(PUBLICATION_CLIENT_LIMITS.parallelFiles,manifest.length)},async()=>{
@@ -87,6 +88,7 @@ export async function downloadPublicationArtifact(client,{signal}={}){
    }
   }));
   need(total===info.bytes,'PUBLICATION_SIZE_CHANGED');const bundle=encodeArtifactBundle(files);need(bundle.artifactHash===info.binding.artifactHash,'PUBLICATION_ARTIFACT_CHANGED');
-  return Object.freeze({...bundle,binding:Object.freeze(info.binding),published:false});
+  const packet={artifactText:bundle.artifactText,binding:info.binding,inspection:info.inspection};preparePublicationBundle(packet);
+  return Object.freeze({...bundle,binding:Object.freeze(info.binding),inspection:Object.freeze(info.inspection),published:false});
  }finally{controller.abort();}
 }

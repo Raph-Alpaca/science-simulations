@@ -1,0 +1,53 @@
+name: Studio isolated approved artifact check
+on:
+  workflow_call:
+    inputs:
+      publication_id:
+        required: true
+        type: string
+      artifact_hash:
+        required: true
+        type: string
+    secrets:
+      STUDIO_TRANSFER_KEY:
+        required: true
+permissions: {}
+jobs:
+  verify:
+    if: github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1 && vars.STUDIO_PUBLICATION_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build fixed isolated checker
+        id: image
+        run: node automation/runner/container/build.mjs
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: studio-publication-${{ github.run_id }}
+          path: ${{ runner.temp }}/studio-publication-${{ inputs.publication_id }}
+      - name: Inspect only approved bytes in the credential-free container
+        env:
+          STUDIO_PUBLICATION_ID: ${{ inputs.publication_id }}
+          STUDIO_ARTIFACT_HASH: ${{ inputs.artifact_hash }}
+          STUDIO_CHECKER_IMAGE: ${{ steps.image.outputs.image }}
+          STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+        run: node automation/publish/verify-cli.mjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always() && !cancelled()
+        with:
+          name: studio-publication-report-${{ github.run_id }}
+          path: ${{ runner.temp }}/studio-publication-${{ inputs.publication_id }}/report.sealed.json
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 0

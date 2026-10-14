@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 import {publicationApiFixture} from './publication-api-fixture.mjs';
 import {PUBLICATION_TRUST} from '../../apps/studio/lib/publication-auth.mjs';
 import {createPublicationApiClient,createPublicationTokenProvider,downloadPublicationArtifact,PublicationClientError,PUBLICATION_CLIENT_LIMITS} from '../../automation/publish/artifact-client.mjs';
@@ -9,8 +9,9 @@ const run={publicationId:randomUUID(),runId:12345,workflowSha:'a'.repeat(40)};
 const fakeToken=()=>['synthetic',Buffer.from(randomUUID()).toString('base64url'),'signature'].join('.');
 const simple=encodeArtifactBundle(['catalog.json','index.html'].map(path=>({path,bytesBase64:Buffer.from(path==='index.html'?'<!doctype html>':'{}').toString('base64')})));
 const opened=openArtifactBundle(simple.artifactText,simple.artifactHash);
-const binding={...run,approvalId:randomUUID(),reviewId:randomUUID(),runAttempt:1,proposalHash:'b'.repeat(64),artifactHash:simple.artifactHash};
-const manifest={binding,manifest:opened.manifest,bytes:opened.bytes,published:false};
+const proposalText=JSON.stringify({schemaVersion:1,jobId:randomUUID(),contentId:'synthetic',candidateHash:'b'.repeat(64),sourceSnapshotHash:'c'.repeat(64),baselineSha:run.workflowSha,attempt:0,baseArtifactHash:'d'.repeat(64),artifactHash:simple.artifactHash,entry:'index.html'});
+const binding={...run,approvalId:randomUUID(),reviewId:randomUUID(),runAttempt:1,proposalHash:createHash('sha256').update(proposalText).digest('hex'),artifactHash:simple.artifactHash};
+const manifest={binding,manifest:opened.manifest,bytes:opened.bytes,inspection:{proposalText,generationKind:'interactive_2d'},published:false};
 
 test('bounded client downloads all exact bytes through RSA-authenticated HTTP and SQL receipts',async()=>{
  const f=await publicationApiFixture();try{

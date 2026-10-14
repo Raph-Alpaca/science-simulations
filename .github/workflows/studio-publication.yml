@@ -1,4 +1,4 @@
-name: Studio approved artifact preparation
+name: Studio approved artifact preparation and isolated check
 on:
   workflow_dispatch:
     inputs:
@@ -19,5 +19,15 @@ jobs:
     uses: ./.github/workflows/studio-publication-prepare.yml
     with:
       publication_id: ${{ inputs.publication_id }}
+    secrets:
+      STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}
+  verify:
+    needs: prepare
+    permissions:
+      contents: read
+    uses: ./.github/workflows/studio-publication-check.yml
+    with:
+      publication_id: ${{ inputs.publication_id }}
+      artifact_hash: ${{ needs.prepare.outputs.artifact_hash }}
     secrets:
       STUDIO_TRANSFER_KEY: ${{ secrets.STUDIO_TRANSFER_KEY }}

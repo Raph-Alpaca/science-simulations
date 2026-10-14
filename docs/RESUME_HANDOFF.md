@@ -1,5 +1,11 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 10:33 KST:** PR #13 명시 승인·병합·운영 배포/HTTP 확인 완료, main b0885c2edc4803ea185793260bc43f241a6a0228. API 키 입력/인증과 PR #12·#13 병합은 다시 요청하지 않는다. 현재 branch codex/studio-publication-check, 새 게시 검사 미커밋이다. [PUBLICATION_CHECK](PUBLICATION_CHECK.md)의27개 로컬/Chrome13개/build/배포 추적/비활성 HTTP/워크플로 검사가 통과했다. 현재 실행 중 앱·브라우저·검사 프로세스는 없다.
+
+승인 설명은 manifest와 봉투v2로 전달하고 실제 자료실 하위 경로에서 같은 파일을 검사한다. 보안 프로필/권한 변화 없이 컨테이너 진입 모드와 allowlist/COPY 순수 파일만 추가했다. report.sealed.json은 암호문만 저장하며 아직 보고서 HTTP/DB 연결·게시 권한 소비·실제 Pages 배포/확인은 없다. 새 수동 publication rehearsal은 키 없는 합성4사례·job12분이며 아직0회, 구체적 승인 후1회 기록을 만들 예정이다. 기존 제작 rehearsal4/4·누적8 제한과 구분하고 자동 반복하지 않는다.
+
+다음은 검토 목록/해시 고정→PR→새 Linux 확인, 동시에 보고서/게시 권한 연결 로컬 구현이다. 운영 SQL은 worker foundation만 적용됐고 나머지 승인/준비/게시 SQL은 proposal이다. App/전달 키 등록·유료 제작·실제 원문 검토·최종 교사 승인도 남았다.75% 남음/50% 보존(53~55%부터 정리). 기존 기록의 미커밋/승인 대기는 아래 이력으로 구분한다.
+
 **최신 2026-10-14 10:13 KST:** PR #12의 명시 승인·병합·운영 배포/HTTP 확인 완료. main dc277c232f369c861534e9e4245942a999ba1606, deployment7053737818. API 키 인증도 완료이므로 기존 병합 승인/키 입력/GET 인증을 반복하지 않는다. 이전 미커밋/승인 대기는 이력이다.
 
 현재 branch codex/studio-publication-auth에는 별도 게시 OIDC/SQL 원자 읽기·분할 파일 전달·암호화 준비 래퍼·비활성 워크플로가 미커밋으로 있다. [PUBLICATION_ARTIFACT](PUBLICATION_ARTIFACT.md)의29개 검사+실제 PG17 경쟁5개/build/추적8개/비활성 HTTP2개/actionlint PASS를 확인했다. PG/로컬 앱 종료 확인. `.local/studio-publication-auth-review-20261014/`와 `.local/release-postgres17-ab44381d-471c-410d-a2d8-7dd03c40b5ea/`가 증거다. 내용이 변하지 않으면 이미 통과한 검사를 반복하지 않는다.
