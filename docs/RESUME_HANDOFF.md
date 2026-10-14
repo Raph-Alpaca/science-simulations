@@ -1,5 +1,13 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 20:15 KST:** 이전 App 키 ID4858748 삭제를 실제 GitHub Key pairs 목록(새4859387 하나)으로 확인했다. Vercel 로그인 session13197 exit0, 보호된 인증 파일과 기존 프로젝트/Production 조회 성공까지 확인했다. 키 입력·삭제·로그인 요청은 완료됐으므로 반복하지 않는다. App 조회1회/Actions secret2개 등록/OpenAI 인증도 완료 상태다.
+
+**현재 유일한 연결 차단:** 자동 승인 검토가 새 App 개인키와 식별자3개를 Vercel Production에 실제 전송하는 구체적 사용자 승인이 없다고 거절했다. 실제 등록은 시작되지 않았고 vercel-app-env-attempt/result 파일도 없다. 검토 문서는 `.local/studio-setup-20261014/vercel-app-registration-review.md`. 대상은 기존 alpaca-t/science-simulations-studio (`prj_sneEZSgi9cWcn6Ryg7WBZDcyi4tR`), Production에 Secret 형식으로 STUDIO_GITHUB_APP_CLIENT_ID / STUDIO_GITHUB_INSTALLATION_ID / STUDIO_GITHUB_APP_PRIVATE_KEY 세 개다. 새 명시 승인 전에는 다른 경로로 전송하지 않는다.
+
+**승인 후 재개:** 보호 폴더의 vercel-project-metadata.json/vercel-app-env-preflight.json은 실제 조회로 작성했다. 기존6개 모두 sensitive/production, App3개 이름 부재 PASS. 10분을 넘으면 프로젝트/환경 읽기 전용 조회를 다시 수행하고 필터링한 메타데이터만 저장한다. JSON 원문은 환경값을 포함하므로 출력/저장 금지. 날짜는 PowerShell7.6에서 `ConvertFrom-Json -DateKind String`으로 읽는다. private register-vercel-app-env.ps1도 수정 완료. 표식이 없고 신선한 사전 확인이 있으면 승인된 래퍼1회 실행→각 결과 확인→원격 이름/Secret 타입/Production 및 기존6개 보존 검증. 불확실 결과는 표식을 지우거나 쓰기를 재시도하지 말고 읽기 전용으로 확인한다.
+
+**한도/잔여 범위:** 사용량47% 사용/53% 남음으로 정리 중,50%를 보존한다. 원격 main1f4df407298b72a104ec0abcc0303eaf7ce434cf·운영 배포·DB·모든 비활성 gate는 이번에 변경하지 않았다. 이번 승인은 재배포/활성화/DB/유료 AI/학생 게시/추가 Linux를 포함하지 않는다. 실제 OIDC 왕복·첫 제작·원문 검토·교사 수정/최종 승인·동일 파일 게시 확인·불확실 게시 후속 조정은 다음 단계다. 아래의 키 삭제/CLI 로그인 대기는 과거 이력이다.
+
 **최신 2026-10-14 20:06 KST:** 새 App 키 ID4859387(19:56 발급/공개 지문0LfdDps7…)를 사용자 파일 경로에서 받아 GitHub 지문 대조·RSA2048·DPAPI 복원 검증 PASS, 평문 제거까지 완료했다. `github-app-private-key.dpapi`/`github-app-key-status.json`이 보호 폴더에 있다. **App 메타데이터 조회1회도20:04:33KST에 GET6회/약3초 PASS**: `app-check-attempt.json`/`app-check-result.json` 존재, 절대 반복하지 않는다. 전체 executionReady는 false다.
 
 **남은 사용자 입력:** GitHub 탭971977200의 이전 키 ID4858748(위쪽19:05/SEAoRuJ…)만 직접 삭제하고 새 키는 유지하도록 요청했다. 아직 삭제 확인 전이다. Vercel의 기존 요청 오류 응답 후 새 로그인3을20:03 시작, session13197/보호 로그vercel-login-3.log/Chrome3 탭971977304.20:06 실측 session live, auth.json 없음, Allow Access 비활성. 새 요청 화면을 직접 확인하도록 질문했다. 탭을 handoff로 유지하며 코드/URL을 문서나 공개 로그에 넣지 않는다. 종료 여부를 실제 handle로 확인하고, 사용자 준비 없이 새 요청을 자동 반복하지 않는다.

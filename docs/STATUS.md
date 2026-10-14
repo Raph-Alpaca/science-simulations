@@ -1,5 +1,15 @@
 # 구현 현황
 
+## 2026-10-14 20:15 KST — 이전 키 삭제·Vercel 인증 확인, 설정 전송 승인 대기
+
+사용자의 두 완료 응답을 실제 상태와 대조했다. GitHub Key pairs 목록은 새 키 ID4859387 하나이며 이전 키 ID4858748이 없다. Vercel 로그인 session13197은 exit0으로 종료됐고 보호된 인증 파일과 인증된 프로젝트 조회 성공을 확인했다. 이전 키 삭제/로그인/키 입력을 다시 요청하지 않는다.
+
+기존 alpaca-t의 science-simulations-studio 프로젝트 ID와 Production 환경을 실제 CLI로 확인했다. 기존6개 설정은 모두 sensitive/production이며 추가 대상 App 설정3개 이름은 없다. 환경 응답은 메모리에서 이름·타입·target·시각만 추렸고 값은 출력/저장하지 않았다. 처음 사전 확인은 PowerShell JSON 날짜의 자동 변환 때문에 로컬에서 중단됐다. `ConvertFrom-Json -DateKind String`으로 시각 문자열을 보존한 뒤 실제 읽기 전용 조회에 근거한 PRODUCTION_PREFLIGHT_PASS를 기록했다. 이 실패는 원격 쓰기 전이다.
+
+**등록은 미실행:** 준비된 `register-vercel-app-env.ps1` 실행 요청을 자동 승인 검토가 차단했다. 사유는 DPAPI 개인키와 식별자를 Vercel Production에 전송하는 구체적 사용자 승인이 없다는 것이다. 앞선 포괄 위임/로그인 확인으로 이를 대신하지 않는다. `vercel-app-env-attempt.json`/result 파일이 없음을 확인했고 새 환경값은 등록되지 않았다. 정확한3개 이름·대상·권한 영향·제외 범위를 `.local/studio-setup-20261014/vercel-app-registration-review.md`에 고정했다.
+
+다음은 위 검토 범위의 명시 승인 후 신선한 실제 사전 확인→설정3개 Secret/Production 등록→이름/타입/대상·기존6개 메타데이터 보존 확인이다. 재배포/기능 활성화/DB 변경/유료 AI/학생 게시/추가 Linux 실행은 이번 범위가 아니다. 완료된 App 조회/OpenAI 인증/Actions secret 등록은 반복하지 않는다. 사용량47% 사용/53% 남음으로50% 보존을 위해 정리 중이다. 새 공개 업로드·PR·재배포는 없으며 전체 시스템 완료가 아니다.
+
 ## 2026-10-14 20:06 KST — App 키 보호·실제 조회 검사 완료
 
 사용자가 직접 내려받은 새 App 개인키 경로를 제공했다. GitHub 실제 키 목록에서19:56 발급 키 ID4859387의 공개 지문을 확인한 뒤 로컬 RSA2048 지문과 일치함을 검증했다.20:02:54KST 현재 사용자 전용 DPAPI 저장·복원 일치 PASS, 정확한 다운로드 평문1개만 제거했고 파일 부재도 확인했다. 암호화 키는 `.local/studio-worker-secrets-20261014/github-app-private-key.dpapi`, 증거는 github-app-key-status.json에 있다. 키 값은 출력/공개하지 않았다.
