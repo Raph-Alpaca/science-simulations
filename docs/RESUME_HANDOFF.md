@@ -1,5 +1,17 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 19:18 KST:** App/키 등록 범위를 구체적으로 제시한 뒤 사용자가 계속 진행을 승인했다. 이전 App 접근 승인 질문을 반복하지 않는다. `Science Studio Raph Alpaca`는 생성·저장소1개 설치 완료(선택 저장소 화면 검증, Actions write/Contents read/Metadata read). `OPENAI_API_KEY`, `STUDIO_TRANSFER_KEY`는 Actions에 실제 등록·이름/시각 검증 완료다. 기존 OpenAI 인증 GET과 secret 등록을 다시 실행하지 않는다. Production App 환경값은 아직0개 추가, 실행 gate 변경 없음.
+
+**지금 필요한 입력2개:** Chrome3의 GitHub 탭971977200은 Key pairs 화면에서 사용자의 New key 직접 다운로드/파일 경로 응답 대기다. 첫 키 ID4858748은 발급됐지만 브라우저가 다운로드를 차단해 로컬 확보 미확인이다. 새 파일의 SHA256 공개 지문을 화면과 대조해 보호한 뒤 이 미확보 키를 정리해야 한다. 비밀값/PEM 내용은 채팅으로 받지 않는다. Vercel 탭971977298은 기존 raph-alpaca 계정의 CLI Authorize Device 화면이며 Allow Access가 비활성으로 보여 사용자에게 직접 확인을 요청했다. 두 탭을 handoff로 유지한다. 탭이 없어졌다면 기존 Chrome3에서 새 탭을 사용하고 브라우저를 재선택하지 않는다.
+
+**인증 대기:** CLI 로그인 두 번째 요청은19:11KST 시작, shell session89016. 인증 파일은 보호 폴더의 `vercel-auth/auth.json`, 로그는 `vercel-login-2.log`다. 임시 URL/코드는 문서에 넣지 않는다. 성공/만료/종료를 확인한 뒤 이어가며 오래된 코드 재사용/자동 로그인 반복은 하지 않는다. 첫 실패는 한글 hostname의 ByteString 오류였고 로컬 CLI64.0.2 `chunk-AOWWC6WZ.js`의 User-Agent hostname만 encodeURIComponent로 수정했다. 기록 `vercel-cli-local-encoding-fix.json`, TLS·계정 범위 변경 없음. 설치본 업데이트 시 패치가 사라질 수 있다.
+
+**보호 폴더:** `.local/studio-worker-secrets-20261014/` 현재 사용자 ACL/DPAPI/Git 제외 유지. `github-app-metadata.json`에는 App ID5313819/client ID/설치171315999/선택1개 메타데이터가 있다. `OPENAI_API_KEY.registration-result.json`, `STUDIO_TRANSFER_KEY.registration-result.json`은 REGISTERED이며 시도 표식도 존재한다. `github-app-private-key.dpapi`, App 검사/환경 등록의 시도 표식은 아직 없다. 상태를 먼저 확인하고 완료 파일을 덮어쓰지 않는다.
+
+**이어갈 절차:** 사용자 파일 경로·화면 지문 확인→준비한 `protect-app-key.ps1 -DownloadPath ... -ExpectedFingerprint ...` 실제 실행→DPAPI 복원/지문/원본 제거 결과 확인→미확보 첫 키 정리 확인→`check-app-connection.ps1 -ExpectedSha 1f4df407298b72a104ec0abcc0303eaf7ce434cf` 조회 검사1회(최대6GET/20초, 재시도 금지). Vercel CLI 인증 후 기존 project inspect로 이름/ID/팀, Production env 이름만 검사해10분 이내 `vercel-app-env-preflight.json`을 작성한 뒤 `register-vercel-app-env.ps1`로 승인된 설정3개만 등록한다. preflight는 실제 조회 결과로만 작성하고 Secret 값/CLI raw출력은 공개하지 않는다. 등록 후 이름/Production/Secret 타입을 확인한다. 아직 새 환경 재배포·기능 활성화·유료 제작·학생 게시는 실행하지 않는다.
+
+**검증/저장:** 새 보호/등록 헬퍼는 구문 검사만 통과했다. 실제 App 조회/키 보호/Vercel 등록 성공이라고 기록하지 않는다. 로컬 branch codex/studio-live-connection, 이전 HEAD75820d11ab7f2d12e90f0ea45e74892a8955b449, 문서 갱신 예정. main/운영DB는 PR #18 완료 상태 유지. 사용량44% 사용/56% 남음이므로53~55% 남음부터 정리하고50%를 보존한다. 아래 미생성/secret0/승인 대기 문장은 이전 이력이다.
+
 **최신 2026-10-14 13:22 KST:** 사용자가 GitHub 본인 확인과 Vercel 로그인을 완료했고 두 화면으로 확인했다. 이전 로그인 질문을 반복하지 않는다. GitHub 탭971976955는 미제출 App 초안(Science Studio Raph Alpaca/계정전용/webhook off/Actions write/Metadata read)이며 Contents 메뉴가 열린 채 Read-only 클릭을 자동 승인 검토가 차단했다. 해당 App 자체는 아직 생성되지 않았다. Vercel 탭971976956은 기존 프로젝트의 Production 환경 화면이다. 재개 시 CUA 세션 변수가 사라질 수 있으므로 오류가 있으면 기존 브라우저3/두 tab ID로 다시 연결한다. 탭을 handoff로 유지한다.
 
 대기 질문은 **새 App 생성·science-simulations 한 저장소에만 설치·개인키 보호/Vercel Production App 설정3개/GitHub Actions 기존 키2개 등록/조회 전용 App 검사1회**다. 사용자 답변에 따라 허용된 부분만 수행한다. 질문 옵션은 전체 승인/App 생성·설치만 승인/보류. 아직 답변 없으며 포괄 진행 위임으로 거부된 Contents 선택을 재시도하지 않는다. 검토 `.local/studio-setup-20261014/app-registration-review.json` 및 두 PNG, [LIVE_CONNECTION](LIVE_CONNECTION.md). 기존 DB·공개 PR 승인을 반복하지 않는다.

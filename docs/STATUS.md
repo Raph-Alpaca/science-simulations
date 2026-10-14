@@ -1,5 +1,19 @@
 # 구현 현황
 
+## 2026-10-14 19:18 KST — App 설치·Actions 키 등록 완료, 서버 키/CLI 확인 대기
+
+사용자가 구체적인 App 생성·저장소1개 설치·Production App 설정3개·Actions secret2개·조회 검사1회 제안 뒤 계속 진행을 지시했다. 이 범위의 이전 접근 권한 승인 차단은 해소됐다. GitHub sudo 인증 만료는 사용자 재확인 뒤 해소했다.
+
+**실제 완료:** 개인 계정 전용 `Science Studio Raph Alpaca` App 생성과 `Raph-Alpaca/science-simulations` 한 개 선택 설치. 실제 설치 화면에서 선택1개와 Actions write / Contents read / Metadata read를 확인했다. Webhook/OAuth 요청/device flow는 비활성이다. 기존 DPAPI의 OpenAI/전달 키는 stdin을 사용하는 GitHub CLI로 해당 저장소 Actions secret `OPENAI_API_KEY`, `STUDIO_TRANSFER_KEY`에 등록했다.10:04:43Z/10:04:44Z 이름·등록 시각 재조회 PASS. 키 값은 출력하지 않았고 실행 gate를 변경하지 않았다.
+
+**실패/미완료:** App의 첫 개인키 발급은 GitHub에 기록됐지만 브라우저 다운로드가 `ERR_BLOCKED_BY_CLIENT`로 끝났다. 다운로드 폴더에서 해당 App 이름의 PEM을 찾지 못했다. 키 ID4858748은 원격에 남아 있으며 값을 확보했다고 간주하지 않는다. 재발급을 자동 반복하지 않고 사용자에게 New key 직접 다운로드·경로만 전달을 요청했다. 새 파일을 보호·지문 검증한 뒤 기존 미확보 키를 정리해야 한다. App 메타데이터만 로컬 저장했고 개인키 DPAPI/실제 App 조회 검사/표식은 아직 없다.
+
+Vercel CLI 로그인 첫 시도는 한글 PC 이름을 HTTP User-Agent에 넣어 ByteString 변환 오류로 중단됐다. 로컬 설치본64.0.2의 해당 헤더 hostname만 URI 인코딩해 구문 검사 후 두 번째 로그인 요청을 시작했다. TLS·인증 범위 변경 없음. 실제 기존 계정의 Authorize Device 화면은 확인했으나 Allow Access가 비활성으로 보여 사용자 확인 대기다. CLI 인증 파일 생성·프로젝트 inspect·App 환경변수 등록·재배포는 아직 미완료다. 로그인 임시 요청의 만료/종료 여부를 재개 시 먼저 확인한다.
+
+**로컬 준비:** `.local/studio-setup-20261014/`의 `register-actions-secrets.ps1` 실제 성공, `inspect-app-key.mjs`, `protect-app-key.ps1`, `register-vercel-app-env.ps1`은 구문 검사만 PASS이며 실제 실행 전이다. PEM 보호는 RSA≥2048/화면 지문 대조·DPAPI 왕복·원본 정확한 경로/해시 확인 후 해당 평문1개만 제거한다. Vercel 래퍼는10분 이내 실제 프로젝트/Production/동일 이름 부재 확인 기록을 요구하고 stdin·Secret 타입·단일 시도 표식을 사용한다. 부분 실패는 다시 실행하지 않고 원격 이름/범위를 조사한다. 비공개 승인·성공·실패 증거와 App 설치 화면은 모두 `.local`에만 있다.
+
+원격 main은1f4df407298b72a104ec0abcc0303eaf7ce434cf 그대로다. 운영 DB/기능 코드/유료 호출/학생 게시/추가 Linux 실행/새 공개 push·PR 변경 없음. 최근 사용량44% 사용/56% 남음,50% 보존. 남은 두 사용자 입력 뒤 서버 키 보호→미확보 키 정리→App 메타데이터1회→Vercel 대상 검증·설정3개 등록 순으로 이어간다. 실제 자동 제작/교사 승인/게시가 검증된 것은 아니다.
+
 ## 2026-10-14 13:22 KST — 로그인 확인·App 접근 권한 승인 대기
 
 사용자의 GitHub 본인 확인/Vercel 로그인 완료 응답 뒤 실제 화면을 확인했다. GitHub 탭971976955는 Create GitHub App으로 진입했고 Vercel 탭971976956은 기존 alpaca-t/science-simulations-studio 프로젝트에 로그인됐다. Vercel Project ID는 prj_sneEZSgi9cWcn6Ryg7WBZDcyi4tR, Production main/기존6개 환경변수 이름과 Secret 타입을 확인했다. 값은 열지 않았다. 아래 로그인 대기는 해소됐다.
