@@ -3,6 +3,7 @@ import {publicationNeed as need,publicationHash as hash,publicationUuid as uuid,
 import {inspectReleaseReview} from './release-approval.mjs';
 import {openArtifactBundle} from '../../../automation/publish/artifact-bundle.mjs';
 import {LIMITS} from '../../../packages/contracts/content-source.js';
+import {publicationInspection} from '../../../automation/publish/publication-packet.mjs';
 
 export function createPublicationGateway(client){
  const db=client.schema('studio');
@@ -19,7 +20,9 @@ export function createPublicationGateway(client){
    try{checked=inspectReleaseReview(packet.snapshot,packet.ownerId);bundle=openArtifactBundle(checked.record.artifact_text,b.artifactHash);}
    catch{throw new PublicationAuthError('PUBLICATION_ARTIFACT_INVALID',409);}
    need(checked.summary.current&&checked.summary.approval?.effective&&checked.summary.approval.id===b.approvalId&&checked.record.id===b.reviewId&&checked.record.proposal_hash===b.proposalHash,'PUBLICATION_APPROVAL_CHANGED',409);
-   return {binding:b,manifest:bundle.manifest,bytes:bundle.bytes,published:false};
+   const inspection={proposalText:checked.record.proposal_text,generationKind:JSON.parse(packet.snapshot.result.worker.input_text).input.generationKind};
+   publicationInspection(inspection,b);
+   return {binding:b,manifest:bundle.manifest,bytes:bundle.bytes,inspection,published:false};
   }
   need(action==='file'&&path(filePath),'PUBLICATION_REQUEST_INVALID',400);
   const f=packet.file;exact(f,['path','bytesBase64']);need(f.path===filePath&&typeof f.bytesBase64==='string'&&f.bytesBase64.length<=Math.ceil(LIMITS.fileBytes/3)*4,'PUBLICATION_ARTIFACT_INVALID',409);

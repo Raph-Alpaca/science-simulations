@@ -25,7 +25,7 @@ test('signed request -> durable receipt -> exact approved manifest and individua
   await f.enableApi();const response=await f.request('manifest');assert.equal(response.status,200);
   assert.equal(response.headers.get('cache-control'),'private, no-store');assert.equal(response.headers.get('vary'),'Authorization');
   const m=await response.json();assert.equal(m.binding.publicationId,f.intent.id);assert.equal(m.binding.approvalId,f.approval.id);assert.equal(m.published,false);
-  assert.deepEqual(Object.keys(m).sort(),['binding','bytes','manifest','published']);assert.ok(!JSON.stringify(m).includes(f.ownerId));
+  assert.deepEqual(Object.keys(m).sort(),['binding','bytes','inspection','manifest','published']);assert.ok(!JSON.stringify(m).includes(f.ownerId));
   const files=[];
   for(const expected of m.manifest){
    const r=await f.request('file',{path:expected.path});assert.equal(r.status,200);const data=await r.json();

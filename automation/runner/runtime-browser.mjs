@@ -4,10 +4,11 @@ import {chromium} from '@playwright/test';
 import {hash} from '../../packages/contracts/content-source.js';
 import {RUNTIME_CONTRACT,RuntimeCheckError,runtimeNeed as need,checkRuntimeSource} from './runtime-contract.mjs';
 import {browserLaunchIssues} from './runtime-diagnostics.mjs';
+import {preparePublicationBundle} from '../publish/publication-packet.mjs';
 
 const ORIGIN='https://simulation.invalid';
 const CSP="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'none'; connect-src 'self'; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
-const mime={html:'text/html',js:'text/javascript',css:'text/css',json:'application/json',svg:'image/svg+xml'};
+const mime={html:'text/html',js:'text/javascript',css:'text/css',json:'application/json',svg:'image/svg+xml',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',woff2:'font/woff2'};
 export function browserEnvironment(env){
  const result={};for(const key of ['SystemRoot','SYSTEMROOT','WINDIR','TEMP','TMP','TMPDIR','PATH','HOME','USERPROFILE','LOCALAPPDATA','PROGRAMFILES','PROGRAMFILES(X86)'])if(typeof env[key]==='string')result[key]=env[key];
  return result;
@@ -44,7 +45,8 @@ async function webglObservation(context,page){
   return result.result.value;
  }finally{await cdp.detach();}
 }
-export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',environment=process.env}={}){
+export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',environment=process.env,publicationPacket}={}){
+ const site=publicationPacket?preparePublicationBundle(publicationPacket):null;if(site)bundle=site.runtime;
  const started=Date.now(),base={candidateHash:bundle.candidateHash,sourceSnapshotHash:bundle.sourceSnapshotHash,baselineSha:bundle.baselineSha,attempt:bundle.attempt,contractVersion:RUNTIME_CONTRACT.version};
  const result={...base,checks:{contract:'not_run',runtime:'not_run'},checksExecuted:[],issues:[],observations:[],requests:0};
  let browser,timer,closePromise,expired=false,cancelled=signal?.aborted===true;
@@ -60,7 +62,8 @@ export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',envir
    try{browser=await chromium.launch(runtimeLaunchOptions({channel,environment}));}
    catch(error){stop();const [code,...markers]=browserLaunchIssues(error);result.issues.push(...markers);throw new RuntimeCheckError(code);}
    stop();result.browserVersion=browser.version();result.checksExecuted.push('runtime');result.checks.runtime='fail';
-   const files=new Map(bundle.candidate.files.map(f=>['/'+f.path,f.content]));let requests=0;
+   const files=site?new Map(site.artifact.files.map(f=>[site.basePath+f.path,Buffer.from(f.bytesBase64,'base64')])):new Map(bundle.candidate.files.map(f=>['/'+f.path,f.content]));
+   const entryPath=site?.entryPath??'/'+bundle.candidate.meta.entry,catalogPath=site?site.basePath+'index.html':null;let requests=0;
    async function scene(width,noWebgl=false){
     stop();const context=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,reducedMotion:'reduce',serviceWorkers:'block',acceptDownloads:false,permissions:[],offline:true});
     const faults=new Set();let page;
@@ -69,7 +72,7 @@ export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',envir
       const req=route.request(),url=new URL(req.url());requests++;result.requests=Math.min(requests,201);
       if(requests>RUNTIME_CONTRACT.limits.requests){faults.add('RUNTIME_REQUEST_LIMIT');return route.abort();}
       if(url.origin!==ORIGIN||req.method()!=='GET'||url.search||!files.has(url.pathname)||
-       (req.isNavigationRequest()&&(req.frame()!==page?.mainFrame()||url.pathname!=='/'+bundle.candidate.meta.entry))){faults.add('RUNTIME_NETWORK_OR_ASSET_REJECTED');return route.abort();}
+       (req.isNavigationRequest()&&(req.frame()!==page?.mainFrame()||url.pathname!==entryPath&&url.pathname!==catalogPath))){faults.add('RUNTIME_NETWORK_OR_ASSET_REJECTED');return route.abort();}
       return route.fulfill({status:200,body:files.get(url.pathname),contentType:(mime[url.pathname.split('.').pop()]||'application/octet-stream')+'; charset=utf-8',headers:{'Content-Security-Policy':CSP,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'}});
      });
      await context.routeWebSocket('**/*',ws=>{faults.add('RUNTIME_WEBSOCKET_REJECTED');ws.close();});
@@ -80,7 +83,15 @@ export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',envir
      page.on('dialog',dialog=>{faults.add('RUNTIME_DIALOG_REJECTED');void dialog.dismiss();});
      page.on('download',download=>{faults.add('RUNTIME_DOWNLOAD_REJECTED');void download.cancel();});
      if(noWebgl)await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /^webgl|^experimental-webgl/.test(type)?null:original.call(this,type,...args);};});
-     await page.goto(ORIGIN+'/'+bundle.candidate.meta.entry,{waitUntil:'load'});await wait(100);stop();
+     if(site&&!noWebgl){
+      await page.goto(ORIGIN+catalogPath,{waitUntil:'load'});
+      await until(async()=>{const links=await page.locator('a[href]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')));return site.entries.every(href=>links.includes(href));},'RUNTIME_PUBLICATION_CATALOG_REJECTED');
+      need(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'RUNTIME_HORIZONTAL_OVERFLOW');
+      const target=page.locator('a[href]').filter({visible:true});let selected=false;
+      for(let i=0;i<await target.count();i++){const link=target.nth(i);if(await link.getAttribute('href')===entryPath){await link.click();selected=true;break;}}
+      need(selected&&page.url()===ORIGIN+entryPath,'RUNTIME_PUBLICATION_CATALOG_REJECTED');
+     }else await page.goto(ORIGIN+entryPath,{waitUntil:'load'});
+     await wait(100);stop();
      if(noWebgl){
       const alternative=await one(page,'data-sim-alternative');need((await alternative.innerText()).trim().length>=10,'RUNTIME_ALTERNATIVE_EMPTY');
       need(!faults.size,[...faults][0]);result.observations.push({width,webglUnavailable:true,alternativeVisible:true});return;
@@ -103,7 +114,7 @@ export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',envir
       observed.webgl=gl;observed.cameraChanged=true;observed.alternativeVisible=true;
      }
      need(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'RUNTIME_HORIZONTAL_OVERFLOW');
-     need(page.url()===ORIGIN+'/'+bundle.candidate.meta.entry,'RUNTIME_NAVIGATION_REJECTED');need(!faults.size,[...faults][0]);
+     need(page.url()===ORIGIN+entryPath,'RUNTIME_NAVIGATION_REJECTED');need(!faults.size,[...faults][0]);
      result.observations.push(observed);
     }finally{await context.close();}
    }

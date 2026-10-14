@@ -1,5 +1,13 @@
 # 구현 현황
 
+## 2026-10-14 10:33 KST — PR #13 배포 완료·동일 파일 게시 검사 로컬 검증
+
+사용자의 **PR #13 병합·제작실 재배포 승인** 후23개/headb55a82d4bc24b42ef99f81d7a5631bf812e56d4a를 병합했다. [PR #13](https://github.com/Raph-Alpaca/science-simulations/pull/13)10:16:47 KST merged, main b0885c2edc4803ea185793260bc43f241a6a0228. Production7054207561/success,10:18 실제 홈200·session401·worker503·publication manifest/file503 및 private,no-store 확인. 보호 증거 `.local/studio-publication-auth-review-20261014/production-http.json`. 자동 승인 차단은 해결됐으며 재승인하지 않는다.
+
+별도 `codex/studio-publication-check`에서 [승인 파일 격리 검사](PUBLICATION_CHECK.md)를 구현했다. 실제 자료실 하위 경로의 링크·2D/3D 조작을 같은 바이트로 검사하고 결과를 실행/승인에 묶어 암호화한다. 컨테이너 보안 필터·권한은 그대로이며 새 진입 모드/순수 모듈만 추가했다. 로컬27/27, 실제 Chrome 새5+기존8=13/13, Next build/TypeScript·추적8개·비활성 HTTP·actionlint PASS다. 실제 Linux 새 모드는0회이며 이전 rehearsal 상한4/4·누적8은 늘리지 않는다.
+
+현재 단계 미커밋. 새 Linux 합성 검사1회용 수동 workflow를 준비했으며 별도 승인/실행 기록 후1회만 실행할 계획이다. 운영 SQL/환경/키·유료 AI·학생용 게시 변경0회, 과거 OpenAI 인증 GET1회는 완료돼 반복하지 않는다. 다음은 변경 PR/새 Linux 확인과 보고서 저장·게시 권한 소비·배포/확인 연결이다. 사용량25% 사용/75% 남음이며50% 보존 조건 유지.
+
 ## 2026-10-14 10:13 KST — PR #12 배포 완료·승인 파일 인증/전달 검증
 
 사용자의 **PR #12 병합·제작실 재배포 승인** 후 검토한20개/head24af062a71f7d39300af5bf9b07a72f836a89f85를 병합했다. [PR #12](https://github.com/Raph-Alpaca/science-simulations/pull/12)09:44:33 KST merged, main dc277c232f369c861534e9e4245942a999ba1606. Production deployment7053737818/success,09:47 홈200·session401/LOGIN_REQUIRED·worker503/WORKER_SETUP_REQUIRED 및 private,no-store를 확인했다. 보호 증거 `.local/studio-publication-review-20261014/production-http.json`. 이전 자동 승인 차단은 해결됐고 재승인/재병합하지 않는다. API 키의09:30 인증도 완료돼 입력/인증 GET을 반복하지 않는다.
