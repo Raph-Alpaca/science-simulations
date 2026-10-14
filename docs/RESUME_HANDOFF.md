@@ -1,5 +1,13 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 13:22 KST:** 사용자가 GitHub 본인 확인과 Vercel 로그인을 완료했고 두 화면으로 확인했다. 이전 로그인 질문을 반복하지 않는다. GitHub 탭971976955는 미제출 App 초안(Science Studio Raph Alpaca/계정전용/webhook off/Actions write/Metadata read)이며 Contents 메뉴가 열린 채 Read-only 클릭을 자동 승인 검토가 차단했다. 해당 App 자체는 아직 생성되지 않았다. Vercel 탭971976956은 기존 프로젝트의 Production 환경 화면이다. 재개 시 CUA 세션 변수가 사라질 수 있으므로 오류가 있으면 기존 브라우저3/두 tab ID로 다시 연결한다. 탭을 handoff로 유지한다.
+
+대기 질문은 **새 App 생성·science-simulations 한 저장소에만 설치·개인키 보호/Vercel Production App 설정3개/GitHub Actions 기존 키2개 등록/조회 전용 App 검사1회**다. 사용자 답변에 따라 허용된 부분만 수행한다. 질문 옵션은 전체 승인/App 생성·설치만 승인/보류. 아직 답변 없으며 포괄 진행 위임으로 거부된 Contents 선택을 재시도하지 않는다. 검토 `.local/studio-setup-20261014/app-registration-review.json` 및 두 PNG, [LIVE_CONNECTION](LIVE_CONNECTION.md). 기존 DB·공개 PR 승인을 반복하지 않는다.
+
+Vercel 확인 ID prj_sneEZSgi9cWcn6Ryg7WBZDcyi4tR, 팀 alpaca-t/프로젝트 science-simulations-studio. Production의 기존6개 변수 이름만 확인했고 값 조회/변경은 없다. MCP teams는 빈 목록이라 재조회/403 반복 대신 공식 CLI64.0.2를 `.local/tools/vercel-cli-64.0.2/node_modules/.bin/vercel.cmd`에 준비했다. 도움말 확인 완료(초기 캐시 EPERM은 실제 사용자 도움말 실행으로 해결), 아직 CLI 로그인 없음. --global-config는 보호된 별도 폴더, env add는 stdin/production/--type secret/--project/--scope/--non-interactive를 사용 가능하다. 실제 등록 전 project inspect로 ID/팀 확인하고 키를 argv/로그에 넣지 않는다. `env pull`로 운영 비밀값을 평문 저장하지 않는다.
+
+로컬97c0a85는 연결 검사8개 PASS를 포함한다. 이후3개 문서만 갱신하며 운영 main은1f4df40이다. 새 공개 push/DB/환경/유료/Linux/학생 게시0회, 현재 검사 프로세스 없음. 사용량59% 남음,53~55%부터 인계/50% 보존. 목표 상태는 앞선 로그인 blocker로 blocked였으며 도구로 임의 resume하지 않는다. 사용자가 재개한 이번 접근 권한 대기는 새 blocked 감사의 첫 턴이다.
+
 **최신 2026-10-14 12:37 KST:** 로그인 두 건은 실제 탭 재확인 결과 여전히 대기다(971976955 GitHub Confirm access /971976956 Vercel login). 탭 handoff를 갱신했고 중복 질문·인증 코드 요청·계정 생성은 하지 않았다. 사용자 응답 후 같은 탭의 현재 화면부터 이어간다. 이전 턴에서 완료한 DB/PR #18은 재실행하지 않는다.
 
 대기 중 App 연결 검사 도구3개(automation/studio/app-connection.mjs, app-connection-cli.mjs, tests/studio/app-connection.test.mjs)와 [연결 절차](LIVE_CONNECTION.md)를 로컬 구현했다. 모의8개 PASS/공백 검사PASS. GET 최대6회/20초이며 쓰기 토큰 발급·dispatch·유료 호출·게이트 변경이 없다. App 소유/설치/권한과 공개 main/workflow 메타데이터를 검증하지만 실제 OIDC 왕복이나 설치 저장소 전체 개수까지 증명하지 않는다. 성공도 executionReady=false를 유지한다. 공개 업로드하지 않았으며 운영 앱 코드는 main1f4df407298b72a104ec0abcc0303eaf7ce434cf다.

@@ -1,5 +1,17 @@
 # 구현 현황
 
+## 2026-10-14 13:22 KST — 로그인 확인·App 접근 권한 승인 대기
+
+사용자의 GitHub 본인 확인/Vercel 로그인 완료 응답 뒤 실제 화면을 확인했다. GitHub 탭971976955는 Create GitHub App으로 진입했고 Vercel 탭971976956은 기존 alpaca-t/science-simulations-studio 프로젝트에 로그인됐다. Vercel Project ID는 prj_sneEZSgi9cWcn6Ryg7WBZDcyi4tR, Production main/기존6개 환경변수 이름과 Secret 타입을 확인했다. 값은 열지 않았다. 아래 로그인 대기는 해소됐다.
+
+GitHub App 초안은 Science Studio Raph Alpaca, 해당 계정 전용, 홈페이지는 기존 제작실, webhook/OAuth 요청/device flow 비활성이다. Actions read/write 선택과 자동 Metadata read까지만 초안에 반영됐으며 Contents read 선택은 자동 승인 검토가 구체적 접근 권한 승인이 없다며 차단했다. **App 생성/설치/개인키 발급·등록은 모두 아직 없다.** 같은 동작을 다른 경로로 수행하지 않았다.
+
+사용자에게 App 생성·해당 저장소1개 설치(Actions write/Contents read/Metadata read)·개인키 보호, Vercel Production의 App 설정3개와 GitHub Actions의 기존 OpenAI/전달키2개 등록, 조회 전용 App 검사1회 범위를 묶어 질문했다. 기능 비활성 유지/DB·유료 AI·학생 게시·추가 Linux 실행 제외다. 답변은 아직 대기다. `.local/studio-setup-20261014/app-registration-review.json`과 app-permissions-review.png / app-permissions-review-viewport.png가 제출 전 검토 자료이며 공개 Git 제외다.
+
+독립 준비: Vercel MCP teams 조회는 빈 목록이라 브라우저 로그인과 연결 도구 권한을 구분했다. 공식 npm Vercel CLI64.0.2(Node>=20)를 `.local/tools/vercel-cli-64.0.2`에 설치 스크립트 없이 준비했다(291 packages). env add/login/project inspect 도움말에서 표준 입력·Production·명시 프로젝트/팀·Secret 타입·별도 global-config를 확인했다. 첫 도움말은 기본 사용자 캐시 폴더 EPERM으로 실패했고 실제 사용자 권한의 도움말 조회만 성공했다. CLI 로그인/프로젝트 연결/키 전송/배포는 미실행이다. 등록 시 별도 보호 인증 경로와 실제 프로젝트 ID를 사용하고 CLI 인증이 필요하면 기존 브라우저 로그인과 구분해 안내한다.
+
+기능 코드/테스트 변경 없음, PR #18 운영 상태 유지. 현재 로컬 HEAD97c0a8531d57203f696fcf1fad9910db6e3847d9 이후 진행 문서만 변경했다. 최근 사용량41% 사용/59% 남음으로53~55%부터 정리/50% 보존한다. 전체 시스템은 실제 실행 연결·제작/교사 승인/게시 검증이 남아 있다.
+
 ## 2026-10-14 12:37 KST — 기능 활성화 전 App 연결 검사 준비
 
 현재 Git/문서와 실제 Chrome 탭971976955/971976956을 다시 확인했다. GitHub는 Confirm access, Vercel은 기존 프로젝트로 돌아가는 로그인 화면으로 사용자 인증 대기가 지속된다. 두 탭을 handoff로 유지했고 인증·App 생성/권한 부여·환경/키 등록·추가 원격 실행은 하지 않았다. 이전 완료 보고 뒤 상태 재확인은 새로운 기능 진행으로 계산하지 않으며, 이번에는 아래 로컬 검사 구현을 완료했다.
