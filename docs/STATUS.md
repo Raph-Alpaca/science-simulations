@@ -1,5 +1,23 @@
 # 구현 현황
 
+## 2026-10-14 20:30 KST — 실제 OIDC 연결 검사 로컬 준비 완료
+
+Vercel 등록·보존 검증 이후, 실제 GitHub 발급 토큰의 두 역할을 확인할 `connection` 모드를 준비했다. 기존 caller/reusable 경로를 유지하고 API/전달/DB/App 키 없이 같은 운영 인증 검증 코드를 Actions 내부에서 실행한다. 제작/보고 작업은 시작하지 않으며 Docker·운영 API·DB·유료 모델·학생 게시 호출도 없다. 자세한 경계는 [OIDC_CONNECTION_CHECK](OIDC_CONNECTION_CHECK.md)에 고정했다.
+
+새7개+기존 인증/클라이언트13개=20개 로컬 PASS, YAML3개 actionlint PASS. 새 JavaScript 진입점과 비공개1회 전송 도구 문법도 통과했다. 실제 원격 토큰은 아직 미검증이며 shellcheck/pyflakes는 미실행이다.20:29 읽기 전용 확인에서 원격 main1f4df407298b72a104ec0abcc0303eaf7ce434cf 그대로, 제작/게시/배포 GitHub 변수는 모두 부재(기본 비활성)다.
+
+공개 후보는 원격 main 대비18개: 이번 OIDC 코드/검사/YAML·문서와 앞서 로컬에만 있던 읽기 전용 App 조회 코드/검사·연결 기록이다. 비공개 검토 목록 `.local/studio-oidc-review-20261014/review.md`에 커밋/파일 해시를 고정한다. 원문·키·.local은 공개 대상이 아니다. 아직 push/새 PR/재배포/새 Actions 실행은 없다.
+
+다음은 정확한18개 공개→PR 검사/병합→제작실 재배포와 새 OIDC 검사1회의 범위 확인이다. 기존 Linux4/4·누적8, 게시 합성1/1은 소진됐고 이번 키 등록 승인은 재배포/추가 Linux를 제외했으므로 새 실행은 별도 승인이 필요하다. `.local/studio-oidc-review-20261014/dispatch-once.mjs`는 승인된 정확한 main SHA·비활성 변수·단일 시도 표식·고정 connection/빈 job_id를 강제한다. 승인 대상 파일은 아직 없고 도구는 실행하지 않았다. 재배포 시 승인된 App 설정3개가 반영되지만 제작/게시 API와 DB의 비활성은 유지한다. 실제 운영 API/DB 왕복·유료 제작·학생 게시 확인은 여전히 남는다.
+
+## 2026-10-14 20:20 KST — Vercel Production App 설정3개 등록·보존 검증 완료
+
+사용자가 정확한 Vercel 대상과3개 항목의 전송·등록을 명시 승인해 이전 자동 승인 차단이 해소됐다. 실제 프로젝트/Production 사전 확인을 갱신한 뒤20:19:25~33KST에 STUDIO_GITHUB_APP_CLIENT_ID / STUDIO_GITHUB_INSTALLATION_ID / STUDIO_GITHUB_APP_PRIVATE_KEY 세 항목을 등록했다. 모두 REGISTERED이며 원격 재조회에서 sensitive(Secret)/production만 확인했다. 기존6개 설정의 이름·타입·대상·생성/수정 시각은 보존됐다. 키/환경값은 출력하거나 공개 파일에 저장하지 않았다.
+
+보호 증거는 `.local/studio-worker-secrets-20261014/vercel-app-env-attempt.json`, `vercel-app-env-result.json`, `vercel-app-env-verified.json`(PRODUCTION_REGISTRATION_VERIFIED,baselineUnchanged=true)이다. 키 상태의 remoteRegistered도 검증 후에만 true로 갱신했다. 시도 표식과 결과를 보존하고 등록을 반복하지 않는다. 기존 로그인/키 입력/이전 키 삭제/Actions secret/App 조회 승인도 다시 묻지 않는다.
+
+**실행 범위:** 환경 등록·검증 완료이며 재배포/기능 활성화/DB 변경/유료 AI/학생 게시/추가 Linux 실행은 없다. 현재 배포에는 새 환경이 아직 반영되지 않았다. 다음은 실제 제작을 켜기 전 필요한 서버·Actions·DB 조건과 비용 없는 연결 검사의 준비 범위를 검토하는 것이다. 사용량48% 사용/52% 남음, 남은30% 보존 기준을 따른다.
+
 ## 2026-10-14 — 사용량 한도 변경
 
 사용자가 ‘사용량30%까지 사용 가능합니다’라고 알렸다. 앞선 남은50% 보존 기준을 **남은30% 보존,33~35%부터 정리**로 변경한다고 사용자에게 명시했다. 아래 시점별50% 기록은 당시 기준이다. Vercel Production App 설정3개 전송에 대한 구체적 승인 질문은 아직 별도 대기 중이며, 이 한도 변경을 전송 승인으로 해석하지 않는다. 진행 상태·검토 문서·다음 절차는 아래20:15 기록과 RESUME_HANDOFF에 저장했다.

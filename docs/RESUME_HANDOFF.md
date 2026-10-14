@@ -1,5 +1,15 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 20:30 KST:** [OIDC_CONNECTION_CHECK](OIDC_CONNECTION_CHECK.md)의 비밀 없는 실제 역할 인증 검사 준비 완료. `studio-worker.yml` 새 connection 모드→기존 generate/report reusable의 connection_only job 두 개를 순서대로 호출한다. OpenAI/전달/App/DB 키와 운영 API/컨테이너 실행 없음. 제작 비활성·main·attempt1·빈 job_id만 허용하며 각 job3분/검증15초·GET2회·재시도0이다. 기존 secret 필수 선언은 connection 호출만을 위해 optional로 바뀌었으며 생성 모드는 기존 configuration 검사와 모든 gate를 유지한다.
+
+**검증/공개 범위:** 관련20개 PASS, YAML3개 actionlint PASS, 진입점/비공개 dispatch 문법 PASS. 원격 main1f4df40 그대로·실행 변수3개 부재를20:29 실제 확인했다. main 대비18개(이전 로컬 App 조회 코드/검사·문서 포함)를 `.local/studio-oidc-review-20261014/review.md`의 커밋/해시 목록으로 검토한다. 아직 공개/PR/병합/재배포/새 Linux 실행 없음. 이전4/4·누적8/게시1/1 한도와 최근 키 등록의 재배포 제외 범위 때문에 새 검사1회·공개/병합/재배포 승인을 확인한다.
+
+**승인 후:** 정확한 검토 커밋의 공개 PR 검사→병합/운영 재배포 확인→실제 merge SHA로 private approved-target.json `{approved:true,limit:1,mode:'connection',commit:<SHA>}` 작성. Vercel 환경 등록은 이미 완료했으니 반복 금지. private dispatch-once.mjs는 gh로 대상/변수/검토 SHA 확인→durable oidc-attempt.json→POST1회→실행번호 검증하며 오류 시 자동 재전송하지 않는다. 두 connection job 성공과 실제 고정 JSON 결과를 읽어 기록한다. 실제 운영 API/DB 왕복이나 유료 제작 통과로 확대하지 않는다. API/게시/DB gate는 계속 비활성이다.
+
+**최신 2026-10-14 20:20 KST:** 사용자 ‘Vercel Production App 설정3개 전송·등록 승인’ 응답으로 이전 차단 해소. 실제 사전 확인 후 기존 alpaca-t/science-simulations-studio Production에 세 App 설정 등록·원격 메타데이터 검증 PASS. 모두 sensitive/production, 기존6개 이름/타입/대상/시각 보존. `vercel-app-env-attempt.json` / `vercel-app-env-result.json` / `vercel-app-env-verified.json`이 보호 폴더에 있다. 키 상태 remoteRegistered=true. 재등록하지 않는다. CLI/App/Actions 키 단계는 완료됐고 로그인·키 입력을 다시 요청하지 않는다.
+
+**다음 단계 경계:** 환경 등록만 했으며 재배포·기능 활성화·DB·유료 AI·학생 게시·추가 Linux 실행은 없었다. 기존 운영 배포는 새 환경을 아직 사용하지 않는다. 실제 실행 전 필요한 설정·권한·비용 없는 연결 검사와 첫 제작의 준비를 검토한다. 아래 등록 승인 대기는 해소된 과거 이력이다. 사용량48% 사용/52% 남음, 남은30% 보존/33~35%부터 정리한다.
+
 **최신 사용자 한도 변경(2026-10-14):** ‘사용량30%까지 사용 가능’ 응답에 따라 남은30% 보존,33~35%부터 정리하는 기준을 사용자에게 명시했다. 아래 과거50% 기준을 적용하지 않는다. Vercel Production App 설정3개 전송 승인 질문은 별도로 대기 중이다. 이 사용량 응답만으로 비밀키를 전송하지 않는다. 직전 연결 상태 문서4개는 로컬 커밋6d445e6에 저장됐으며 원격 업로드는 없다.
 
 **최신 2026-10-14 20:15 KST:** 이전 App 키 ID4858748 삭제를 실제 GitHub Key pairs 목록(새4859387 하나)으로 확인했다. Vercel 로그인 session13197 exit0, 보호된 인증 파일과 기존 프로젝트/Production 조회 성공까지 확인했다. 키 입력·삭제·로그인 요청은 완료됐으므로 반복하지 않는다. App 조회1회/Actions secret2개 등록/OpenAI 인증도 완료 상태다.
