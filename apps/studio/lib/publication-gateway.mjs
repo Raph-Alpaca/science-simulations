@@ -4,6 +4,7 @@ import {inspectReleaseReview} from './release-approval.mjs';
 import {openArtifactBundle} from '../../../automation/publish/artifact-bundle.mjs';
 import {LIMITS} from '../../../packages/contracts/content-source.js';
 import {publicationInspection,assertPublicationRuntimeSummary} from '../../../automation/publish/publication-packet.mjs';
+import {assertPublicationOutcome} from '../../../automation/publish/publication-outcome.mjs';
 
 export function createPublicationGateway(client){
  const db=client.schema('studio');
@@ -51,6 +52,15 @@ export function createPublicationGateway(client){
   exact(result,['binding','claim','published']);const b=result.binding,c=result.claim;
   exact(b,['publicationId','approvalId','reviewId','runId','runAttempt','workflowSha','proposalHash','artifactHash']);exact(c,['id','claimedAt','reportHash']);
   need(b.publicationId===publicationId&&b.runId===identity.runId&&b.runAttempt===1&&b.workflowSha===identity.workflowSha&&uuid(b.approvalId)&&uuid(b.reviewId)&&sha(b.proposalHash)&&b.artifactHash===artifactHash&&uuid(c.id)&&c.reportHash===reportHash&&typeof c.claimedAt==='string'&&Number.isFinite(Date.parse(c.claimedAt))&&result.published===false,'PUBLICATION_CLAIM_RECEIPT_INVALID',503);
+  return result;
+ },async complete({identity,publicationId,bodyHash,outcome}){
+  need(identity.purpose==='publication'&&identity.role==='deploy','PUBLICATION_ROLE_REJECTED',403);
+  const run={p_intent:publicationId,p_run:identity.runId,p_attempt:identity.runAttempt,p_sha:identity.workflowSha};
+  const context=await reportRpc('read_publication_completion_context',run);let checked;
+  try{checked=assertPublicationOutcome(outcome,context);}catch{throw new PublicationAuthError('PUBLICATION_OUTCOME_INVALID',409);}
+  const text=JSON.stringify(outcome),result=await reportRpc('record_publication_outcome',{...run,p_jti_hash:identity.jtiHash,p_expires:identity.expiresAt,p_body_hash:bodyHash,p_outcome_text:text});
+  exact(result,['binding','outcomeHash','published','releaseId','recordedAt']);
+  need(JSON.stringify(result.binding)===JSON.stringify(context.binding)&&result.outcomeHash===hash(text)&&result.published===checked.verified&&(checked.verified?uuid(result.releaseId):result.releaseId===null)&&typeof result.recordedAt==='string'&&Number.isFinite(Date.parse(result.recordedAt)),'PUBLICATION_OUTCOME_RECEIPT_INVALID',503);
   return result;
  }});
 }

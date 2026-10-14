@@ -8,10 +8,10 @@ type Job = {execution_mode?: string; id: string; conversation_id: string; state:
 type Event = {id: string; sequence: number; to_state: string; phase: string | null; occurred_at: string};
 type Message = {id: string; body: string};
 const states: Record<string,string> = {queued:'모의 실행 대기',running:'모의 실행 중',cancel_requested:'중단 요청됨',cancelled:'모의 실행 중단',failed:'모의 오류',needs_input:'모의 흐름 종료 · 실제 근거 필요'};
-const realStates:Record<string,string>={queued:'제작 실행 대기',running:'제작·검토 진행 중',cancel_requested:'중단 요청됨',cancelled:'제작 중단',failed:'제작 실패',needs_input:'추가 자료·수정 필요',awaiting_approval:'결과 검토 대기'};
+const realStates:Record<string,string>={queued:'제작 실행 대기',running:'제작·검토 진행 중',cancel_requested:'중단 요청됨',cancelled:'제작 중단',failed:'제작 실패',needs_input:'추가 자료·수정 필요',awaiting_approval:'결과 검토 대기',published:'게시 확인 완료'};
 const stateLabel=(job:Job)=>(job.execution_mode==='real'?realStates:states)[job.state]||job.state;
 const dispatchLabels:Record<string,string>={ready:'실행 요청 준비 중',claimed:'실행 접수 확인 중 · 자동 재전송하지 않습니다.',submitted:'실행번호 확인 완료 · 작업 진행은 아래 기록을 확인하세요.',uncertain:'실행 접수 여부 확인 필요 · 다시 전송하지 않고 대기합니다.',failed:'실행 전 연결 확인 실패 · AI 호출은 시작하지 않았습니다.',cancelled:'실행 요청 취소됨',unavailable:'실행 접수 기록을 확인하지 못했습니다. 새로고침해 주세요.'};
-const phases: Record<string,string> = {source_review:'자료 검토',learning_design:'학습 설계',development:'개발',independent_review:'독립 검토',testing:'검사',policy_check:'정책 확인'};
+const phases: Record<string,string> = {source_review:'자료 검토',learning_design:'학습 설계',development:'개발',independent_review:'독립 검토',testing:'검사',policy_check:'정책 확인',publication_verified:'공개 파일 확인'};
 const errors: Record<string,string> = {
   RUNNER_CONNECTION_REQUIRED:'실제 제작 연결 설정이 아직 준비되지 않았습니다.',
   REAL_EXECUTION_UNAVAILABLE:'실제 제작이 아직 활성화되지 않았거나 일시 중지됐습니다.',

@@ -1,5 +1,13 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 11:52 KST:** PR #16의 검토19개 명시 승인·정확한 head 검사·병합·운영 배포·HTTP 확인 완료. main15f34bceca4f321abf7df233e08f017b913c9009/deployment7055544849. `.local/studio-publication-authority-review-20261014/production-http.json`. 이전 자동 승인 차단과 미커밋 표기는 이력이며 이19개 공개/병합 승인을 다시 묻지 않는다.
+
+현재 `codex/studio-publication-deploy`는 authority 커밋819676f에서 분기했고 같은 코드가 원격 main에 병합됐다. [PUBLICATION_COMPLETION](PUBLICATION_COMPLETION.md)의 동일 파일 전송·공개 바이트 검증·완료 SQL/UI/workflow는 로컬 미커밋이다. 새21+공통25=46개, native PG17 경합6개·종료, Chrome4개, Next build/타입·추적8개/금지0·HTTP5개·actionlint3개 PASS. `.local/studio-publication-deploy-review-20261014/`, `.local/release-postgres17-da92d32e-d6f0-4c31-9dee-9f37973a0bfd/result.json`. 실행 중 검사/DB/브라우저 없음. 변경이 없으면 검사를 반복하지 않는다.
+
+다음은 이 변경을 검토/고정하고 운영 적용용 SQL·새 백업/복원·적용 리허설을 준비한다. 기존 `refresh-backup.ps1`은 과거 foundation 적용을 포함하므로 그대로 재실행하면 안 된다. `backup-and-restore.mjs`도 과거8개 테이블을 기대하므로 현재 foundation18개에 맞는 별도 검토가 필요하다. 운영 변경은 아직 수행하지 않았다. 불확실한 게시의 나중 관찰/조정은 미구현이며, 새 실행으로 기존 OIDC를 대신하거나 claim/슬롯/시도 파일을 삭제하면 안 된다.
+
+운영에는 foundation만 적용돼 있다. 새 승인/준비/게시 SQL·App/전달 키·기능 활성화·실제 제작/원문 검토/최종 교사 승인·학생용 게시가 남았다. OpenAI 키는 이미 저장/인증 완료이며 인증 GET을 반복하지 않는다. Linux 새1/1·제작4/4·누적8 상한도 유지한다. 사용량68% 남음,53~55%부터 정리/50% 보존. 아래 문단은 과거 이력이다.
+
 **최신 2026-10-14 11:11 KST:** PR #15 보고 단계17개 공개/검사/병합/운영 배포·HTTP 확인 완료. main ccd0cfbb1665d1e791794aa2217c75cb27fbddca, deployment7054819984. 이 단계는 자율 위임으로 승인 검토를 통과했으며 추가 질문/차단 없음. 이전 보고 미커밋 기록은 이력이다.
 
 현재 `codex/studio-publication-completion`에서 [PUBLICATION_AUTHORITY](PUBLICATION_AUTHORITY.md)의 전송 전 승인 소비/같은 바이트 준비·철회 경계 UI를 미커밋으로 구현했다. 관련35개·실제 PG17 경합7개·Chrome3개·Next build/타입·추적/비활성 API PASS, 모든 검사 종료. 증거 `.local/studio-publication-authority-review-20261014/`, native `.local/release-postgres17-273510ab-7211-4805-b9bf-7dd3caa0fa32/`. claim API는 소비 영수증을 재발급하지 않는다. 응답 유실 시 authority-send.claim을 지우거나 다시 실행하지 않는다. 아직 실제 업로드·deploy workflow·완료 처리는 없다.
