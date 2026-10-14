@@ -1,5 +1,31 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-15 재개:** 첫 제작1건은 승인 후 이미 수행·종료했다. 아래00:25 승인 대기는 과거 이력이다. [FIRST_GENERATION_RESULT](FIRST_GENERATION_RESULT.md)와 STATUS 맨 위 우선. 새 유료 작업/재전송 금지. 원격main5a2ea91 유지, 새 공개 변경 없음.
+
+- 실제 실행38591221100: 디자인 요구를 추가한 새 입력을 동의 후 접수. 이전 입력은 미사용. 교육과정 검토1회 needs_evidence, 후보0, 비용3466 USD micros(내부약6.93원), settled/closed/held0. DB worker/dispatch/예산 및 GitHub worker 모두false. 활성화·차단 migration 각각1개 적용. 첫 작업 트리거 유지. 같은SQL 재적용 금지. 마지막 verify_2/fetch는 차단 후실패해 전체failure. 재실행하지 않는다.
+- Vercel3개 등록·기존11개 보존 후 기존소스 재배포 dpl_DLG2QdR8dRRT24oKT5Bh6F7hk1pG 완료. `.local/studio-first-generation-20261015/`의 approved-scope.json/design-prepared-input.json/activation-plan.json/approved-activation.sql/approved-stop.sql/배포·worker-enable/disable-result를 보존. 정확한입력ID·해시는 이 비공개기록 사용. 등록·재배포·enable 반복금지.
+- 다음 시스템 작업: 실제 확인한 원문 근거를 제작 전 입력에 연결. 일반 개념 검토와 특정 한국 교과서 대조를 분리. 새 실행범위 검토→후보 생성/검토→최종버전 교사 승인→게시가 남음.
+- 디자인 로컬 구현: 앱CSS/TSX/layout, DESIGN_BRIEF. 빌드/브라우저14개 PASS. 처음 teardown180초실패 보존, 서버수명 분리 private config로 재실행36.8초/exit0. 390/1440접근성·넘침 및 Chrome1024확인. 마지막 보류안내/메타문구수정의 최종빌드 확인 후18개 공개목록/PR/배포 진행. private test-ui.config.mjs는 제품에추가하지 않는다. 중단된3001/3002로컬서버 상태확인 후필요시재시작.
+- 사용61%/잔여39%,33~35%부터정리·30%보존. 소진된 실제제작1건·connection1회·이전Linux진단 횟수 반복금지.
+
+**최신 2026-10-15 00:25 KST:** 사용자 확인 완료: 중3 유전2D·일반 개념 중심. 실제 제작실 새 대화에 입력1개prepared 저장(동의/작업없음). [첫 과제](FIRST_ASSIGNMENT_DRAFT.md), [첫1건 실행 검토](FIRST_GENERATION_REVIEW.md)를 따른다. 출처는 교육부 단원 부분대조·OpenStax 공개교재·NHGRI 정의이며 특정학교교과서/전체개정고시 대조완료를 주장하지 않는다. 외부AI전달·최대1,000원 실제1건과 필요한 DB/설정/배포/종료후중단을 사용자에게 질문했고 답변 대기다.
+
+**준비·실측:** `automation/studio/first-generation-rollout.mjs`는 정확입력1개/최대1시간접수/20분추가확인·두번째작업거절 SQL을 생성할 뿐 실행하지 않는다. 백업 publication-foundation26개 범위 추가. 관련9개PASS. `.local/studio-first-generation-20261015/latest-backup-run.json`의 운영읽기전용백업/격리복원PASS 및 동일복원본의 활성화→접수→중단→rollback PASS. 초기주소표기실패/재검증 둘다보존·로컬서버종료. 운영gatesfalse·worker/call0. 원격main5a2ea91·Vercel11개확인. 고정모델snapshot/입출력요금공식재확인·코드가격기한11월4일유지. 최근잔여43%,33~35%부터정리/30%보존.
+
+**승인 후:** 질문답변과 prepared-input.json 해시/만료(10월16일00:11KST)·현재main을 확인한다. 아직 approved-scope.json은 없다. 명시답변 뒤에만 입력동의/승인 기록을 만든다. SQL을 새로운1시간이내 기한으로 생성·검토하고 운영DDL을 마이그레이션으로 기록한다. 기존 증분 재적용 금지. connection-rollout.ps1은Inspect만 실행; Register→Verify→Redeploy→Status→Metadata는 미실행이다. 기존11개 보존·새3개 STUDIO_WORKER_API_ENABLED/STUDIO_WORKER_TRUSTED_SHAS/STUDIO_DISPATCH_ENABLED. worker-switch.mjs는문법검사만했고 inspect/enable/disable 미실행. 승인·배포검증 뒤worker변수enable→제작실동일입력start1회→관찰/정산→DBstop+worker변수disable. 응답불확실시재전송금지. 게시·후속제작승인없음. Chrome3/971977335는입력미리보기/미동의상태이며deliverable로유지했다.
+
+**반복 금지:** backup-and-rehearse.ps1을 통째로 다시 실행하지 않는다. 기존백업의rehearse-only.ps1도2차결과존재로거절된다. 실패/성공표식을지우지 않는다. 운영activation/등록/재배포/Actions실행은 아직없다. localHEAD2b133dd,origin/main5a2ea91,문서·백업도구·첫제작SQL생성기/검사를 로컬변경했고 공개하지 않았다.
+
+**최신 2026-10-14 23:56 KST:** PC PowerShell·Chrome 응답 정상. 기존 Production에 입력 확인/결과 검토 설정2개 등록, 기존9개 보존 검증 후 PR #19 소스로 재배포 완료. 배포 `dpl_2NC1k63U35MyXppF1APeASKgsNcK`, SHA5a2ea91, Production 별칭 확인/HTTP8개 PASS. 기존 로그인된 Chrome3 탭971977335에서 실제 2D·3D 입력 준비 화면을 확인했다. 새 과제 저장/동의·유료 제작은 아직 없다. 결과 검토는 설정만 연결됐고 실제 결과로는 미검증이다.
+
+**반복 금지/이어가기:** `.local/studio-input-rollout-20261014/`의 등록·재배포 시도/성공·검증 증거를 유지한다. 새 설정 등록이나 재배포/로그인을 반복하지 않는다. worker/dispatch/예산/수정 실행/게시 gate는 계속 false. 로컬 관련17개 PASS. 첫 과제는 기존 중3 유전2D를 기본으로 초안 준비 중이며 다른 주제/3D 선호를 선택 질문으로 알렸다. 권리·비용 동의 및 실제 제작 활성화는 아직 완료하지 않았다. 남은47%,30% 보존. 아래23:41의 다음 단계 중 입력 화면 연결은 이제 완료다.
+
+**최신 2026-10-14 23:41 KST:** PC 도구 응답이 복구됐다. PR #19의18개 공개/검사/병합/Production 재배포 완료, main `5a2ea91011f00e436c2aa17716c6010af2985889`, deployment7065209907/실제 HTTP8개 PASS. 실제 OIDC run38563747495 attempt1에서 generation/report 인증 두 작업과 검증 단계 성공, 나머지 작업 skipped 확인. 새 인증 검사 **1/1 사용 완료이며 재실행 금지**. 등록/로그인/키 입력/배포도 반복하지 않는다.
+
+**복구 상태:** 고정 JSON 로그 수집은 GitHub403(저장소 관리자 권한 필요)으로 실패했다. 권한 확대나 추가 로그 조회 없이 기존 run/jobs API의 두 역할/검증 단계 성공과 나머지10개 skipped를 `oidc-metadata-result.json`에 저장했다. 이후 도구 무응답으로 누락됐던 문서 기록도 복구했다. 현재 PowerShell/파일/사용량 응답 정상, Get-Process에서 gh 프로세스 없음(CIM은 권한 거부). 도구 지연 원인은 미확정이다. `.local/studio-oidc-review-20261014/`의 증거와 단일 시도 표식을 보존한다. 현재 로컬 HEAD2b133dd, origin/main5a2ea91이며 문서 수정 전 트리는 일치한다. 새 상태 문서 변경은 아직 공개되지 않았다.
+
+**다음:** 실제 Vercel App dispatch/실행번호 결합·OIDC→운영 API→DB 영수증과 첫 제작의 준비 조건을 점검한다. PR #19 승인은 DB/기능 활성화/유료 AI/학생 게시를 제외하므로 먼저 구체적인 구현·검토 결과를 준비한다. 공개 가능한 과제·출처/권리·비용 동의, 독립 검토/수정, 교사 최종 버전 승인과 동일 파일 게시/실제 확인, 불확실 결과 후속 조정이 남는다. 유료 호출0/새 DB 변경0/학생 게시0. 사용량49% 남음,30% 보존/33~35%부터 정리. 아래 오래된 대기 기록을 현재 상태로 적용하지 않는다.
+
 **최신 2026-10-14 20:30 KST:** [OIDC_CONNECTION_CHECK](OIDC_CONNECTION_CHECK.md)의 비밀 없는 실제 역할 인증 검사 준비 완료. `studio-worker.yml` 새 connection 모드→기존 generate/report reusable의 connection_only job 두 개를 순서대로 호출한다. OpenAI/전달/App/DB 키와 운영 API/컨테이너 실행 없음. 제작 비활성·main·attempt1·빈 job_id만 허용하며 각 job3분/검증15초·GET2회·재시도0이다. 기존 secret 필수 선언은 connection 호출만을 위해 optional로 바뀌었으며 생성 모드는 기존 configuration 검사와 모든 gate를 유지한다.
 
 **검증/공개 범위:** 관련20개 PASS, YAML3개 actionlint PASS, 진입점/비공개 dispatch 문법 PASS. 원격 main1f4df40 그대로·실행 변수3개 부재를20:29 실제 확인했다. main 대비18개(이전 로컬 App 조회 코드/검사·문서 포함)를 `.local/studio-oidc-review-20261014/review.md`의 커밋/해시 목록으로 검토한다. 아직 공개/PR/병합/재배포/새 Linux 실행 없음. 이전4/4·누적8/게시1/1 한도와 최근 키 등록의 재배포 제외 범위 때문에 새 검사1회·공개/병합/재배포 승인을 확인한다.
