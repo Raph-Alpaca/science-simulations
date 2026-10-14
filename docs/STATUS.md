@@ -1,5 +1,109 @@
 # 구현 현황
 
+## 2026-10-14 20:30 KST — 실제 OIDC 연결 검사 로컬 준비 완료
+
+Vercel 등록·보존 검증 이후, 실제 GitHub 발급 토큰의 두 역할을 확인할 `connection` 모드를 준비했다. 기존 caller/reusable 경로를 유지하고 API/전달/DB/App 키 없이 같은 운영 인증 검증 코드를 Actions 내부에서 실행한다. 제작/보고 작업은 시작하지 않으며 Docker·운영 API·DB·유료 모델·학생 게시 호출도 없다. 자세한 경계는 [OIDC_CONNECTION_CHECK](OIDC_CONNECTION_CHECK.md)에 고정했다.
+
+새7개+기존 인증/클라이언트13개=20개 로컬 PASS, YAML3개 actionlint PASS. 새 JavaScript 진입점과 비공개1회 전송 도구 문법도 통과했다. 실제 원격 토큰은 아직 미검증이며 shellcheck/pyflakes는 미실행이다.20:29 읽기 전용 확인에서 원격 main1f4df407298b72a104ec0abcc0303eaf7ce434cf 그대로, 제작/게시/배포 GitHub 변수는 모두 부재(기본 비활성)다.
+
+공개 후보는 원격 main 대비18개: 이번 OIDC 코드/검사/YAML·문서와 앞서 로컬에만 있던 읽기 전용 App 조회 코드/검사·연결 기록이다. 비공개 검토 목록 `.local/studio-oidc-review-20261014/review.md`에 커밋/파일 해시를 고정한다. 원문·키·.local은 공개 대상이 아니다. 아직 push/새 PR/재배포/새 Actions 실행은 없다.
+
+다음은 정확한18개 공개→PR 검사/병합→제작실 재배포와 새 OIDC 검사1회의 범위 확인이다. 기존 Linux4/4·누적8, 게시 합성1/1은 소진됐고 이번 키 등록 승인은 재배포/추가 Linux를 제외했으므로 새 실행은 별도 승인이 필요하다. `.local/studio-oidc-review-20261014/dispatch-once.mjs`는 승인된 정확한 main SHA·비활성 변수·단일 시도 표식·고정 connection/빈 job_id를 강제한다. 승인 대상 파일은 아직 없고 도구는 실행하지 않았다. 재배포 시 승인된 App 설정3개가 반영되지만 제작/게시 API와 DB의 비활성은 유지한다. 실제 운영 API/DB 왕복·유료 제작·학생 게시 확인은 여전히 남는다.
+
+## 2026-10-14 20:20 KST — Vercel Production App 설정3개 등록·보존 검증 완료
+
+사용자가 정확한 Vercel 대상과3개 항목의 전송·등록을 명시 승인해 이전 자동 승인 차단이 해소됐다. 실제 프로젝트/Production 사전 확인을 갱신한 뒤20:19:25~33KST에 STUDIO_GITHUB_APP_CLIENT_ID / STUDIO_GITHUB_INSTALLATION_ID / STUDIO_GITHUB_APP_PRIVATE_KEY 세 항목을 등록했다. 모두 REGISTERED이며 원격 재조회에서 sensitive(Secret)/production만 확인했다. 기존6개 설정의 이름·타입·대상·생성/수정 시각은 보존됐다. 키/환경값은 출력하거나 공개 파일에 저장하지 않았다.
+
+보호 증거는 `.local/studio-worker-secrets-20261014/vercel-app-env-attempt.json`, `vercel-app-env-result.json`, `vercel-app-env-verified.json`(PRODUCTION_REGISTRATION_VERIFIED,baselineUnchanged=true)이다. 키 상태의 remoteRegistered도 검증 후에만 true로 갱신했다. 시도 표식과 결과를 보존하고 등록을 반복하지 않는다. 기존 로그인/키 입력/이전 키 삭제/Actions secret/App 조회 승인도 다시 묻지 않는다.
+
+**실행 범위:** 환경 등록·검증 완료이며 재배포/기능 활성화/DB 변경/유료 AI/학생 게시/추가 Linux 실행은 없다. 현재 배포에는 새 환경이 아직 반영되지 않았다. 다음은 실제 제작을 켜기 전 필요한 서버·Actions·DB 조건과 비용 없는 연결 검사의 준비 범위를 검토하는 것이다. 사용량48% 사용/52% 남음, 남은30% 보존 기준을 따른다.
+
+## 2026-10-14 — 사용량 한도 변경
+
+사용자가 ‘사용량30%까지 사용 가능합니다’라고 알렸다. 앞선 남은50% 보존 기준을 **남은30% 보존,33~35%부터 정리**로 변경한다고 사용자에게 명시했다. 아래 시점별50% 기록은 당시 기준이다. Vercel Production App 설정3개 전송에 대한 구체적 승인 질문은 아직 별도 대기 중이며, 이 한도 변경을 전송 승인으로 해석하지 않는다. 진행 상태·검토 문서·다음 절차는 아래20:15 기록과 RESUME_HANDOFF에 저장했다.
+
+## 2026-10-14 20:15 KST — 이전 키 삭제·Vercel 인증 확인, 설정 전송 승인 대기
+
+사용자의 두 완료 응답을 실제 상태와 대조했다. GitHub Key pairs 목록은 새 키 ID4859387 하나이며 이전 키 ID4858748이 없다. Vercel 로그인 session13197은 exit0으로 종료됐고 보호된 인증 파일과 인증된 프로젝트 조회 성공을 확인했다. 이전 키 삭제/로그인/키 입력을 다시 요청하지 않는다.
+
+기존 alpaca-t의 science-simulations-studio 프로젝트 ID와 Production 환경을 실제 CLI로 확인했다. 기존6개 설정은 모두 sensitive/production이며 추가 대상 App 설정3개 이름은 없다. 환경 응답은 메모리에서 이름·타입·target·시각만 추렸고 값은 출력/저장하지 않았다. 처음 사전 확인은 PowerShell JSON 날짜의 자동 변환 때문에 로컬에서 중단됐다. `ConvertFrom-Json -DateKind String`으로 시각 문자열을 보존한 뒤 실제 읽기 전용 조회에 근거한 PRODUCTION_PREFLIGHT_PASS를 기록했다. 이 실패는 원격 쓰기 전이다.
+
+**등록은 미실행:** 준비된 `register-vercel-app-env.ps1` 실행 요청을 자동 승인 검토가 차단했다. 사유는 DPAPI 개인키와 식별자를 Vercel Production에 전송하는 구체적 사용자 승인이 없다는 것이다. 앞선 포괄 위임/로그인 확인으로 이를 대신하지 않는다. `vercel-app-env-attempt.json`/result 파일이 없음을 확인했고 새 환경값은 등록되지 않았다. 정확한3개 이름·대상·권한 영향·제외 범위를 `.local/studio-setup-20261014/vercel-app-registration-review.md`에 고정했다.
+
+다음은 위 검토 범위의 명시 승인 후 신선한 실제 사전 확인→설정3개 Secret/Production 등록→이름/타입/대상·기존6개 메타데이터 보존 확인이다. 재배포/기능 활성화/DB 변경/유료 AI/학생 게시/추가 Linux 실행은 이번 범위가 아니다. 완료된 App 조회/OpenAI 인증/Actions secret 등록은 반복하지 않는다. 사용량47% 사용/53% 남음으로50% 보존을 위해 정리 중이다. 새 공개 업로드·PR·재배포는 없으며 전체 시스템 완료가 아니다.
+
+## 2026-10-14 20:06 KST — App 키 보호·실제 조회 검사 완료
+
+사용자가 직접 내려받은 새 App 개인키 경로를 제공했다. GitHub 실제 키 목록에서19:56 발급 키 ID4859387의 공개 지문을 확인한 뒤 로컬 RSA2048 지문과 일치함을 검증했다.20:02:54KST 현재 사용자 전용 DPAPI 저장·복원 일치 PASS, 정확한 다운로드 평문1개만 제거했고 파일 부재도 확인했다. 암호화 키는 `.local/studio-worker-secrets-20261014/github-app-private-key.dpapi`, 증거는 github-app-key-status.json에 있다. 키 값은 출력/공개하지 않았다.
+
+보호 도구의 초기 실패는 저장 전 중단으로 남긴다: UTC 생성시각과 로컬 변환 시각을 비교한 DOWNLOAD_FILE_INVALID, Node 설치 경로2개가 연결돼 자식 프로세스를 시작하지 못한 KEY_PROTECTION_FAILED. 명시 UTC와 실행 경로1개 선택으로 수정했고 가짜 입력으로 경로 원인을 분리 확인했다. 같은 Node 경로 문제를 아직 실행하지 않은 Vercel 래퍼와 App 검사 래퍼에도 수정했다. 원격 App 조회를 실패 횟수만큼 반복한 것이 아니다.
+
+20:04:33KST 승인된 **App 메타데이터 조회1회 PASS**: GET6회, 약3초, App/설치/권한/저장소/main SHA/제작·게시 workflow 일치. app-check-attempt.json과 app-check-result.json을 보존하고 재실행하지 않는다. main은1f4df407298b72a104ec0abcc0303eaf7ce434cf 그대로이며 installation 저장소1개는 앞선 실제 UI 확인을 별도 증거로 사용한다. `executionReady=false`는 유지한다. 설치 토큰/dispatch/유료 AI/DB 변경/학생 게시/추가 Linux 실행은 없다.
+
+첫 미확보 키 ID4858748은 아직 원격에 있어 사용자에게 **위쪽19:05/SEAoRuJ… 키만 삭제, 아래쪽19:56/0LfdDps7… 유지**를 요청했다. 인증 수단 폐기는 사용자 직접 마무리 대상이다. 새 키 보호/조회 성공이 이를 대신하지 않는다. 사용자에게 이전 Vercel 코드는 검증되지 않는다는 화면을 전달받아 새 로그인 요청3을20:03에 시작했다. 현재 session13197은 살아 있고 인증 파일은 아직 없다. 새 Chrome 탭971977304도 Allow Access가 비활성이어서 직접 확인을 요청했다. 기존 키 정리와 CLI 인증 응답 대기이며 승인된 Production 환경3개는 아직 등록하지 않았다.
+
+현재 사용량46% 사용/54% 남음으로 중단 준비 구간이다. 새 코드 공개/PR/재배포는 없으며 문서와 비공개 운영 도구만 갱신했다. 다음은 이전 키 정리 확인과 Vercel 인증 후 대상 프로젝트/Production/이름 부재 검증→설정3개 등록·범위 확인이다. 완료한 App 조회/OpenAI 인증/Actions secret2개 등록은 반복하지 않는다.
+
+## 2026-10-14 19:22 KST — 사용자 입력 대기로 안전 중단
+
+원래 연결 작업과 두 번의 자동 계속 턴에서 동일한 사용자 입력 대기를 확인했다. 마지막 실측에서 GitHub App PEM/DPAPI 개인키와 Vercel CLI 인증 파일이 모두 없었다. 직전 턴은 실제 살아 있는 session89016을 확인한 verified wait였으나 이번 조회에서 exit1로 종료됐다. 보호 로그에는 추가 오류 설명이 없어 만료 등 구체적 원인을 단정하지 않는다. 새 로그인 요청을 시작하지 않았고, 종료된 CLI 확인 탭은 닫았다. 사용자가 준비됐다고 알려주면 새 로그인 요청으로 이어간다. GitHub 키 다운로드 탭은 유지한다.
+
+완료된 App 설치/Actions secret2개 등록은 그대로 보존했고 새 외부 변경·유료 호출·Linux 실행·재배포는 없다. 재개 전 현재 파일/원격 상태를 먼저 확인한다. 전체 시스템 완료가 아니라 입력 대기로 중단한 상태이며, 사용량45% 사용/55% 남음으로50% 보존 여유를 유지했다. `.local/studio-setup-20261014/connection-wait-status.json`에 종료/대기 근거를 기록했다.
+
+## 2026-10-14 19:18 KST — App 설치·Actions 키 등록 완료, 서버 키/CLI 확인 대기
+
+사용자가 구체적인 App 생성·저장소1개 설치·Production App 설정3개·Actions secret2개·조회 검사1회 제안 뒤 계속 진행을 지시했다. 이 범위의 이전 접근 권한 승인 차단은 해소됐다. GitHub sudo 인증 만료는 사용자 재확인 뒤 해소했다.
+
+**실제 완료:** 개인 계정 전용 `Science Studio Raph Alpaca` App 생성과 `Raph-Alpaca/science-simulations` 한 개 선택 설치. 실제 설치 화면에서 선택1개와 Actions write / Contents read / Metadata read를 확인했다. Webhook/OAuth 요청/device flow는 비활성이다. 기존 DPAPI의 OpenAI/전달 키는 stdin을 사용하는 GitHub CLI로 해당 저장소 Actions secret `OPENAI_API_KEY`, `STUDIO_TRANSFER_KEY`에 등록했다.10:04:43Z/10:04:44Z 이름·등록 시각 재조회 PASS. 키 값은 출력하지 않았고 실행 gate를 변경하지 않았다.
+
+**실패/미완료:** App의 첫 개인키 발급은 GitHub에 기록됐지만 브라우저 다운로드가 `ERR_BLOCKED_BY_CLIENT`로 끝났다. 다운로드 폴더에서 해당 App 이름의 PEM을 찾지 못했다. 키 ID4858748은 원격에 남아 있으며 값을 확보했다고 간주하지 않는다. 재발급을 자동 반복하지 않고 사용자에게 New key 직접 다운로드·경로만 전달을 요청했다. 새 파일을 보호·지문 검증한 뒤 기존 미확보 키를 정리해야 한다. App 메타데이터만 로컬 저장했고 개인키 DPAPI/실제 App 조회 검사/표식은 아직 없다.
+
+Vercel CLI 로그인 첫 시도는 한글 PC 이름을 HTTP User-Agent에 넣어 ByteString 변환 오류로 중단됐다. 로컬 설치본64.0.2의 해당 헤더 hostname만 URI 인코딩해 구문 검사 후 두 번째 로그인 요청을 시작했다. TLS·인증 범위 변경 없음. 실제 기존 계정의 Authorize Device 화면은 확인했으나 Allow Access가 비활성으로 보여 사용자 확인 대기다. CLI 인증 파일 생성·프로젝트 inspect·App 환경변수 등록·재배포는 아직 미완료다. 로그인 임시 요청의 만료/종료 여부를 재개 시 먼저 확인한다.
+
+**로컬 준비:** `.local/studio-setup-20261014/`의 `register-actions-secrets.ps1` 실제 성공, `inspect-app-key.mjs`, `protect-app-key.ps1`, `register-vercel-app-env.ps1`은 구문 검사만 PASS이며 실제 실행 전이다. PEM 보호는 RSA≥2048/화면 지문 대조·DPAPI 왕복·원본 정확한 경로/해시 확인 후 해당 평문1개만 제거한다. Vercel 래퍼는10분 이내 실제 프로젝트/Production/동일 이름 부재 확인 기록을 요구하고 stdin·Secret 타입·단일 시도 표식을 사용한다. 부분 실패는 다시 실행하지 않고 원격 이름/범위를 조사한다. 비공개 승인·성공·실패 증거와 App 설치 화면은 모두 `.local`에만 있다.
+
+원격 main은1f4df407298b72a104ec0abcc0303eaf7ce434cf 그대로다. 운영 DB/기능 코드/유료 호출/학생 게시/추가 Linux 실행/새 공개 push·PR 변경 없음. 최근 사용량44% 사용/56% 남음,50% 보존. 남은 두 사용자 입력 뒤 서버 키 보호→미확보 키 정리→App 메타데이터1회→Vercel 대상 검증·설정3개 등록 순으로 이어간다. 실제 자동 제작/교사 승인/게시가 검증된 것은 아니다.
+
+## 2026-10-14 13:22 KST — 로그인 확인·App 접근 권한 승인 대기
+
+사용자의 GitHub 본인 확인/Vercel 로그인 완료 응답 뒤 실제 화면을 확인했다. GitHub 탭971976955는 Create GitHub App으로 진입했고 Vercel 탭971976956은 기존 alpaca-t/science-simulations-studio 프로젝트에 로그인됐다. Vercel Project ID는 prj_sneEZSgi9cWcn6Ryg7WBZDcyi4tR, Production main/기존6개 환경변수 이름과 Secret 타입을 확인했다. 값은 열지 않았다. 아래 로그인 대기는 해소됐다.
+
+GitHub App 초안은 Science Studio Raph Alpaca, 해당 계정 전용, 홈페이지는 기존 제작실, webhook/OAuth 요청/device flow 비활성이다. Actions read/write 선택과 자동 Metadata read까지만 초안에 반영됐으며 Contents read 선택은 자동 승인 검토가 구체적 접근 권한 승인이 없다며 차단했다. **App 생성/설치/개인키 발급·등록은 모두 아직 없다.** 같은 동작을 다른 경로로 수행하지 않았다.
+
+사용자에게 App 생성·해당 저장소1개 설치(Actions write/Contents read/Metadata read)·개인키 보호, Vercel Production의 App 설정3개와 GitHub Actions의 기존 OpenAI/전달키2개 등록, 조회 전용 App 검사1회 범위를 묶어 질문했다. 기능 비활성 유지/DB·유료 AI·학생 게시·추가 Linux 실행 제외다. 답변은 아직 대기다. `.local/studio-setup-20261014/app-registration-review.json`과 app-permissions-review.png / app-permissions-review-viewport.png가 제출 전 검토 자료이며 공개 Git 제외다.
+
+독립 준비: Vercel MCP teams 조회는 빈 목록이라 브라우저 로그인과 연결 도구 권한을 구분했다. 공식 npm Vercel CLI64.0.2(Node>=20)를 `.local/tools/vercel-cli-64.0.2`에 설치 스크립트 없이 준비했다(291 packages). env add/login/project inspect 도움말에서 표준 입력·Production·명시 프로젝트/팀·Secret 타입·별도 global-config를 확인했다. 첫 도움말은 기본 사용자 캐시 폴더 EPERM으로 실패했고 실제 사용자 권한의 도움말 조회만 성공했다. CLI 로그인/프로젝트 연결/키 전송/배포는 미실행이다. 등록 시 별도 보호 인증 경로와 실제 프로젝트 ID를 사용하고 CLI 인증이 필요하면 기존 브라우저 로그인과 구분해 안내한다.
+
+기능 코드/테스트 변경 없음, PR #18 운영 상태 유지. 현재 로컬 HEAD97c0a8531d57203f696fcf1fad9910db6e3847d9 이후 진행 문서만 변경했다. 최근 사용량41% 사용/59% 남음으로53~55%부터 정리/50% 보존한다. 전체 시스템은 실제 실행 연결·제작/교사 승인/게시 검증이 남아 있다.
+
+## 2026-10-14 12:37 KST — 기능 활성화 전 App 연결 검사 준비
+
+현재 Git/문서와 실제 Chrome 탭971976955/971976956을 다시 확인했다. GitHub는 Confirm access, Vercel은 기존 프로젝트로 돌아가는 로그인 화면으로 사용자 인증 대기가 지속된다. 두 탭을 handoff로 유지했고 인증·App 생성/권한 부여·환경/키 등록·추가 원격 실행은 하지 않았다. 이전 완료 보고 뒤 상태 재확인은 새로운 기능 진행으로 계산하지 않으며, 이번에는 아래 로컬 검사 구현을 완료했다.
+
+[LIVE_CONNECTION](LIVE_CONNECTION.md)에 현재 코드 기준의 키 목적지와 활성화 전 순서를 정리했다. `automation/studio/app-connection.mjs`는 App JWT로 고정 App/저장소 설치 정보만 읽고, 공개 저장소 ID/main SHA/제작·게시 workflow를 확인한다. GET 최대6회, 전체20초/요청5초/응답128KiB, 리다이렉트·재시도 없음. 설치 토큰 발급/dispatch/모델 호출/DB 쓰기는 하지 않는다. 성공도 `metadata_verified`이며 `executionReady=false`: 선택 저장소의 총개수, 원격 secret, 실제 OIDC/제작/승인/게시는 별도 미검증으로 남긴다.
+
+표준 입력 전용 CLI는32KiB/입력5초/전체25초 제한이며 키를 명령 인수/평문 파일로 받지 않는다. 관련8개 모의 검사 PASS(권한·계정·main 변경/HTTP·크기·응답 지연·입력 거부/비밀값 미출력), git diff --check PASS. 보호 폴더의 `check-app-connection.ps1`은 DPAPI→자식 프로세스 stdin 전달, 현재 사용자 ACL/Git 제외/단일 시도 표식/30초 프로세스 상한을 준비했고 **구문 검사만 PASS**다. 실제 App 메타데이터/개인키 파일이 없어 실제 DPAPI 전달·원격 검사 미실행이며 marker도 생성하지 않았다.
+
+새 코드/문서는 로컬 준비이며 공개 push/새 PR/재배포 없음. 이미 완료한 PR #18·운영 DB·OpenAI 인증·Linux 한도 검사를 반복하지 않는다. GitHub 본인 확인과 Vercel 기존 계정 로그인 응답 뒤 App 생성/설치 폼을 구체적으로 검토하고 필요한 권한/키 등록 범위를 확정한다. 최신 사용량38% 사용/62% 남음,50% 보존. 현재 실행 중 검사/서버 프로세스 없음.
+
+## 2026-10-14 12:25 KST — 실행 연결을 위한 사용자 로그인 대기
+
+Chrome에서 Raph-Alpaca 계정의 GitHub Apps 화면에 **No GitHub Apps**를 확인했다. New GitHub App 진입은 Confirm access/sudo 본인 확인이 필요해 사용자에게 GitHub Mobile/인증 앱 확인을 요청했다. `🔧 제작실 연결` 그룹의 해당 탭을 handoff로 유지했다. Vercel 기존 alpaca-t 프로젝트 설정은 로그인 화면으로 이동해 기존 계정 로그인을 함께 요청했다. App 생성·권한 부여·키 발급/업로드·환경 변경은 하지 않았다. 이 두 사용자 응답은 아직 대기 중이다.
+
+독립적인 로컬 준비로32바이트 전달 키를 기존 사용자 전용 ACL/Git 제외 폴더에 DPAPI CurrentUser로 생성·저장·복원 일치 검증했다. `.local/studio-worker-secrets-20261014/transfer-key.dpapi`, transfer-key-status.json의 STORED_AND_VERIFIED/remoteRegistered=false. 키 값은 채팅·명령·로그에 출력하지 않았으며 OpenAI 키 인증을 반복하지 않았다. `prepare-transfer-key.ps1`은 중복 생성을 거부하므로 다시 실행하지 않는다.
+
+현재 추가 변경은 완료·재개 기록4개이며 기능 코드는 main1f4df40과 같다. 실제 DB 증분/PR #18은 완료했고 재적용하지 않는다. 새 제작/게시/유료 실행은0회다. 최근 사용량37% 사용/63% 남음으로50% 보존 기준보다 여유가 있다. 이후 작업의 실제 실행 연결은 사용자 본인 확인/로그인 뒤 이어간다.
+
+## 2026-10-14 12:18 KST — PR #18 배포·승인/게시 DB 증분 운영 적용 완료
+
+사용자가 검토11개 공개/병합/재배포와 운영 증분1개를 명시 승인했다. [PR #18](https://github.com/Raph-Alpaca/science-simulations/pull/18), head6d513785af9a5a0e4726e38fb92eaee59cf15cd8/manifesta6d4faa0738e0751a0dd4932613676821284526033326b53e09f760c0c49e10a의 검사2개 SUCCESS 후12:15:27 병합. main1f4df407298b72a104ec0abcc0303eaf7ce434cf, Production7055900789/success.12:17:58 실제 홈200/session401/worker503/publication5개503·private,no-store PASS. `.local/studio-publication-migration-20261014/production-http.json`. 공개 범위 차단은 해소됐고 이11개/DB 적용 승인을 반복하지 않는다.
+
+12:15:45~12:15:58 KST 해시38665dc7590464e199a6864468b033bb86e9e35c568b8def2524a38aaa24af27의 `20261014025610_studio_publication_foundation.sql`을 운영에1회 적용하고 검증했다. 최신 백업/데이터/스키마/이력·main SQL·단일 dry-run을 재확인하고 durable write marker 뒤 실행했다. 기존18개 테이블의 모든 기존 값이 보존됐고 운영 스키마는 검증한 복원본과 정확히 일치한다. migration 이력4개,26테이블/79함수, 새8개 테이블 행0개, worker/dispatch/budget/delete/publication/artifact/deploy 모두false. 보호 백업 폴더의 `publication-production-apply.json`은 applied/verified/PASS이며 write.claim을 삭제하거나 적용을 반복하지 않는다.
+
+적용 후 보안 advisor INFO18은 서버 전용 RLS/브라우저 무권한 테이블이며 기존 Auth 유출 비밀번호 보호 WARN1은 그대로다. 새 오류는 없다. 유료 AI·학생용 게시·환경/키 변경·추가 Linux 실행0회. 원격 실행용 GitHub 저장소 secrets는0개, 현재 변수는 과거 PAGES_DEPLOY_ENABLED=true뿐이며 PR #17 이후 빈 목록 workflow는 게시 기능이 없다. 로컬 GitHub App 설정3개도 미등록이다. GitHub App 설치 목록 조회는 현재 CLI 토큰 종류 때문에403, Vercel 환경 메타데이터 도구는 alpaca-t 범위 권한403이라 원격 App 설정 유무까지 확정하지 못했다. Vercel CLI는 PATH/보호 tools 최상위에서 발견하지 못했다.
+
+현재 새 branch `codex/studio-live-connection`에서 다음 연결 준비를 진행한다. 필요한 일은 GitHub App/전달 키·OpenAI 키 등록, 제한된 실행 활성화, 실제 제작·원문 검토·교사 최종 승인·게시 확인이다. 불확실 게시의 후속 관찰/조정도 남았다. 키 입력/인증 GET1회 및 Linux 새1/1·제작4/4·누적8을 반복하지 않는다. 남은 사용량50% 보존 조건을 유지한다.
+
 ## 2026-10-14 12:08 KST — PR #17 배포 완료·운영 DB 증분 적용 전 검사
 
 사용자가 검토32개/manifest75968f12204d1ff432dd20a9fb731a0b9e790f867d4651002c14c495459dfe22의 공개·검사 후 병합·재배포를 명시 승인했다. [PR #17](https://github.com/Raph-Alpaca/science-simulations/pull/17) headdb99e4425e431c115c7fe547bf71cc22c3961235 검사2개 SUCCESS 뒤11:54:55 KST 병합. main12001d2c3b5b90a62f7c2eec8962ba77cf45c1a0, Production7055622915/success.11:59:27 실제 홈200/session401/worker503/publication5개503·private,no-store PASS. `.local/studio-publication-deploy-review-20261014/production-http.json`. 앞선32개 공개 범위 차단은 해결됐으므로 승인을 반복하지 않는다.

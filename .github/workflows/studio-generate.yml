@@ -5,13 +5,38 @@ on:
       job_id:
         required: true
         type: string
+      connection_only:
+        required: false
+        type: boolean
+        default: false
     secrets:
       OPENAI_API_KEY:
-        required: true
+        required: false
 permissions: {}
 jobs:
+  connection:
+    if: inputs.connection_only && inputs.job_id == '' && github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1 && github.event.inputs.mode == 'connection' && vars.STUDIO_WORKER_ENABLED != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify generation identity without production access
+        env:
+          STUDIO_OIDC_CONNECTION: 'true'
+        run: node automation/runner/oidc-connection-cli.mjs generation
   generate:
-    if: github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1 && vars.STUDIO_WORKER_ENABLED == 'true'
+    if: inputs.connection_only == false && github.event.inputs.mode == 'generate' && github.repository == 'Raph-Alpaca/science-simulations' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1 && vars.STUDIO_WORKER_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 24
     permissions:
