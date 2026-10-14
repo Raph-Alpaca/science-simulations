@@ -1,5 +1,13 @@
 # 재개 인계 — 과학 시뮬레이션 제작실
 
+**최신 2026-10-14 12:37 KST:** 로그인 두 건은 실제 탭 재확인 결과 여전히 대기다(971976955 GitHub Confirm access /971976956 Vercel login). 탭 handoff를 갱신했고 중복 질문·인증 코드 요청·계정 생성은 하지 않았다. 사용자 응답 후 같은 탭의 현재 화면부터 이어간다. 이전 턴에서 완료한 DB/PR #18은 재실행하지 않는다.
+
+대기 중 App 연결 검사 도구3개(automation/studio/app-connection.mjs, app-connection-cli.mjs, tests/studio/app-connection.test.mjs)와 [연결 절차](LIVE_CONNECTION.md)를 로컬 구현했다. 모의8개 PASS/공백 검사PASS. GET 최대6회/20초이며 쓰기 토큰 발급·dispatch·유료 호출·게이트 변경이 없다. App 소유/설치/권한과 공개 main/workflow 메타데이터를 검증하지만 실제 OIDC 왕복이나 설치 저장소 전체 개수까지 증명하지 않는다. 성공도 executionReady=false를 유지한다. 공개 업로드하지 않았으며 운영 앱 코드는 main1f4df407298b72a104ec0abcc0303eaf7ce434cf다.
+
+`.local/studio-setup-20261014/check-app-connection.ps1`은 나중에 보호 폴더의 `github-app-metadata.json`(appClientId/installationId)과 `github-app-private-key.dpapi`를 읽고 표준 입력으로 전달한다. 지금 두 파일은 없고 **래퍼는 구문 검사만** 했다. 실제 키 준비·등록 범위 확인 후 검토한 main SHA를 `-ExpectedSha`로 전달해1회 수행한다. `app-check-attempt.json`/result가 생기면 지우거나 자동 재시도하지 않는다. 키 값을 명령 인수/채팅/로그에 넣지 않는다. 새 App·키 업로드·환경 변경은 아직0회다.
+
+아래 12:25의 문서4개는 이미78546835b1469cae6640bb569e6e640691bc6780으로 로컬 commit했다. 그 이후 새 연결 준비6개 파일을 이번 checkpoint에 추가한다. 사용량62% 남음,50% 보존. 검사 프로세스는 종료됐다. 다음은 사용자 로그인 완료→정확한 App 설치 범위 검토→실제 메타데이터1회 검사→키 등록 범위 확인이며, 전체 시스템/실제 제작/게시 완료로 간주하지 않는다.
+
 **최신 2026-10-14 12:25 KST:** DB/PR #18 완료 후 실행 연결 단계에서 사용자 본인 확인/로그인을 기다린다. Chrome `🔧 제작실 연결` 그룹의 GitHub 탭971976955는 https://github.com/settings/apps/new 의 Confirm access이고 Raph-Alpaca 계정으로 로그인되어 있다. 현재 계정에 GitHub App이 없음을 실제 확인했다. Vercel 탭971976956은 기존 alpaca-t/science-simulations-studio 설정으로 돌아가는 로그인 화면이다. 두 탭은 handoff 표시했으며 임의로 다시 탐색/새 계정 생성하지 않는다. 다음 턴에는 cua 문서를 다시 읽고 실제 화면을 확인한 뒤 필요한 handoff를 다시 표시한다. 인증 코드/비밀번호를 채팅에 요청하지 않는다.
 
 사용자에게 GitHub 본인 확인 완료와 Vercel 기존 계정 로그인 완료를 각각 물었으며 아직 응답이 없다. App 생성/설치 권한은 아직 부여하지 않았다. 생성할 App은 저장소1개 한정 Actions write/Contents read/Metadata read, webhook·OAuth 사용자 인증 불필요를 기준으로 폼/설치를 검토한다. 실제 보안 접근 권한 부여 전 정확한 범위를 확인해야 한다. App private key는 서버(Vercel) 전용이며 생성 코드/Actions 후보 컨테이너에 제공하지 않는다.

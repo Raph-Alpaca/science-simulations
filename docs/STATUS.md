@@ -1,5 +1,15 @@
 # 구현 현황
 
+## 2026-10-14 12:37 KST — 기능 활성화 전 App 연결 검사 준비
+
+현재 Git/문서와 실제 Chrome 탭971976955/971976956을 다시 확인했다. GitHub는 Confirm access, Vercel은 기존 프로젝트로 돌아가는 로그인 화면으로 사용자 인증 대기가 지속된다. 두 탭을 handoff로 유지했고 인증·App 생성/권한 부여·환경/키 등록·추가 원격 실행은 하지 않았다. 이전 완료 보고 뒤 상태 재확인은 새로운 기능 진행으로 계산하지 않으며, 이번에는 아래 로컬 검사 구현을 완료했다.
+
+[LIVE_CONNECTION](LIVE_CONNECTION.md)에 현재 코드 기준의 키 목적지와 활성화 전 순서를 정리했다. `automation/studio/app-connection.mjs`는 App JWT로 고정 App/저장소 설치 정보만 읽고, 공개 저장소 ID/main SHA/제작·게시 workflow를 확인한다. GET 최대6회, 전체20초/요청5초/응답128KiB, 리다이렉트·재시도 없음. 설치 토큰 발급/dispatch/모델 호출/DB 쓰기는 하지 않는다. 성공도 `metadata_verified`이며 `executionReady=false`: 선택 저장소의 총개수, 원격 secret, 실제 OIDC/제작/승인/게시는 별도 미검증으로 남긴다.
+
+표준 입력 전용 CLI는32KiB/입력5초/전체25초 제한이며 키를 명령 인수/평문 파일로 받지 않는다. 관련8개 모의 검사 PASS(권한·계정·main 변경/HTTP·크기·응답 지연·입력 거부/비밀값 미출력), git diff --check PASS. 보호 폴더의 `check-app-connection.ps1`은 DPAPI→자식 프로세스 stdin 전달, 현재 사용자 ACL/Git 제외/단일 시도 표식/30초 프로세스 상한을 준비했고 **구문 검사만 PASS**다. 실제 App 메타데이터/개인키 파일이 없어 실제 DPAPI 전달·원격 검사 미실행이며 marker도 생성하지 않았다.
+
+새 코드/문서는 로컬 준비이며 공개 push/새 PR/재배포 없음. 이미 완료한 PR #18·운영 DB·OpenAI 인증·Linux 한도 검사를 반복하지 않는다. GitHub 본인 확인과 Vercel 기존 계정 로그인 응답 뒤 App 생성/설치 폼을 구체적으로 검토하고 필요한 권한/키 등록 범위를 확정한다. 최신 사용량38% 사용/62% 남음,50% 보존. 현재 실행 중 검사/서버 프로세스 없음.
+
 ## 2026-10-14 12:25 KST — 실행 연결을 위한 사용자 로그인 대기
 
 Chrome에서 Raph-Alpaca 계정의 GitHub Apps 화면에 **No GitHub Apps**를 확인했다. New GitHub App 진입은 Confirm access/sudo 본인 확인이 필요해 사용자에게 GitHub Mobile/인증 앱 확인을 요청했다. `🔧 제작실 연결` 그룹의 해당 탭을 handoff로 유지했다. Vercel 기존 alpaca-t 프로젝트 설정은 로그인 화면으로 이동해 기존 계정 로그인을 함께 요청했다. App 생성·권한 부여·키 발급/업로드·환경 변경은 하지 않았다. 이 두 사용자 응답은 아직 대기 중이다.
