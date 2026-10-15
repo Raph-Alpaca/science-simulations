@@ -3,8 +3,8 @@ export const WORKER_TABLES=Object.freeze(['dispatch_intents','budget_policy','bu
 export const FOUNDATION_TABLES=Object.freeze([...LEGACY_TABLES,...WORKER_TABLES].sort());
 export const PUBLICATION_TABLES=Object.freeze(['release_baseline','release_reviews','source_reviews','publication_dispatches','publication_oidc_receipts','publication_checks','publication_authorizations','publication_outcomes'].sort());
 export function backupScope(mode='legacy'){
- if(!['legacy','worker-foundation'].includes(mode))throw Error('BACKUP_SCOPE_REJECTED');
- return mode==='legacy'?LEGACY_TABLES:FOUNDATION_TABLES;
+ if(!['legacy','worker-foundation','publication-foundation'].includes(mode))throw Error('BACKUP_SCOPE_REJECTED');
+ return mode==='legacy'?LEGACY_TABLES:mode==='worker-foundation'?FOUNDATION_TABLES:Object.freeze([...FOUNDATION_TABLES,...PUBLICATION_TABLES].sort());
 }
 export function fingerprintScope(tables,excludeColumns={}){
  if(!Array.isArray(tables)||tables.length<1||tables.length>64||new Set(tables).size!==tables.length||tables.some(t=>!/^[_a-z][_a-z0-9]*$/.test(t)))throw Error('FINGERPRINT_SCOPE_REJECTED');

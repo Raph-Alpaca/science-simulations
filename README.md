@@ -1,6 +1,6 @@
 # science-simulations — 과학 시뮬레이션 제작실
 
-**2026-10-14 진행:** PR #18까지 제작실 배포와 승인·게시 DB 증분의 운영 적용·보존 검증을 완료했습니다. 실제 OpenAI 키 인증과 Linux의 승인 파일 2D/3D 검사가 통과했고, 실행용 App·Actions·Vercel의 승인된 키 등록도 완료했습니다. 제작·비용·삭제·게시 기능은 비활성입니다. 다음은 [실제 실행 인증 확인](docs/OIDC_CONNECTION_CHECK.md)이며 실제 제작/원문 검토/교사 승인/게시와 불확실 결과의 후속 조정은 남아 있습니다. [진행 현황](docs/STATUS.md)부터 읽고, [10월8일 중단 기록](docs/PAUSE_HANDOFF_20261008.md)은 이전 이력으로 참고합니다.
+**2026-10-15 진행:** 실제 제작실·실행기 연결을 완료하고 사용자 승인으로 첫 유전2D 제작1건을 실행했습니다. 교육과정 근거 검토에서 보류돼 후보는 아직 없고, API1회/0.003466 USD를 정산한 뒤 제작·예산 스위치를 닫았습니다. [실제 결과와 미완료 사항](docs/FIRST_GENERATION_RESULT.md)을 확인하세요. 현대적인 제작실 UI 개편은 로컬 구현·검증했고 공개 반영을 준비 중입니다. [진행 현황](docs/STATUS.md) 맨 위가 최신 상태입니다.
 
 공개 자료실과 교사용 제작실을 배포했고, 실제 Supabase 연결을 확인했습니다. 2026-10-04 운영 DB 백업·격리 복원과 대화 관리 v2 DB 적용을 완료했습니다. 승인된 교육 콘텐츠가 없어 공개 목록은 비어 있으며, 자동 AI 제작·검토·게시 실행기는 연결 작업 중입니다.
 
@@ -27,7 +27,7 @@ GitHub의 기존 저장소를 origin으로 연결했습니다. 초기 AI_EXECUTI
 - [운영 규칙](docs/OPERATIONS.md), [결정 기록](docs/DECISIONS.md), [도구 확인](docs/TOOLS.md)
 - [사용자 입력·학년별 검증표](docs/OWNER_INPUT.md)와 [역할 지침](automation/roles/README.md)
 
-교사용 제작실은 https://science-simulations-studio.vercel.app/ 입니다. 교육과정·교과서 원문 대조는 미확인입니다. 유전 초안은 공개 Git 소스에 포함되지만 정식 사이트 배포에서는 제외합니다. [Vercel 배포 준비](docs/VERCEL_PREPARATION.md)와 [업로드 후보](docs/STUDIO_UPLOAD_REVIEW.md)는 당시 준비 기록입니다.
+교사용 제작실은 https://science-simulations-studio.vercel.app/ 입니다. 2026-10-14 실제 과제 입력·확인 화면을 연결했습니다. 입력 저장에는 AI 비용이 없으며 실제 제작은 아직 연결 대기입니다. 교육과정은 유전 단원만 부분 대조했고 선정 교과서 대조는 미확인입니다. 유전 초안은 공개 Git 소스에 포함되지만 정식 사이트 배포에서는 제외합니다. [Vercel 배포 준비](docs/VERCEL_PREPARATION.md)와 [업로드 후보](docs/STUDIO_UPLOAD_REVIEW.md)는 당시 준비 기록입니다.
 
 ## 05 교사용 제작실 — 실제 연결된 로컬 모의 실행
 

@@ -1,5 +1,55 @@
 # 구현 현황
 
+## 2026-10-15 — 첫 제작 보류·정산 완료, 제작실 디자인 개편 검증
+
+이 기록이 아래의 과거 준비/승인 대기 상태보다 우선한다. 사용자가 디자인 개선과 첫 실제 제작1건을 승인했다. [실제 결과와 비용](FIRST_GENERATION_RESULT.md)을 확인한다.
+
+- 실행38591221100/attempt1: 교육과정 AI 검토1회 후 `CURRICULUM_EVIDENCE_REQUIRED` 보류. 후보0·학생 게시0. 기록비용0.003466 USD(내부 환산 약6.93원), settled/예산 closed/미정산0.
+- 운영 DB 첫 입력 제한 활성화/차단 마이그레이션 각각1개 완료. worker/dispatch/예산 false, GitHub worker false. 첫 작업 전용 트리거 유지. 새 유료 실행·자동 재시도 없음.
+- 기존 Vercel11개 보존·설정3개 추가·기존5a2ea91 재배포 완료. 배포 dpl_DLG2QdR8dRRT24oKT5Bh6F7hk1pG READY/별칭 검증. 설정 재등록 불필요.
+- 전체 Actions는 마지막 verify_2/fetch 실패로 failure다. DB 정산 후 차단했을 때 마지막 정리가 남아 있었다. 차단 시점의 영향이 의심되나 상세 로그는 미확인이다. 다음에는 전체 workflow 종료까지 확인 후 정상 차단한다. 실패 보존·재실행 금지.
+- 실제 제작실에서 보류 사유·파일 없음·호출/비용 표시 확인. 원문 대조 기록을 제작기의 신뢰 가능한 입력 근거에 연결하는 기능은 미구현이다. 일반 개념 중심과 특정 한국 교과서 일치를 구분해야 한다.
+
+**디자인 구현(로컬):** 중성색/코발트, 간결한 상단 바와 선택 대화 제목, 대화/입력/진행의 구분, 한국어 글꼴 위계, 초점·동작 줄이기·반응형, 구체적인 보류 안내를 적용했다. [디자인 방향](DESIGN_BRIEF.md)을 따른다. 첫 유전 입력에도 반영했지만 생성물은 아직 없다.
+
+**검증:** 빌드/타입 PASS. 기존 입력/결과/로그인/대화/접근성 브라우저14개 PASS. 처음에는 Windows 서버 종료180초 초과로 runner 종료 오류가 발생했다. 해당 서버를 정리하고 수명을 분리한 로컬 설정으로 동일14개를36.8초/exit0으로 완료했다. 실패를 숨기지 않는다. 390/1440 크기의 접근성·넘침 및 Chrome1024 시각 확인. UI 개편으로 운영 API·권한·승인 규칙을 바꾸지 않았다.
+
+새 공개 commit/push/PR 및 디자인 배포는 아직 없다. 현재 변경18개 공개 전 검토 중. 최근 사용61%/잔여39%, 잔여33~35%부터 인계 정리·30% 보존.
+
+## 2026-10-15 00:25 KST — 첫 유전2D 입력 저장·1건 실행 준비, 유료 범위 확인 대기
+
+사용자가 **기존 유전 주제·2D, 일반 개념 중심**을 확인했다. 실제 제작실의 새 대화 ‘완두의 유전 · 첫 2D 제작’에 요구사항 및 교육과정/OpenStax/NHGRI 출처 요약3개를 저장했다. 동의 체크박스 미선택, DB 입력prepared·consent 없음·job 없음. worker/dispatch/예산false, 실제worker0·유료호출기록0이다. [과제](FIRST_ASSIGNMENT_DRAFT.md)와 [실행 범위](FIRST_GENERATION_REVIEW.md)를 검토할 수 있다. 특정 학교 교과서 일치는 미확인이고 원문 없이 링크/범위/자체 요약만 사용한다.
+
+**로컬 준비:** 정확한 입력ID/해시1개만 허용하고 첫 작업 종료 뒤에도 두 번째 작업을 거절하는 SQL 생성기·중단SQL을 만들었다. 최대1시간 접수·추가20분 실행 확인, 기존 예산 유지, 중단 후 신규 예약 거절·기존 정산 허용이다. 백업 도구에는 현행26개 테이블 범위를 추가했다. 관련9개 검사PASS. 최초 합성검사의 정산p_job 인자 누락1개 실패는 수정 후9/9 통과했고 검사를 삭제하지 않았다. 운영 적용은 없다.
+
+**백업·격리:** 00:18 운영읽기전용 백업/격리PostgreSQL17 복원PASS,26개 데이터/메타데이터 일치·RLS/서버RPC/직접쓰기차단·서버종료 확인. 첫 로컬 활성화 시험은 주소의 `/32` 표기 비교 때문에 LOCAL_ONLY_GUARD_FAILED로 쓰기 전 중단됐다. host(inet_server_addr()) 비교로 수정 후00:19 활성화→정확입력 접수→중단→전부rollback·보존PASS. 운영백업1회, 재검증은 같은 로컬복원본만 사용했다. 로컬 합성동의는 운영동의가 아니다. 초기 Supabase 조회의 테이블명 오기는 input_reviews로 수정해 조회했고 운영변경은 없다.
+
+**원격 준비:** 00:21 Vercel 기존11개/새3개부재, 원격main5a2ea91 확인. 기존PAGES_DEPLOY_ENABLED=true는 보존, STUDIO_WORKER_ENABLED와 Studio 게시 변수는 부재다. Vercel3개설정·같은소스재배포/GitHubworker변수/운영DB제한 및 첫유료1건은 모두 미실행이다. 해당 입력의 외부AI처리·최대1,000원 첫1건·필요한활성화/종료후닫기를 묶어 사용자에게 확인했고 답변 대기다. 학생게시/추가제작/자동재시도는 제외한다. 소진된 OIDC1/1·게시합성1/1·기존Linux검사는 반복하지 않는다.
+
+증거/도구: `.local/studio-first-generation-20261015/`의 prepared-input.json, preflight.json, latest-backup-run.json, connection-rollout.ps1, worker-switch.mjs. 보호복원폴더 `first-generation-preflight-20261015-7a38066dec4e4bedb4447aa04ca1ff1f`의 backup-result.json과 first-generation-rehearsal.json(실패)/first-generation-rehearsal-2.json(PASS)을 보존한다. 신규공개commit/push/PR 없음. 최근57%사용/43%남음,30%보존.
+
+## 2026-10-14 23:56 KST — 실제 과제 입력 화면 연결 완료
+
+자율 진행 요청에 따라 기존 Production에 `STUDIO_INPUT_REVIEW_ENABLED=true`, `STUDIO_RESULT_REVIEW_ENABLED=true` 두 설정을 추가했다. 등록 전 정확한 프로젝트/기존9개 확인, 등록 후 두 항목의 Secret/Production 범위·기존9개 메타데이터 보존 PASS. 이미 검토된 PR #19 소스만1회 재배포했으며 로컬 변경 파일은 업로드하지 않았다.
+
+배포 `dpl_2NC1k63U35MyXppF1APeASKgsNcK` READY, source SHA `5a2ea91011f00e436c2aa17716c6010af2985889`, 프로젝트ID/Production 별칭을 Vercel API로 검증했다. 실제 HTTP8개 PASS(홈200·미인증401·worker/게시503·private/no-store). Chrome 기존 교사 로그인 세션에서 **2D·3D 제작 준비/과제 입력/참고 자료/제작 입력 미리 확인** 화면이 실제 보인다. 입력 준비에는 비용이 없고 실제 제작은 연결 대기라고 표시된다. 새 로그인·비밀번호 입력을 요청하지 않았다.
+
+관련 로컬 input-review/result-review/dispatch-store17개 PASS. 설정 도구 구문 검사 PASS. 결과 검토 설정도 등록했지만 실제 제작 결과가 아직 없어 운영 결과 화면의 성공 사례는 미검증이다. 운영 과제 저장/동의는 아직 수행하지 않았다. DB 구조/예산/worker·dispatch·수정 실행·게시 기능 변경, 유료 호출, 새 Actions 실행, 학생 게시 없음.
+
+비공개 증거 `.local/studio-input-rollout-20261014/`의 review.md, preflight.json, register-attempt/result.json, verified.json, redeploy-attempt/result.json, deployment-status/verified.json, production-http.json. 완료된 등록/재배포를 반복하지 않는다. 다음은 기존 중3 유전2D를 기본으로 첫 과제 초안과 출처·권리/비용 동의·첫 실제 실행 조건을 준비한다. 사용량53% 사용/47% 남음,30% 보존 기준 유지.
+
+## 2026-10-14 23:41 KST — PC 도구 응답 복구, PR #19·실제 인증 검사 성공 기록 복구
+
+23:45 보완: 로그 수집 실패는 `HTTP403: Must have admin rights to Repository`로 확인됐다. 반복 조회를 끝내고 기존 run/jobs API로 두 역할과 검증 단계 성공·나머지10개 skipped를 다시 확인해 `oidc-metadata-result.json`에 저장했다. 세부 JSON 로그는 미수집으로 남긴다. `waiting-status.json`의 과거 승인 대기 표기도 완료로 고쳤다. 새 권한/재실행은 없다.
+
+사용자의 18개 공개·검사 후 병합·재배포 및 인증 검사1회 승인에 따라 [PR #19](https://github.com/Raph-Alpaca/science-simulations/pull/19)를 검사 후21:24KST 병합했다. 검토 head `2b133ddca1fa1a3d4639840743957734542f6583`, main `5a2ea91011f00e436c2aa17716c6010af2985889`이며 두 트리의 내용 일치도 확인했다. Vercel Production deployment7065209907 성공,21:25 실제 HTTP8개 PASS(홈200/미인증401/worker·게시 경로503·no-store). 승인·등록한 App 설정3개가 반영됐으며 기능은 비활성이다.
+
+[실제 OIDC 실행38563747495](https://github.com/Raph-Alpaca/science-simulations/actions/runs/38563747495)는 같은 main/attempt1로 단1회 실행해 completed/success였다. GitHub jobs 응답에서 generation/report connection 두 작업과 각각의 실제 역할 검증 단계 성공, 나머지 제작·검사·보고 작업 skipped를 확인했다. **새 인증 검사1/1 사용 완료**다. 운영 API/DB 왕복·App을 통한 실제 dispatch·유료 제작·학생 게시 완료를 뜻하지 않는다.
+
+이후 고정 결과 JSON을 보완 수집하는 과정에서 generation job 로그 조회가 gh exit1로 실패했다. 이어 PC 도구 응답이 지연돼 최신 문서 저장도 완료되지 않았으며,23:41 재개 시 파일에 이전 기록만 있음을 확인했다. 현재 PowerShell·파일·사용량 조회 응답이 복구됐고 Get-Process 기준 gh 실행 프로세스는 없다(CIM 조회는 접근 거부). 장애 원인은 미확정이다. 기존 실행의 읽기 전용 증거 수집만 이어가며 dispatch·키 등록·배포는 반복하지 않는다.
+
+실제 증거: `.local/studio-oidc-review-20261014/production-target.json`, `production-http.json`, `oidc-attempt.json`, `oidc-dispatch.json`. 단일 시도 표식은 보존한다. DB 변경/기능 활성화/유료 호출/학생 게시0회. 사용량51% 사용/49% 남음이며 남은30% 보존·33~35%부터 인계 정리한다. 아래 승인 대기와 미실행 표기는 당시 이력이다.
+
 ## 2026-10-14 20:30 KST — 실제 OIDC 연결 검사 로컬 준비 완료
 
 Vercel 등록·보존 검증 이후, 실제 GitHub 발급 토큰의 두 역할을 확인할 `connection` 모드를 준비했다. 기존 caller/reusable 경로를 유지하고 API/전달/DB/App 키 없이 같은 운영 인증 검증 코드를 Actions 내부에서 실행한다. 제작/보고 작업은 시작하지 않으며 Docker·운영 API·DB·유료 모델·학생 게시 호출도 없다. 자세한 경계는 [OIDC_CONNECTION_CHECK](OIDC_CONNECTION_CHECK.md)에 고정했다.
