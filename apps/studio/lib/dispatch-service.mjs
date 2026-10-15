@@ -13,7 +13,7 @@ export function createDispatchService({db,ownerId,env,transport=fetch}){
   return response.data;
  };
  const configured=()=>{if(!dispatcher)throw new StudioError('RUNNER_CONNECTION_REQUIRED',503);};
- const input=createInputReviewService({db,ownerId,enabled:env.STUDIO_INPUT_REVIEW_ENABLED==='true'});
+ const input=createInputReviewService({db,ownerId,enabled:env.STUDIO_INPUT_REVIEW_ENABLED==='true',preparationEnabled:env.STUDIO_SOURCE_PREPARATION_ENABLED==='true'});
  return Object.freeze({
   async capability(signal=undefined){if(!dispatcher)return false;try{return await rpc('dispatch_version',{},signal)===1&&await rpc('dispatch_execution_enabled',{},signal)===true&&await rpc('worker_execution_enabled',{},signal)===true;}catch{return false;}},
   async read(jobId){id(jobId);return {dispatch:await rpc('read_dispatch_intent',{p_owner:ownerId,p_job:jobId})};},

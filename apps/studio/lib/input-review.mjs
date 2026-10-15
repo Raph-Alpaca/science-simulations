@@ -4,6 +4,7 @@ import {hash} from '../../../packages/contracts/content-source.js';
 import {StudioError,id,fields,requestEnvelope} from './domain.mjs';
 import budget from '../../../config/execution-budget.json' with {type:'json'};
 import {CURRICULUM} from './dispatcher.mjs';
+import {createPreparationSourceReader} from './preparation-sources.mjs';
 
 const need=(value,code='INPUT_REVIEW_INVALID',status=400)=>{if(!value)throw new StudioError(code,status);};
 const exact=(value,names)=>{fields(value,names);need(Object.keys(value).length===names.length);};
@@ -40,25 +41,46 @@ export function reviewForBrowser(row){
  const {input,context}=JSON.parse(row.input_text);
  return {id:row.id,conversationId:row.conversation_id,sourceHash:row.source_hash,state:row.state,expiresAt:row.expires_at,jobId:row.job_id,
   topic:input.topic,generationKind:input.generationKind,requirements:input.requirements.map(r=>r.text).join('\n\n'),requirementItems:input.requirements,revision:input.revision??null,grade:context.grade,unit:context.unit,contentId:context.contentId,sources:context.sources,curriculumRevision:context.curriculumRevision,
-  budget:inputBudget(),unverified:['교육과정 원문 대조','교과서 원문 대조','과학·학습 설계·실제 동작'],
-  missingSourceKinds:['curriculum','textbook','science'].filter(kind=>!context.sources.some(s=>s.kind===kind))};
+  budget:inputBudget(),unverified:context.sourcePreparation?['제작 결과의 교육과정 적합성','특정 학교 교과서 일치','과학·학습 설계·실제 동작']:['교육과정 원문 대조','교과서 원문 대조','과학·학습 설계·실제 동작'],
+  missingSourceKinds:['curriculum','textbook','science'].filter(kind=>!context.sources.some(s=>s.kind===kind)),
+  sourcePreparation:context.sourcePreparation??null};
 }
-export function createInputReviewService({db,ownerId,enabled=false}){
+export function attachSourcePreparation(prepared,evidence){
+ const source=JSON.parse(prepared.inputText);
+ source.context.sourcePreparation=evidence.packet;
+ source.input.evidenceNotice='Source preparation records cover only the named original sections and exact authored summaries. Read their scope, limitations and review level. They do not certify this candidate, selected school textbook alignment, learning design or publication approval. Missing evidence must remain unverified.';
+ const inputText=JSON.stringify(source);need(Buffer.byteLength(inputText)<=50000,'INPUT_REVIEW_TOO_LARGE');
+ return {...prepared,inputText,sourceHash:hash(inputText)};
+}
+export function createInputReviewService({db,ownerId,enabled=false,preparationEnabled=false,now=()=>Date.now()}){
  id(ownerId);
+ const preparation=createPreparationSourceReader({db,ownerId,enabled:preparationEnabled,now});
  const rpc=async(name,args)=>{
   let response;try{response=await db.rpc(name,args).abortSignal(AbortSignal.timeout(10000));}catch{throw new StudioError('INPUT_REVIEW_UNAVAILABLE',503);}
-  if(response.error){const c=response.error.code;throw new StudioError(({PT400:'INPUT_REVIEW_INVALID',PT403:'TEACHER_NOT_ALLOWED',PT404:'NOT_FOUND',PT409:'INPUT_REVIEW_CHANGED',PT410:'INPUT_REVIEW_EXPIRED',PT412:'REAL_EXECUTION_UNAVAILABLE',PT423:'CONVERSATION_BUSY',PT429:'INPUT_REVIEW_LIMIT',PGRST202:'INPUT_REVIEW_SETUP_REQUIRED'})[c]||'INPUT_REVIEW_UNAVAILABLE',({PT400:400,PT403:403,PT404:404,PT409:409,PT410:409,PT412:503,PT423:409,PT429:429})[c]||503);}
+  if(response.error){const c=response.error.code;throw new StudioError(({PT400:'INPUT_REVIEW_INVALID',PT403:'TEACHER_NOT_ALLOWED',PT404:'NOT_FOUND',PT409:'INPUT_REVIEW_CHANGED',PT410:'INPUT_REVIEW_EXPIRED',PT412:'REAL_EXECUTION_UNAVAILABLE',PT422:'SOURCE_EVIDENCE_REQUIRED',PT423:'CONVERSATION_BUSY',PT429:'INPUT_REVIEW_LIMIT',PGRST202:'INPUT_REVIEW_SETUP_REQUIRED'})[c]||'INPUT_REVIEW_UNAVAILABLE',({PT400:400,PT403:403,PT404:404,PT409:409,PT410:409,PT412:503,PT422:409,PT423:409,PT429:429})[c]||503);}
   return response.data;
  };
  const configured=()=>need(enabled,'INPUT_REVIEW_SETUP_REQUIRED',503);
+ const decorate=async row=>{
+  const review=reviewForBrowser(row);if(!preparationEnabled)return review;
+  const {context}=JSON.parse(row.input_text);
+  const evidence=await preparation.read({sources:context.sources,reviewScope:context.sourcePreparation?.reviewScope??'general_concepts',curriculumRevision:context.curriculumRevision});
+  const unchanged=Boolean(context.sourcePreparation)&&hash(JSON.stringify(context.sourcePreparation))===evidence.packetHash;
+  return {...review,sourceReadiness:{state:evidence.state==='ready'&&unchanged?'ready':'needs_evidence',missingSourceIds:evidence.missingSourceIds,missingKinds:evidence.missingKinds,changed:!unchanged}};
+ };
  return Object.freeze({
-  async capability(){if(!enabled)return false;try{return await rpc('input_review_version',{})===1;}catch{return false;}},
-  async prepare(body){configured();const p=prepareInputReview(body,ownerId);const row=await rpc('prepare_worker_input',{p_owner:ownerId,p_conversation:p.conversationId,p_client:p.clientRequestId,p_request:p.request,p_input:p.inputText,p_hash:p.sourceHash,p_content:p.contentId});return {review:reviewForBrowser(row)};},
-  async read(reviewId){configured();id(reviewId);return {review:reviewForBrowser(await rpc('read_worker_input',{p_owner:ownerId,p_review:reviewId}))};},
+  async capability(){if(!enabled)return false;try{return await rpc('input_review_version',{})===1&&(!preparationEnabled||await preparation.capability()&&await preparation.admissionReady());}catch{return false;}},
+  async prepare(body){configured();let p=prepareInputReview(body,ownerId);
+   if(preparationEnabled){const {context}=JSON.parse(p.inputText);const evidence=await preparation.read({sources:context.sources,reviewScope:'general_concepts',curriculumRevision:context.curriculumRevision});p=attachSourcePreparation(p,evidence);}
+   const row=await rpc('prepare_worker_input',{p_owner:ownerId,p_conversation:p.conversationId,p_client:p.clientRequestId,p_request:p.request,p_input:p.inputText,p_hash:p.sourceHash,p_content:p.contentId});return {review:await decorate(row)};},
+  async read(reviewId){configured();id(reviewId);return {review:await decorate(await rpc('read_worker_input',{p_owner:ownerId,p_review:reviewId}))};},
   async approve(reviewId,body){configured();id(reviewId);exact(body,['sourceHash','rightsConfirmed','budgetAccepted']);need(/^[a-f0-9]{64}$/.test(body.sourceHash)&&body.rightsConfirmed===true&&body.budgetAccepted===true,'INPUT_PERMISSION_REQUIRED');
-   return {review:reviewForBrowser(await rpc('approve_worker_input',{p_owner:ownerId,p_review:reviewId,p_hash:body.sourceHash,p_consent:INPUT_CONSENT}))};},
+   if(preparationEnabled){const {review}=await this.read(reviewId);need(review.state==='consumed'||review.sourceReadiness.state==='ready','SOURCE_EVIDENCE_REQUIRED',409);}
+   return {review:await decorate(await rpc('approve_worker_input',{p_owner:ownerId,p_review:reviewId,p_hash:body.sourceHash,p_consent:INPUT_CONSENT}))};},
   // Called by the trusted dispatch service only after its configuration passes.
   // Preparing/approving input never silently consumes a paid job reservation.
-  async submit(reviewId,sourceHash){configured();id(reviewId);need(/^[a-f0-9]{64}$/.test(sourceHash));return {job:await rpc('submit_reviewed_worker_job',{p_owner:ownerId,p_review:reviewId,p_hash:sourceHash})};},
+  async submit(reviewId,sourceHash){configured();id(reviewId);need(/^[a-f0-9]{64}$/.test(sourceHash));
+   if(preparationEnabled){const row=await rpc('read_worker_input',{p_owner:ownerId,p_review:reviewId});if(row.state!=='consumed'){need(await preparation.admissionReady(),'PREPARATION_SOURCES_SETUP_REQUIRED',503);need((await decorate(row)).sourceReadiness.state==='ready','SOURCE_EVIDENCE_REQUIRED',409);}}
+   return {job:await rpc('submit_reviewed_worker_job',{p_owner:ownerId,p_review:reviewId,p_hash:sourceHash})};},
  });
 }

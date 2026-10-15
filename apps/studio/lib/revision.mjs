@@ -1,7 +1,7 @@
 import {hash} from '../../../packages/contracts/content-source.js';
 import {inspectRevisionBase} from '../../../automation/runner/revision.mjs';
 import {inspectWorkerResult} from './result-review.mjs';
-import {reviewForBrowser} from './input-review.mjs';
+import {reviewForBrowser,createInputReviewService} from './input-review.mjs';
 import {StudioError,id,fields,requestEnvelope} from './domain.mjs';
 
 const need=(ok,code='REVISION_CHANGED',status=409)=>{if(!ok)throw new StudioError(code,status);};
@@ -29,7 +29,7 @@ export function prepareRevision(snapshot,lineage,body){
  return {inputText,sourceHash:hash(inputText),baseCandidateText,request,reference};
 }
 
-export function createRevisionService({db,ownerId,enabled=false}){
+export function createRevisionService({db,ownerId,enabled=false,preparationEnabled=false}){
  id(ownerId);
  const rpc=async(name,args)=>{
   let response;try{response=await db.rpc(name,args).abortSignal(AbortSignal.timeout(10000));}catch{throw new StudioError('REVISION_UNAVAILABLE',503);}
@@ -45,7 +45,7 @@ export function createRevisionService({db,ownerId,enabled=false}){
    const lineage=await rpc('read_revision_context',{p_owner:ownerId,p_job:jobId,p_client:body.clientRequestId});
    const p=prepareRevision(snapshot,lineage,body);
    const row=await rpc('prepare_worker_revision',{p_owner:ownerId,p_parent:jobId,p_feedback:body.feedbackId,p_client:body.clientRequestId,p_head:p.reference.headJobId,p_request:p.request,p_input:p.inputText,p_hash:p.sourceHash,p_candidate:p.baseCandidateText});
-   return {review:reviewForBrowser(row)};
+   return preparationEnabled?createInputReviewService({db,ownerId,enabled:true,preparationEnabled:true}).read(row.id):{review:reviewForBrowser(row)};
   },
  });
 }
