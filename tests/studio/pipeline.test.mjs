@@ -122,6 +122,68 @@ test('in-flight cancellation after runtime does not dispatch another paid review
 });
 
 const preparedScope=reviewScope=>({schemaVersion:1,purpose:'generation_source_preparation',reviewScope,records:[]});
+
+function changeDeveloper(f,change){
+ const call=f.dependencies.call;
+ f.dependencies.call=async request=>{
+  const response=await call(request);
+  if(request.role==='developer')response.text=JSON.stringify(change(JSON.parse(response.text),f.requests.filter(r=>r.role==='developer').length));
+  return response;
+ };
+}
+test('missing metadata is corrected within two repairs and the first valid candidate uses verifier zero',async()=>{
+ const verified=[],f=fixture(),verify=f.dependencies.verify;
+ f.dependencies.verify=async request=>{verified.push(request.attempt);return verify(request);};
+ changeDeveloper(f,(value,n)=>n<3?{files:value.files.filter(file=>file.path!=='meta.json')}:value);
+ const result=await f.run();
+ assert.equal(result.kind,'candidate_for_human_review');assert.equal(result.calls,7);
+ assert.deepEqual(verified,[0]);assert.equal(result.attempts.length,3);
+ assert.deepEqual(result.attempts.slice(0,2).map(a=>a.contractError),['CANDIDATE_META_INVALID','CANDIDATE_META_INVALID']);
+ assert.equal(result.attempts[2].generationAttempt,2);assert.equal(result.attempts[2].attempt,0);
+ assert.equal(f.records.filter(r=>r.kind==='candidate').length,1);
+ assert.equal(f.records.filter(r=>r.kind==='runtime_evidence').length,1);
+ const developers=f.requests.filter(r=>r.role==='developer').map(r=>JSON.parse(r.input));
+ assert.equal(developers[0].outputContract.metadataValues.id,context.contentId);
+ assert.deepEqual(developers[0].outputContract.requiredFiles,['meta.json']);
+ assert.equal(developers[1].repair.contract.status,'fail');assert.equal(developers[1].previousCandidate.files.length,1);
+ assert.equal(developers[1].previousCandidate.candidateHash,undefined);
+ assert.equal(f.records.filter(r=>r.kind==='role_output'&&r.role==='developer').length,3);
+});
+test('runtime and metadata corrections share the same two-repair budget without skipping verifier slots',async()=>{
+ const verified=[],f=fixture({failures:1}),verify=f.dependencies.verify;
+ f.dependencies.verify=async request=>{verified.push(request.attempt);return verify(request);};
+ changeDeveloper(f,(value,n)=>n===2?{files:value.files.filter(file=>file.path!=='meta.json')}:value);
+ const result=await f.run();assert.equal(result.kind,'candidate_for_human_review');assert.equal(result.calls,8);
+ assert.deepEqual(verified,[0,1]);assert.equal(result.attempts[0].review.status,'fail');
+ assert.equal(result.attempts[1].contractError,'CANDIDATE_META_INVALID');assert.equal(result.attempts[2].generationAttempt,2);
+ assert.equal(f.requests.filter(r=>r.role==='developer').length,3);
+});
+test('persistent metadata defects stop after three outputs with no verifier or fabricated candidate',async()=>{
+ const f=fixture({overrides:{async verify(){assert.fail('invalid files must not execute');}}});
+ changeDeveloper(f,value=>({files:value.files.filter(file=>file.path!=='meta.json')}));
+ const result=await f.run();assert.equal(result.kind,'needs_input');assert.equal(result.reason,'REPAIR_LIMIT_REACHED');assert.equal(result.calls,6);
+ assert.equal(result.attempts.length,3);assert.equal(f.records.filter(r=>r.kind!=='role_output').length,0);
+});
+test('metadata schema and missing entry defects are repairable but unsafe paths and approval claims still stop immediately',async()=>{
+ for(const defect of ['schema','entry']){
+  const f=fixture();changeDeveloper(f,(value,n)=>{
+   if(n!==1)return value;
+   if(defect==='entry')return {files:value.files.filter(file=>file.path==='meta.json')};
+   const changed={...meta,extra:'not allowed'};value.files.find(file=>file.path==='meta.json').content=JSON.stringify(changed);return value;
+  });const result=await f.run();assert.equal(result.kind,'candidate_for_human_review');assert.equal(result.calls,6);
+ }
+ for(const [path,metadata,code] of [['../outside.js',meta,'CANDIDATE_PATH_REJECTED'],['index.html',{...meta,stage:'ready',extra:'invalid'},'CANDIDATE_SELF_APPROVAL_REJECTED'],['index.html',{...meta,approvalIsExternal:false},'CANDIDATE_SELF_APPROVAL_REJECTED'],['index.html',{...meta,id:'changed',extra:'invalid'},'CANDIDATE_REQUIREMENTS_CHANGED'],['index.html',{...meta,curriculumRevision:'forged'},'CANDIDATE_REQUIREMENTS_CHANGED'],['index.html',{...meta,sourceIds:['invented']},'CANDIDATE_META_INVALID']]){
+  const f=fixture();changeDeveloper(f,()=>({files:[{path,content:'synthetic'},{path:'meta.json',content:JSON.stringify(metadata)}]}));
+  await assert.rejects(f.run(),new RegExp(code));assert.equal(f.requests.length,4);assert.equal(f.records.filter(r=>r.kind==='candidate').length,0);
+ }
+});
+test('oversized correction context and cancelled correction never make another provider call',async()=>{
+ const large=fixture();changeDeveloper(large,()=>({files:[{path:'index.html',content:'x'.repeat(150000)}]}));
+ const result=await large.run();assert.equal(result.reason,'CANDIDATE_REPAIR_INPUT_LIMIT');assert.equal(result.calls,4);
+ const f=fixture();let checks=0;changeDeveloper(f,value=>({files:value.files.filter(file=>file.path!=='meta.json')}));
+ f.dependencies.checkpoint=async()=>++checks<=5;
+ await assert.rejects(f.run(),/JOB_NOT_ACTIVE/);assert.equal(f.requests.length,4);
+});
 test('general-concepts source preflight precedes implementation and leaves actual candidate checks to the independent reviewer',async()=>{
  const f=fixture();f.args.context={...context,sourcePreparation:preparedScope('general_concepts')};
  f.args.input.requirements=[{id:'R1',text:'Predict first, compare Punnett probabilities and random samples. Provide reset, keyboard controls and a refined white/cobalt layout. Selected-school textbook alignment is unverified.'}];
