@@ -37,7 +37,7 @@ export function parseRoleReport(text,role,candidateHash){
 }
 const report=parseRoleReport;
 
-// Not wired to production. Every dependency must be supplied by a trusted host.
+// Every dependency must be supplied by a trusted host.
 // authorize verifies the reviewed public input snapshot, claimRun atomically
 // claims a run once and reserves its job budget, checkpoint verifies the
 // live job/budget/cancellation state, record persists PRIVATE evidence, and
@@ -87,10 +87,29 @@ export async function runPipeline({jobId,input,context,baseCandidateText,signal}
   if(subject.status!=='pass'||subject.blockingIssues.length)return held('SUBJECT_EVIDENCE_REQUIRED');
   const design=report(await ask('design',{...original,curriculum,subject}),'design');
   if(design.status!=='pass'||design.blockingIssues.length)return held('DESIGN_REVIEW_REQUIRED');
-  let candidate,repair;
-  for(let attempt=0;attempt<=budget.maxRepairAttempts;attempt++){
-   const candidateText=await ask('developer',{...original,metadataSchema,runtimeContract:RUNTIME_CONTRACT,design,...(repair?{previousCandidate:candidate,repair}:revisionBase?{previousCandidate:revisionBase,revisionRequest:snapshot.input.revision}:{})});
-   candidate=parseCandidate(candidateText,snapshot.context);
+  let candidate,repair,verificationAttempt=0;
+  const outputContract={requiredFiles:['meta.json'],paths:'Relative to the content folder. Include the HTML file named by meta.entry.',
+   metadataValues:{id:snapshot.context.contentId,grade:snapshot.context.grade,unit:snapshot.context.unit,schoolYear:snapshot.context.schoolYear,curriculumRevision:snapshot.context.curriculumRevision,approvalIsExternal:true},
+   allowedStages:['draft','in_review']};
+  for(let generationAttempt=0;generationAttempt<=budget.maxRepairAttempts;generationAttempt++){
+   const developerInput={...original,metadataSchema,outputContract,runtimeContract:RUNTIME_CONTRACT,design,...(repair?{previousCandidate:candidate,repair}:revisionBase?{previousCandidate:revisionBase,revisionRequest:snapshot.input.revision}:{})};
+   // A malformed candidate is inert source, not a runtime result. Returning it
+   // for correction must fit the original prompt limit without truncation.
+   if(repair&&Buffer.byteLength(JSON.stringify(developerInput))+Buffer.byteLength(instructionsForRole('developer',snapshot.context))>CALL_LIMITS.promptBytes)return held('CANDIDATE_REPAIR_INPUT_LIMIT');
+   const candidateText=await ask('developer',developerInput);
+   try{candidate=parseCandidate(candidateText,snapshot.context);}
+   catch(error){
+    // Only metadata/entry defects reached after all file/path/size checks are
+    // repairable. Never soften unsafe paths, identity changes or self-approval.
+    if(!(error instanceof RunnerError)||!(error.code==='CANDIDATE_META_INVALID'&&error.candidateRepairable===true||error.code==='CANDIDATE_ENTRY_MISSING'))throw error;
+    attempts.push({generationAttempt,contractError:error.code});
+    candidate=freeze(JSON.parse(candidateText));
+    repair={contract:{status:'fail',code:error.code,requiredFiles:['meta.json'],instruction:'Return all complete files. Include valid meta.json matching metadataSchema/outputContract and its existing HTML entry. Preserve unrelated content. No runtime test has run for this output.'}};
+    continue;
+   }
+   // Workflow verifiers wait for 0,1,2 in order. Invalid source never consumes
+   // a verifier slot; generation corrections still consume the same two repairs.
+   const attempt=verificationAttempt++;
    await record({kind:'candidate',attempt,candidateHash:candidate.candidateHash,manifest:candidate.manifest});
    await checkpoint();
    const evidence=await dependencies.verify({jobId,attempt,candidate,sourceSnapshotHash,signal:controller.signal});
@@ -99,7 +118,7 @@ export async function runPipeline({jobId,input,context,baseCandidateText,signal}
     ['pass','fail','not_run'].includes(evidence?.checks?.contract)&&list(evidence?.issues),'RUNTIME_EVIDENCE_INVALID');
    freeze(evidence);await record({kind:'runtime_evidence',attempt,evidence});
    const review=report(await ask('reviewer',{...original,design,candidate,evidence:evidenceForModel(evidence),...(revisionBase?{previousCandidate:revisionBase}:{})}),'reviewer',candidate.candidateHash);
-   attempts.push({attempt,candidateHash:candidate.candidateHash,evidence,review});
+   attempts.push({attempt,generationAttempt,candidateHash:candidate.candidateHash,evidence,review});
    await record({kind:'review',attempt,checksHash:evidence.checksHash,review});
    // A known source-contract failure is repairable even though its unsafe code
    // was not launched. A missing checker or other unexecuted test stays on hold.

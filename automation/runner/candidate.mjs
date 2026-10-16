@@ -4,6 +4,7 @@ import {hash, LIMITS, relativeFile} from '../../packages/contracts/content-sourc
 import {RunnerError, CALL_LIMITS} from './bounded-responses.mjs';
 
 const need = (condition, code) => { if (!condition) throw new RunnerError(code); };
+const metadataError = repairable => Object.assign(new RunnerError('CANDIDATE_META_INVALID'),{candidateRepairable:repairable});
 const contentIdPattern = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 const textExtensions = new Set(['.html', '.css', '.js', '.json', '.svg']);
 const forbidden = /^(?:agents\.md|package(?:-lock)?\.json|npm-shrinkwrap\.json|tsconfig(?:\..+)?\.json|jsconfig\.json|(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?)$/i;
@@ -47,9 +48,18 @@ export function parseCandidate(text, {contentId, grade, unit, schoolYear, curric
   }
   let meta;
   try { meta = JSON.parse(files.find(f => f.path === 'meta.json')?.content); }
-  catch { throw new RunnerError('CANDIDATE_META_INVALID'); }
+  catch { throw metadataError(true); }
+  // Missing fields may be corrected; supplied identity or approval changes must
+  // remain fatal even when a separate schema error occurs in the same object.
+  if(meta&&typeof meta==='object'&&!Array.isArray(meta)){
+    for(const [key,value] of Object.entries({id:contentId,grade,unit,schoolYear,curriculumRevision})){
+      if(Object.hasOwn(meta,key))need(meta[key]===value,'CANDIDATE_REQUIREMENTS_CHANGED');
+    }
+    if(Object.hasOwn(meta,'stage'))need(['draft','in_review'].includes(meta.stage),'CANDIDATE_SELF_APPROVAL_REJECTED');
+    if(Object.hasOwn(meta,'approvalIsExternal'))need(meta.approvalIsExternal===true,'CANDIDATE_SELF_APPROVAL_REJECTED');
+  }
   try { assertMetadata(meta, contentId, config, sources); }
-  catch { throw new RunnerError('CANDIDATE_META_INVALID'); }
+  catch(error) { throw metadataError(error instanceof Error&&error.message.startsWith('META_SCHEMA:')); }
   need(meta.grade === grade && meta.unit === unit && meta.schoolYear === schoolYear &&
     meta.curriculumRevision === curriculumRevision, 'CANDIDATE_REQUIREMENTS_CHANGED');
   need(['draft', 'in_review'].includes(meta.stage), 'CANDIDATE_SELF_APPROVAL_REJECTED');

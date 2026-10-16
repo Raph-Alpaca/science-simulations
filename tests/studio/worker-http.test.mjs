@@ -39,7 +39,7 @@ test('oversized/unknown fields and malformed requests cannot consume authenticat
   assert.equal((await f.db.query('select count(*)::int n from studio.worker_oidc_receipts')).rows[0].n,0);
  }finally{await f.db.close();}
 });
-test('full synthetic pipeline uses signed HTTP for budget/evidence and a distinct reporter identity',async()=>{
+for(const missingMetadata of [false,true])test('full synthetic pipeline uses signed HTTP and a distinct reporter'+(missingMetadata?' after a metadata correction':''),async()=>{
  const f=await setup();try{
   const source=await f.post('input');let reported;
   const store={
@@ -66,17 +66,18 @@ test('full synthetic pipeline uses signed HTTP for budget/evidence and a distinc
    async finish(result){return f.post('finish',{kind:result.kind,candidateHash:result.candidate?.candidateHash??null,reason:result.reason??null});},
   };
   const ledger={reserve:({callId,requestHash,role,maxUsdMicros})=>f.post('reserve',{callId,requestHash,role,maxUsdMicros}),settle:({callId,chargedUsdMicros,uncertain})=>f.post('settle',{callId,chargedUsdMicros,uncertain})};
-  const roles=['curriculum','subject','design','developer','reviewer'];let index=0,requests=0;
+  const roles=['curriculum','subject','design','developer',...(missingMetadata?['developer']:[]),'reviewer'];let index=0,requests=0;
   const call=createBoundedResponses({apiKey:'sk-'+'fixture-only'.repeat(3),ledger,now:()=>Date.parse('2026-10-04T00:00:00Z'),transport:async(url,options)=>{
    requests++;if(url.endsWith('/input_tokens'))return Response.json({object:'response.input_tokens',input_tokens:100});
    const role=roles[index++],input=JSON.parse(JSON.parse(options.body).input[1].content);let value;
-   if(role==='developer')value={files:[{path:'meta.json',content:JSON.stringify(f.meta)},{path:'index.html',content:'<!doctype html><canvas></canvas>'}]};
+   if(role==='developer')value={files:[...(missingMetadata&&index===4?[]:[{path:'meta.json',content:JSON.stringify(f.meta)}]),{path:'index.html',content:'<!doctype html><canvas></canvas>'}]};
    else if(role==='design')value={status:'pass',plan:'Synthetic fixture.',blockingIssues:[]};
    else if(role==='reviewer')value={status:'pass',candidateHash:input.candidate.candidateHash,checks:{science:'pass',learning:'pass',curriculum:'pass',textbook:'pass'},findings:[],blockingIssues:[]};
    else value={status:'pass',findings:[],blockingIssues:[]};
    return Response.json({model:PRICING.model,service_tier:'default',status:'completed',usage:{input_tokens:100,output_tokens:200},output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(value)}]}]});
   }});
   const verify=async({candidate,attempt})=>{
+   assert.equal(attempt,0);
    const info={candidateHash:candidate.candidateHash,attempt};
    assert.equal((await f.post('runtime',info)).pending,true);
    assert.deepEqual(await f.post('verification',{attempt:1},{role:'report'}),{state:'pending'});
@@ -95,9 +96,9 @@ test('full synthetic pipeline uses signed HTTP for budget/evidence and a distinc
    const result=await f.post('runtime',info);assert.equal(result.pending,false);reported=result.evidence;return reported;
   };
   const outcome=await executeStoredPipeline({jobId:f.jobId,input:source.input,context:source.context},{store,call,verify});
-  assert.equal(outcome.job.state,'awaiting_approval');assert.equal(requests,10);
-  assert.equal((await f.db.query('select count(*)::int n from studio.worker_evidence')).rows[0].n,8);
-  const budget=(await f.db.query('select state,spent_usd_micros from studio.budget_jobs')).rows[0];assert.deepEqual(budget,{state:'closed',spent_usd_micros:4875});
+  assert.equal(outcome.job.state,'awaiting_approval');assert.equal(requests,missingMetadata?12:10);
+  assert.equal((await f.db.query('select count(*)::int n from studio.worker_evidence')).rows[0].n,missingMetadata?9:8);
+  const budget=(await f.db.query('select state,spent_usd_micros from studio.budget_jobs')).rows[0];assert.deepEqual(budget,{state:'closed',spent_usd_micros:missingMetadata?5850:4875});
   assert.equal((await f.db.query('select count(*)::int n from studio.approvals')).rows[0].n,0);
   const ended=await f.post('verification',{attempt:1},{role:'report'});assert.deepEqual(ended,{state:'done'});assert.equal(ended.packet,undefined);
  }finally{await f.db.close();}
