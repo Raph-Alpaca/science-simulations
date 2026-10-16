@@ -6,7 +6,7 @@ import {resolve,join,sep} from 'node:path';
 import {randomUUID,createHash,X509Certificate} from 'node:crypto';
 import net from 'node:net';
 import {assessBackupConnection} from './backup-checks.mjs';
-import {backupScope,LEGACY_TABLES,WORKER_TABLES,PUBLICATION_TABLES} from './backup-scope.mjs';
+import {backupScope,LEGACY_TABLES} from './backup-scope.mjs';
 
 const project=resolve('.'), privateRoot=join(project,'.local','studio-v1-backup-20260916');
 const run=resolve(process.argv[2]||'INVALID');
@@ -132,10 +132,11 @@ try {
     for(const table of LEGACY_TABLES)requireCheck(await local.sql(`select count(*) from studio.${table} where owner_id<>${q(activeOwner)};`)==='0','RESTORED_RLS_ISOLATION_FAILED');
     await local.sql('rollback;');report.restoredRlsIsolation=true;
     if(scope!=='legacy'){
-      const privateTables=scope==='publication-foundation'?[...WORKER_TABLES,...PUBLICATION_TABLES]:WORKER_TABLES;
+      const privateTables=tables.filter(table=>!LEGACY_TABLES.includes(table));
       const security=await local.json("select json_agg(json_build_object('name',relname,'rls',relrowsecurity,'anon',has_table_privilege('anon',oid,'SELECT,INSERT,UPDATE,DELETE'),'browser',has_table_privilege('authenticated',oid,'SELECT,INSERT,UPDATE,DELETE')) order by relname)::text from pg_class where relnamespace='studio'::regnamespace and relname in ("+privateTables.map(q).join(',')+");");
       requireCheck(security.length===privateTables.length&&security.every(t=>t.rls&&!t.anon&&!t.browser),'RESTORED_WORKER_GRANTS_INVALID');report.restoredWorkerIsolation=true;
-      if(scope==='publication-foundation')report.restoredPublicationIsolation=true;
+      if(scope==='publication-foundation'||scope==='source-preparation')report.restoredPublicationIsolation=true;
+      if(scope==='source-preparation')report.restoredPreparationIsolation=true;
     }
     await local.sql('begin;set local role service_role;');
     const created=await local.json(`select json_build_object('created',length(studio.new_conversation(${q(activeOwner)},'Local restore verification only')->>'id')=36)::text;`);

@@ -1,9 +1,10 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import SourcePreparation,{sourcePreparationBlocked,type SourcePreparationState} from './source-preparation';
 
 type Source={kind:string;title:string;url:string;location:string;summary:string};
 type Draft={topic:string;grade:number;unit:string;requirements:string;generationKind:string;sources:Source[]};
-type Review=Draft&{id:string;sourceHash:string;state:string;expiresAt:string;contentId:string;jobId:string|null;curriculumRevision:string|null;budget:{monthlyLimitKrw:number;monthlyJobLimit:number;jobLimitKrw:number;maxRepairAttempts:number};unverified:string[]};
+type Review=Draft&SourcePreparationState&{id:string;sourceHash:string;state:string;expiresAt:string;contentId:string;jobId:string|null;curriculumRevision:string|null;budget:{monthlyLimitKrw:number;monthlyJobLimit:number;jobLimitKrw:number;maxRepairAttempts:number};unverified:string[]};
 type Props={conversationId:string;disabled:boolean;realReady:boolean;onStarted:(jobId:string)=>Promise<void>;api:(path:string,body?:unknown)=>Promise<any>;run:(fn:()=>Promise<void>)=>Promise<void>;onError:(error:unknown)=>void};
 const labels:Record<string,string>={curriculum:'교육과정',textbook:'교과서',science:'과학 참고 자료'};
 const cleanSources=(sources:Source[])=>sources.map(({kind,title,url,location,summary})=>({kind,title,url,location,summary}));
@@ -24,8 +25,8 @@ export default function GenerationRequest({conversationId,disabled,realReady,onS
  const locked=disabled||restoring||!conversationId;
  function change(next:Partial<Draft>){setDraft(value=>({...value,...next}));setReview(null);setRights(false);setCost(false);sessionStorage.removeItem(storage);}
  function source(index:number,patch:Partial<Source>){change({sources:draft.sources.map((s,i)=>i===index?{...s,...patch}:s)});}
- async function prepare(){
-  if(review&&Date.parse(review.expiresAt)>Date.now())return;
+ async function prepare(refresh=false){
+  if(!refresh&&review&&Date.parse(review.expiresAt)>Date.now())return;
   const raw=JSON.stringify({conversationId,...draft});
   const signature=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw))),b=>b.toString(16).padStart(2,'0')).join('');
   let saved:{signature:string;key:string}|null=null;try{saved=JSON.parse(sessionStorage.getItem(pending)||'null');}catch{}
@@ -45,9 +46,10 @@ export default function GenerationRequest({conversationId,disabled,realReady,onS
   await onStarted(data.jobId);
  }
  const expired=review&&review.state!=='consumed'?Date.parse(review.expiresAt)<=Date.now():false;
+ const evidenceBlocked=sourcePreparationBlocked(review);
  return <div className="generation-request">
   <h3>2D·3D 제작 준비</h3><p className="muted">과제와 직접 작성한 자료 요약을 확인합니다. 입력 저장에는 AI 비용이 발생하지 않습니다.</p>
-  <form onSubmit={e=>{e.preventDefault();void run(prepare);}}><fieldset disabled={locked}>
+  <form onSubmit={e=>{e.preventDefault();void run(()=>prepare());}}><fieldset disabled={locked}>
    <legend className="sr-only">실제 제작을 위한 과제 입력</legend>
    <label>탐구 주제<input value={draft.topic} onChange={e=>change({topic:e.target.value})} maxLength={120} required/></label>
    <div className="form-row"><label>학년<select value={draft.grade} onChange={e=>change({grade:Number(e.target.value)})}>{[1,2,3].map(g=><option key={g} value={g}>중{g}</option>)}</select></label><label>단원<input value={draft.unit} onChange={e=>change({unit:e.target.value})} maxLength={120} required/></label></div>
@@ -69,17 +71,19 @@ export default function GenerationRequest({conversationId,disabled,realReady,onS
   {review&&<section className="input-preview" aria-labelledby="input-preview-title">
    <h3 id="input-preview-title">제작기에 전달할 내용</h3>
    <p><strong>{review.topic}</strong> · 중{review.grade} · {review.unit} · {review.generationKind==='interactive_3d'?'3D':'2D'}</p><p className="preserve-lines">{review.requirements}</p>
-   <p className="muted">제작 기준: {review.curriculumRevision?review.curriculumRevision+' 개정':'미확인'} · 원문 대조 미확인</p>
+   <p className="muted">제작 기준: {review.curriculumRevision?review.curriculumRevision+' 개정':'미확인'} · {review.sourceReadiness?'원문 확인은 아래 기록 범위에 한정':'원문 대조 미확인'}</p>
    {review.sources.length?<ul>{review.sources.map((s,i)=><li key={i}><strong>{labels[s.kind]} · {s.title}</strong><br/><a href={s.url} target="_blank" rel="noreferrer">{s.url}</a><p>{s.location}</p><p className="preserve-lines">{s.summary}</p></li>)}</ul>:<p>등록된 참고 자료가 없습니다. 근거를 확인하기 전까지 과학·교육과정 검토는 보류됩니다.</p>}
    <p className="muted">현재 미확인: {review.unverified.join(', ')}. 링크를 저장한 것만으로 원문 확인을 완료하지 않습니다.</p>
+   <SourcePreparation value={review}/>
+   {review.sourceReadiness&&review.state!=='consumed'&&evidenceBlocked&&<button type="button" disabled={locked} onClick={()=>void run(()=>prepare(true))}>자료 확인 후 새 입력 준비</button>}
    <p>내부 예산 한도: 월 {review.budget.monthlyLimitKrw.toLocaleString()}원·{review.budget.monthlyJobLimit}건, 작업당 {review.budget.jobLimitKrw.toLocaleString()}원. 검토와 최대 {review.budget.maxRepairAttempts}회 수정을 포함합니다.</p>
-   {expired?<p className="notice">입력 확인 기한이 지났습니다. 내용을 다시 준비해 주세요.</p>:review.state==='prepared'?<fieldset disabled={locked}>
+   {expired?<p className="notice">입력 확인 기한이 지났습니다. 내용을 다시 준비해 주세요.</p>:review.state==='prepared'?<fieldset disabled={locked||evidenceBlocked}>
     <legend className="sr-only">입력 사용 범위 확인</legend>
     <label className="check-label"><input type="checkbox" checked={rights} onChange={e=>setRights(e.target.checked)}/>과제와 직접 작성한 요약에 개인정보·비밀·비공개 원문이 없으며, AI 처리와 결과물 공개에 사용할 수 있음을 확인했습니다.</label>
     <label className="check-label"><input type="checkbox" checked={cost} onChange={e=>setCost(e.target.checked)}/>실제 제작을 시작하면 실패·중단 전까지 발생한 비용도 위 한도에 포함됨을 확인했습니다.</label>
     <button type="button" className="primary" disabled={!rights||!cost} onClick={()=>void run(approve)}>입력 확인 저장</button>
-   </fieldset>:<div><p className="notice" role="status">{review.state==='consumed'?'이 입력 버전으로 작업이 접수됐습니다. 작업 상세에서 상태를 확인하세요.':realReady?'입력 확인을 저장했습니다. 아래 버튼으로 제작을 시작할 수 있습니다.':'입력 확인을 저장했습니다. 실제 실행기 연결 후 이 버전으로 제작할 수 있습니다.'}</p>
-    {review.state==='consumed'&&review.jobId?<button type="button" disabled={locked} onClick={()=>void run(()=>onStarted(review.jobId!))}>접수한 작업 보기</button>:realReady&&<button type="button" className="primary" disabled={locked} onClick={()=>void run(start)}>제작 시작 · 최대 {review.budget.jobLimitKrw.toLocaleString()}원</button>}
+   </fieldset>:<div><p className="notice" role="status">{review.state==='consumed'?'이 입력 버전으로 작업이 접수됐습니다. 작업 상세에서 상태를 확인하세요.':evidenceBlocked?'자료 확인 상태가 바뀌어 제작을 보류했습니다. 확인된 자료로 새 입력을 준비해 주세요.':realReady?'입력 확인을 저장했습니다. 아래 버튼으로 제작을 시작할 수 있습니다.':'입력 확인을 저장했습니다. 실제 실행기 연결 후 이 버전으로 제작할 수 있습니다.'}</p>
+    {review.state==='consumed'&&review.jobId?<button type="button" disabled={locked} onClick={()=>void run(()=>onStarted(review.jobId!))}>접수한 작업 보기</button>:realReady&&<button type="button" className="primary" disabled={locked||evidenceBlocked} onClick={()=>void run(start)}>제작 시작 · 최대 {review.budget.jobLimitKrw.toLocaleString()}원</button>}
    </div>}
    <p className="muted">내용을 수정하면 다시 확인합니다. 제작 결과의 검토와 게시 승인은 이후 단계입니다.</p>
   </section>}

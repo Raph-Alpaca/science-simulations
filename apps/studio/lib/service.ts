@@ -55,12 +55,12 @@ export async function login(body: unknown) {
   return { authenticated: true };
 }
 type Session = Awaited<ReturnType<typeof session>>;
-const inputReviews=(s:Session)=>createInputReviewService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_INPUT_REVIEW_ENABLED==='true'});
+const inputReviews=(s:Session)=>createInputReviewService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_INPUT_REVIEW_ENABLED==='true',preparationEnabled:process.env.STUDIO_SOURCE_PREPARATION_ENABLED==='true'});
 const dispatchService=(s:Session)=>createDispatchService({db:s.db,ownerId:s.userId,env:process.env});
 const resultReviews=(s:Session)=>createResultReviewService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_RESULT_REVIEW_ENABLED==='true'});
 const releaseApprovals=(s:Session)=>createReleaseApprovalService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_RELEASE_APPROVAL_ENABLED==='true'});
 const publicationDispatch=(s:Session)=>createStudioPublicationDispatch({db:s.db,ownerId:s.userId,env:process.env});
-const revisions=(s:Session)=>createRevisionService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_REVISION_ENABLED==='true'&&process.env.STUDIO_INPUT_REVIEW_ENABLED==='true'&&process.env.STUDIO_RESULT_REVIEW_ENABLED==='true'});
+const revisions=(s:Session)=>createRevisionService({db:s.db,ownerId:s.userId,enabled:process.env.STUDIO_REVISION_ENABLED==='true'&&process.env.STUDIO_INPUT_REVIEW_ENABLED==='true'&&process.env.STUDIO_RESULT_REVIEW_ENABLED==='true',preparationEnabled:process.env.STUDIO_SOURCE_PREPARATION_ENABLED==='true'});
 async function conversation(s: Session, conversationId: string) {
   id(conversationId);
   const { data, error } = await s.db.from('conversations').select('*').eq('id', conversationId).eq('owner_id', s.userId).maybeSingle();

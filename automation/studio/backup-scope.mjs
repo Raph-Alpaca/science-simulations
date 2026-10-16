@@ -2,9 +2,10 @@ export const LEGACY_TABLES=Object.freeze(['approvals','conversations','job_event
 export const WORKER_TABLES=Object.freeze(['dispatch_intents','budget_policy','budget_jobs','budget_calls','worker_runs','worker_evidence','worker_oidc_receipts','input_reviews','result_feedback','content_heads'].sort());
 export const FOUNDATION_TABLES=Object.freeze([...LEGACY_TABLES,...WORKER_TABLES].sort());
 export const PUBLICATION_TABLES=Object.freeze(['release_baseline','release_reviews','source_reviews','publication_dispatches','publication_oidc_receipts','publication_checks','publication_authorizations','publication_outcomes'].sort());
+export const PREPARATION_TABLES=Object.freeze(['preparation_sources']);
 export function backupScope(mode='legacy'){
- if(!['legacy','worker-foundation','publication-foundation'].includes(mode))throw Error('BACKUP_SCOPE_REJECTED');
- return mode==='legacy'?LEGACY_TABLES:mode==='worker-foundation'?FOUNDATION_TABLES:Object.freeze([...FOUNDATION_TABLES,...PUBLICATION_TABLES].sort());
+ if(!['legacy','worker-foundation','publication-foundation','source-preparation'].includes(mode))throw Error('BACKUP_SCOPE_REJECTED');
+ return mode==='legacy'?LEGACY_TABLES:mode==='worker-foundation'?FOUNDATION_TABLES:Object.freeze([...FOUNDATION_TABLES,...PUBLICATION_TABLES,...(mode==='source-preparation'?PREPARATION_TABLES:[])].sort());
 }
 export function fingerprintScope(tables,excludeColumns={}){
  if(!Array.isArray(tables)||tables.length<1||tables.length>64||new Set(tables).size!==tables.length||tables.some(t=>!/^[_a-z][_a-z0-9]*$/.test(t)))throw Error('FINGERPRINT_SCOPE_REJECTED');
