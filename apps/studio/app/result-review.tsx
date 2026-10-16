@@ -2,12 +2,13 @@
 import {useRef,useState} from 'react';
 import RevisionRequest from './revision-request';
 import PublicationApproval from './publication-approval';
+import ResultScreenshots from './result-screenshots';
 
 type Version={stateVersion:number;sourceHash:string;candidateHash:string|null;evidenceHash:string};
 type ModelReport={status:string;findings?:string[];blockingIssues:string[];plan?:string;checks?:Record<string,string>};
 type Result={jobId:string;state:string;reason:string|null;version:Version;revision:null|{parentJobId:string;candidateHash:string};input:{generationKind:string;grade:number;unit:string;sources:{id:string;title:string;kind:string;verification:string}[]};
  candidate:null|{contentId:string;title:string;summary:string;assumptions:string[];entry:string;files:{path:string;hash:string;bytes:number}[]};
- initialReviews:(ModelReport&{role:string;sequence:number})[];attempts:{attempt:number;candidateHash:string;runtime:null|{checksHash:string;checks:Record<string,string>;checksExecuted:string[];issues:string[];details:{browserVersion:string|null;browserStopped:boolean;observations:{width:number;webglUnavailable?:boolean}[]}};review:ModelReport|null}[];
+ initialReviews:(ModelReport&{role:string;sequence:number})[];attempts:{attempt:number;candidateHash:string;screenshots?:{width:number;height:number;hash:string}[];runtime:null|{checksHash:string;checks:Record<string,string>;checksExecuted:string[];issues:string[];details:{browserVersion:string|null;browserStopped:boolean;observations:{width:number;webglUnavailable?:boolean}[]}};review:ModelReport|null}[];
  budget:{state:string;calls:number;spentUsdMicros:number;heldUsdMicros:number};feedbackAllowed:boolean;publication:{eligible:boolean;blockers:string[]};
  feedback:{id:string;decision:string;note:string;candidate_hash:string|null;created_at:string}[]};
 type Props={jobId:string;disabled:boolean;revisionReady:boolean;releaseReviewReady?:boolean;publicationDispatchReady?:boolean;realReady:boolean;onStarted:(jobId:string)=>Promise<void>;onError:(error:unknown)=>void;api:(path:string,body?:unknown)=>Promise<any>;run:(fn:()=>Promise<void>)=>Promise<void>};
@@ -41,6 +42,7 @@ export default function ResultReview({jobId,disabled,revisionReady,releaseReview
    <p className="muted">AI 검토 의견과 별도 실행 검사 결과를 구분합니다. 모델의 통과 의견만으로 출처 대조나 게시 승인이 완료되지 않습니다.</p>
    {result.initialReviews.map(report=><details key={report.sequence}><summary>{role[report.role]} · {status[report.status]||'확인 필요'}</summary><Opinion report={report}/></details>)}
    {result.attempts.map(attempt=><details key={attempt.attempt} open={attempt.attempt===result.attempts.length-1}><summary>{attempt.attempt===0?'최초 결과':`수정 ${attempt.attempt}회 결과`} · {attempt.candidateHash.slice(0,12)}</summary>
+    <ResultScreenshots key={result.version.evidenceHash+':'+attempt.attempt} jobId={jobId} version={result.version} attempt={attempt.attempt} candidateHash={attempt.candidateHash} images={attempt.screenshots??[]} disabled={disabled} api={api} run={run}/>
     <h4>별도 실행 검사</h4>{attempt.runtime?<><table><caption className="sr-only">{attempt.attempt+1}번째 결과의 실행 검사</caption><thead><tr><th scope="col">검사</th><th scope="col">결과</th></tr></thead><tbody>{Object.entries(attempt.runtime.checks).map(([key,value])=><tr key={key}><th scope="row">{dimension[key]}</th><td>{status[value]}</td></tr>)}</tbody></table>
     <p className="muted">브라우저 {attempt.runtime.details.browserVersion||'미확인'} · 종료 {attempt.runtime.details.browserStopped?'확인':'미확인'} · 검사 화면 {Array.from(new Set(attempt.runtime.details.observations.map(o=>o.width))).join(' / ')||'없음'}px</p>{attempt.runtime.issues.length>0&&<ul>{attempt.runtime.issues.map((issue,i)=><li key={i}>{issue==='RESET_FAILED'?'초기화 동작 실패':issue}</li>)}</ul>}</>:<p>실행 검사 기록이 없습니다.</p>}
     <h4>독립 검토</h4>{attempt.review?<><Opinion report={attempt.review}/><ul>{Object.entries(attempt.review.checks||{}).map(([key,value])=><li key={key}>{dimension[key]} · AI 의견 {status[value]}</li>)}</ul></>:<p>독립 검토 기록이 없습니다.</p>}

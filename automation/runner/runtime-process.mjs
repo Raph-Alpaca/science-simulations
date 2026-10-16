@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {browserEnvironment} from './runtime-browser.mjs';
 import {prepareRuntimeBundle,RuntimeCheckError} from './runtime-contract.mjs';
 import {assertRuntimeReport} from '../../packages/contracts/runtime-report.js';
+import {SCREENSHOT_LIMITS} from '../../packages/contracts/runtime-screenshot.js';
 
 export async function runRuntimeProcess(packet,{signal,environment=process.env}={}){
  const bundle=prepareRuntimeBundle(packet);
@@ -17,14 +18,14 @@ export async function runRuntimeProcess(packet,{signal,environment=process.env}=
   const cancel=()=>{if(child.connected)child.send('cancel',()=>{});};
   signal?.addEventListener('abort',cancel,{once:true});
   const timer=setTimeout(()=>{timedOut=true;cancel();killTimer=setTimeout(()=>child.kill(),5000);},55000);
-  child.stdout.on('data',chunk=>{bytes+=chunk.length;if(bytes>64000){child.kill();return;}output+=chunk;});
+  child.stdout.on('data',chunk=>{bytes+=chunk.length;if(bytes>SCREENSHOT_LIMITS.reportBytes){child.kill();return;}output+=chunk;});
   child.stderr.on('data',()=>{});child.stdin.on('error',()=>{});
   const cleanup=()=>{clearTimeout(timer);clearTimeout(killTimer);signal?.removeEventListener('abort',cancel);};
   child.once('error',()=>{cleanup();reject(new RuntimeCheckError('RUNTIME_PROCESS_UNAVAILABLE'));});
   child.once('close',code=>{
    cleanup();
    try{
-    if(timedOut||signal?.aborted||code!==0||bytes>64000)throw new RuntimeCheckError(timedOut?'RUNTIME_PROCESS_TIMEOUT':signal?.aborted?'RUNTIME_CANCELLED':'RUNTIME_PROCESS_FAILED');
+    if(timedOut||signal?.aborted||code!==0||bytes>SCREENSHOT_LIMITS.reportBytes)throw new RuntimeCheckError(timedOut?'RUNTIME_PROCESS_TIMEOUT':signal?.aborted?'RUNTIME_CANCELLED':'RUNTIME_PROCESS_FAILED');
     const result=assertRuntimeReport(JSON.parse(output),bundle.generationKind);
     if(['candidateHash','sourceSnapshotHash','baselineSha','attempt'].some(key=>result[key]!==bundle[key]))throw new RuntimeCheckError('RUNTIME_PROCESS_BINDING_FAILED');
     resolve(result);

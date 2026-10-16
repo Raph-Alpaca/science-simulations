@@ -5,6 +5,7 @@ import {hash} from '../../packages/contracts/content-source.js';
 import {RUNTIME_CONTRACT,RuntimeCheckError,runtimeNeed as need,checkRuntimeSource} from './runtime-contract.mjs';
 import {browserLaunchIssues} from './runtime-diagnostics.mjs';
 import {preparePublicationBundle} from '../publish/publication-packet.mjs';
+import {captureRecord,SCREENSHOT_LIMITS} from '../../packages/contracts/runtime-screenshot.js';
 
 const ORIGIN='https://simulation.invalid';
 const CSP="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'none'; connect-src 'self'; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
@@ -48,7 +49,7 @@ async function webglObservation(context,page){
 export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',environment=process.env,publicationPacket}={}){
  const site=publicationPacket?preparePublicationBundle(publicationPacket):null;if(site)bundle=site.runtime;
  const started=Date.now(),base={candidateHash:bundle.candidateHash,sourceSnapshotHash:bundle.sourceSnapshotHash,baselineSha:bundle.baselineSha,attempt:bundle.attempt,contractVersion:RUNTIME_CONTRACT.version};
- const result={...base,checks:{contract:'not_run',runtime:'not_run'},checksExecuted:[],issues:[],observations:[],requests:0};
+ const result={...base,checks:{contract:'not_run',runtime:'not_run'},checksExecuted:[],issues:[],observations:[],requests:0,...(!site?{screenshots:[]}: {})};
  let browser,timer,closePromise,expired=false,cancelled=signal?.aborted===true;
  const close=()=>browser?(closePromise??=browser.close().then(()=>true,()=>false)):Promise.resolve(true);
  const abort=()=>{cancelled=true;void close();};signal?.addEventListener('abort',abort,{once:true});
@@ -101,6 +102,13 @@ export async function verifyRuntimeBrowser(bundle,{signal,channel='chrome',envir
      need(['CANVAS','svg'].includes(await view.evaluate(el=>el.tagName)),'RUNTIME_VIEW_TYPE');
      need((await assumptions.innerText()).trim().length>=10,'RUNTIME_ASSUMPTIONS_EMPTY');
      need(await control.evaluate(el=>!!(el.labels?.length||el.getAttribute('aria-label')?.trim()||el.getAttribute('aria-labelledby'))),'RUNTIME_CONTROL_LABEL');
+     if(!site){
+      // A missing/oversized screenshot is not a substitute for a runtime result.
+      // The teacher sees only available captures, never candidate HTML.
+      try{const bytes=await page.screenshot({type:'jpeg',quality:60,fullPage:false,animations:'disabled',timeout:3000});
+       if(bytes.length<=SCREENSHOT_LIMITS.bytes)result.screenshots.push(captureRecord(bytes,width));
+      }catch{/* Existing runtime checks still determine pass/fail. */}
+     }
      const before={value:await value(control),output:(await output.innerText()).trim(),image:await shot(view)};need(before.output.length>0,'RUNTIME_OUTPUT_EMPTY');
      await change(control);await until(async()=>(await output.innerText()).trim()!==before.output,'RUNTIME_OUTPUT_UNCHANGED');
      const after=await shot(view);need(after!==before.image,'RUNTIME_VIEW_UNCHANGED');

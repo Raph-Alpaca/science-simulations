@@ -105,6 +105,7 @@ export async function write(s: Session, parts: string[], body: unknown) {
   if(parts.length===3&&parts[0]==='publication-approvals'&&parts[2]==='revoke')return releaseApprovals(s).revoke(parts[1],body);
   if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='revision-input')return revisions(s).prepare(parts[1],body);
   if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='result-file')return resultReviews(s).file(parts[1],body);
+  if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='result-screenshot')return resultReviews(s).screenshot(parts[1],body);
   if(parts.length===3&&parts[0]==='jobs'&&parts[2]==='feedback')return resultReviews(s).feedback(parts[1],body);
   if(parts.length===3&&parts[0]==='input-reviews'&&parts[2]==='start')return dispatchService(s).start(parts[1],body);
   if(parts.length===1&&parts[0]==='input-reviews')return inputReviews(s).prepare(body);

@@ -8,6 +8,19 @@
   --accent: #2257d5;
   --accent-soft: #edf2ff;
 }
+.result-screenshots { margin: 20px 0; }
+.result-screenshots figure { margin: 16px 0; }
+.result-screenshots figure>img { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: var(--surface); }
+.result-screenshots figcaption { color: var(--muted); font-size: 12px; margin: 8px 0 12px; }
+.screenshot-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.screenshot-options button { flex: 1; text-align: left; min-width: 120px; }
+.screenshot-options button span { display: block; color: var(--muted); font-size: 12px; font-weight: 400; }
+.screenshot-options button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 -2px var(--accent); }
+.screenshot-dialog { width: fit-content; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); padding: 20px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); }
+.screenshot-dialog::backdrop { background: #18212fcc; }
+.screenshot-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; position: sticky; top: -20px; background: var(--surface); padding-bottom: 12px; }
+.screenshot-dialog-heading p { margin: 0; font-weight: 600; }
+.screenshot-dialog img { display: block; max-width: 100%; height: auto; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.65 'Segoe UI','Malgun Gothic','Apple SD Gothic Neo',sans-serif; -webkit-font-smoothing: antialiased; }
 button,input,textarea,select { font: inherit; }
