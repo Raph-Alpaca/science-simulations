@@ -5,6 +5,7 @@ import {parseRoleReport} from '../../../automation/runner/pipeline.mjs';
 import {PRICING} from '../../../automation/runner/bounded-responses.mjs';
 import {assertRuntimeReport} from '../../../packages/contracts/runtime-report.js';
 import {inspectRevisionBase} from '../../../automation/runner/revision.mjs';
+import {instructionsForRole,roleReviewScope,ROLE_STAGES,ROLE_POLICY_VERSION} from '../../../automation/runner/role-instructions.mjs';
 
 export function createWorkerGateway(client){
  const studio=client.schema('studio');
@@ -41,11 +42,18 @@ export function createWorkerGateway(client){
  async function evidence(binding,requestId,event){
   need(event.jobId===binding.jobId&&event.sourceSnapshotHash===binding.sourceSnapshotHash,'WORKER_BINDING_REJECTED',403);
   if(event.kind==='role_output'){
-   exactKeys(event,['jobId','sourceSnapshotHash','kind','executionMode','role','callId','inputHash','outputHash','output','model','requestHash','usage','chargedUsdMicros']);
+   const policyKeys=['rolePolicyVersion','reviewStage','reviewScope','instructionsHash'];
+   const hasPolicy=policyKeys.some(key=>Object.hasOwn(event,key));
+   exactKeys(event,['jobId','sourceSnapshotHash','kind','executionMode','role','callId','inputHash','outputHash','output','model','requestHash','usage','chargedUsdMicros',...(hasPolicy?policyKeys:[])]);
    exactKeys(event.usage,['inputTokens','outputTokens']);
    need(event.executionMode==='separate_context'&&['curriculum','subject','design','developer','reviewer'].includes(event.role)&&uuid(event.callId)&&sha(event.inputHash)&&sha(event.outputHash)&&sha(event.requestHash)&&
     typeof event.output==='string'&&Buffer.byteLength(event.output)<=2000000&&hash(event.output)===event.outputHash&&event.model===PRICING.model&&
     Number.isSafeInteger(event.chargedUsdMicros)&&event.chargedUsdMicros>=0&&Object.values(event.usage).every(n=>Number.isSafeInteger(n)&&n>=0));
+   if(hasPolicy){
+    const source=await input(binding);
+    let scope,instructions;try{scope=roleReviewScope(source.context);instructions=instructionsForRole(event.role,source.context);}catch{throw new WorkerAuthError('WORKER_REVIEW_POLICY_MISMATCH',409);}
+    need(event.rolePolicyVersion===ROLE_POLICY_VERSION&&event.reviewStage===ROLE_STAGES[event.role]&&event.reviewScope===scope&&event.instructionsHash===hash(instructions),'WORKER_REVIEW_POLICY_MISMATCH',409);
+   }
    const charge=await result(studio.from('budget_calls').select('job_id,state,request_hash,role,charged_usd_micros').eq('call_id',event.callId).maybeSingle());
    need(charge?.job_id===binding.jobId&&charge.state==='settled'&&charge.request_hash===event.requestHash&&charge.role===event.role&&charge.charged_usd_micros===event.chargedUsdMicros,'WORKER_COST_RECEIPT_MISMATCH',409);
   }else if(event.kind==='candidate'){

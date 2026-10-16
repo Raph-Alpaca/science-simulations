@@ -3,6 +3,7 @@ import {hash,relativeFile} from '../../../packages/contracts/content-source.js';
 import {parseCandidate} from '../../../automation/runner/candidate.mjs';
 import {parseRoleReport} from '../../../automation/runner/pipeline.mjs';
 import {assertRuntimeReport} from '../../../packages/contracts/runtime-report.js';
+import {screenshotSummary} from '../../../packages/contracts/runtime-screenshot.js';
 import {StudioError,id,fields} from './domain.mjs';
 
 const need=(ok,code='RESULT_RECORD_INVALID',status=503)=>{if(!ok)throw new StudioError(code,status);};
@@ -32,7 +33,7 @@ export function inspectWorkerResult(snapshot){
   let report;try{report=parseRoleReport(row.event.output,row.event.role);}catch{report={status:'invalid',findings:[],blockingIssues:['ROLE_REPORT_INVALID']};}
   return {role:row.event.role,sequence:row.sequence,createdAt:row.createdAt,...report};
  });
- let latest=null;
+ let latest=null;const screenshots=[];
  const attempts=events.filter(row=>row.event.kind==='candidate').map(version=>{
   const v=version.event;need(Number.isInteger(v.attempt)&&v.attempt>=0&&v.attempt<=2&&sha(v.candidateHash));
   const developer=outputs.findLast(row=>row.sequence<version.sequence&&row.event.role==='developer');need(developer);
@@ -47,7 +48,9 @@ export function inspectWorkerResult(snapshot){
    const report={candidateHash:e.candidateHash,sourceSnapshotHash:e.sourceSnapshotHash,baselineSha:e.baselineSha,attempt:runtime.event.attempt,checks:e.checks,checksExecuted:e.checksExecuted,issues:e.issues,details:e.details};
    try{assertRuntimeReport(report,source.input.generationKind);}catch{need(false);}
    need(hash(JSON.stringify(report))===e.checksHash);
-   runtimeReport={checksHash:e.checksHash,checks:e.checks,checksExecuted:e.checksExecuted,issues:e.issues,details:e.details};
+   const {screenshots:frames=[],...details}=e.details;
+   for(const frame of frames)screenshots.push({attempt:v.attempt,candidateHash:v.candidateHash,...frame});
+   runtimeReport={checksHash:e.checksHash,checks:e.checks,checksExecuted:e.checksExecuted,issues:e.issues,details};
   }
   if(review){
    const reviewer=outputs.findLast(row=>row.sequence<review.sequence&&row.sequence>version.sequence&&row.event.role==='reviewer');
@@ -56,7 +59,8 @@ export function inspectWorkerResult(snapshot){
    need(JSON.stringify(parsed)===JSON.stringify(review.event.review));reviewReport=parsed;
   }
   latest=candidate;
-  return {attempt:v.attempt,candidateHash:v.candidateHash,createdAt:version.createdAt,runtime:runtimeReport,review:reviewReport};
+  return {attempt:v.attempt,candidateHash:v.candidateHash,createdAt:version.createdAt,runtime:runtimeReport,review:reviewReport,
+   screenshots:screenshots.filter(s=>s.attempt===v.attempt).map(screenshotSummary)};
  });
  need(attempts.length<=3&&attempts.every((a,i)=>a.attempt===i));
  if(worker.candidate_hash!==null)need(latest?.candidateHash===worker.candidate_hash);
@@ -78,7 +82,7 @@ export function inspectWorkerResult(snapshot){
   feedback:snapshot.feedback,feedbackAllowed:terminal.includes(job.state)&&['finished','uncertain'].includes(worker.state),publication:{eligible:false,blockers:publicationBlockers},
  };
  need(snapshot.feedback.length<=20&&Buffer.byteLength(JSON.stringify(result))<=262144);
- return {result,candidate:latest};
+ return {result,candidate:latest,screenshots};
 }
 
 export function createResultReviewService({db,ownerId,enabled=false}){
@@ -94,6 +98,13 @@ export function createResultReviewService({db,ownerId,enabled=false}){
  return Object.freeze({
   async capability(){if(!enabled)return false;try{return await rpc('result_review_version',{})===1;}catch{return false;}},
   async read(jobId){return {result:(await inspect(jobId)).result};},
+  async screenshot(jobId,body){
+   fields(body,['version','attempt','width','hash']);fields(body.version,['stateVersion','sourceHash','candidateHash','evidenceHash']);
+   need(Number.isInteger(body.attempt)&&body.attempt>=0&&body.attempt<=2&&[390,1440].includes(body.width)&&sha(body.hash),'INVALID_REQUEST',400);
+   const {result,screenshots}=await inspect(jobId);matches(body.version,result.version);
+   const image=screenshots.find(s=>s.attempt===body.attempt&&s.width===body.width&&s.hash===body.hash);need(image,'NOT_FOUND',404);
+   return {screenshot:{...image,mimeType:'image/jpeg'}};
+  },
   async file(jobId,body){
    fields(body,['version','path']);fields(body.version,['stateVersion','sourceHash','candidateHash','evidenceHash']);
    try{relativeFile(body.path);}catch{throw new StudioError('INVALID_REQUEST');}

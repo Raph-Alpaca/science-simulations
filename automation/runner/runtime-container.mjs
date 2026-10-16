@@ -4,6 +4,7 @@ import path from 'node:path';
 import {readFile} from 'node:fs/promises';
 import {prepareRuntimeBundle,RuntimeCheckError} from './runtime-contract.mjs';
 import {assertRuntimeReport} from '../../packages/contracts/runtime-report.js';
+import {SCREENSHOT_LIMITS} from '../../packages/contracts/runtime-screenshot.js';
 import {checkedSeccomp} from './container/build-context.mjs';
 import {startupPublicKey as checkStartupKey,assertStartupProbe} from './startup-diagnostic.mjs';
 import {preparePublicationBundle,assertPublicationRuntimeReport} from '../publish/publication-packet.mjs';
@@ -70,7 +71,7 @@ export async function runRuntimeContainer(packet,{image,signal,command=dockerCom
   need(/^[a-f0-9]{64}$/.test(id),'CONTAINER_ID_INVALID');
   stage='inspect';const state=JSON.parse(await command(['inspect',id],{signal}));
   need(assertContainerConfiguration(state,{image,profile,probe,startupProbe,publication})===id,'CONTAINER_ID_INVALID');
-  stage='execute';const raw=await command(['start','--attach','--interactive',id],{input:probe?'':JSON.stringify(startupProbe?{publicKey:startupPublicKey}:packet),signal,timeout:CONTAINER_LIMITS.seconds*1000});
+  stage='execute';const raw=await command(['start','--attach','--interactive',id],{input:probe?'':JSON.stringify(startupProbe?{publicKey:startupPublicKey}:packet),signal,timeout:CONTAINER_LIMITS.seconds*1000,maxBytes:probe||startupProbe||publication?64000:SCREENSHOT_LIMITS.reportBytes});
   stage='report';
   if(probe){result=JSON.parse(raw);need(JSON.stringify(result)==='{"isolated":true}','CONTAINER_ISOLATION_REJECTED');}
   else if(startupProbe){result=assertStartupProbe(JSON.parse(raw));if(result.sealed)need(result.sealed.keyId===checkStartupKey(startupPublicKey).keyId,'CONTAINER_REPORT_MISMATCH');}

@@ -35,7 +35,7 @@ test('candidate enters only stdin after inspected isolation; successful report r
  const docker=mock();assert.deepEqual(await runRuntimeContainer(packet,{image,command:docker.command}),report);
  assert.deepEqual(docker.calls.map(c=>c.args[0]),['create','inspect','start','rm']);
  assert.equal(JSON.stringify(docker.calls.map(c=>c.args)).includes('검사용 도형'),false);
- const start=docker.calls[2];assert.deepEqual(JSON.parse(start.options.input),packet);assert.equal(start.options.timeout,65000);
+ const start=docker.calls[2];assert.deepEqual(JSON.parse(start.options.input),packet);assert.equal(start.options.timeout,65000);assert.equal(start.options.maxBytes,640000);
  const remove=docker.calls[3];assert.match(remove.args[2],/^studio-verify-/);assert.equal(remove.options.signal,undefined);
  assert.deepEqual(dockerEnvironment({PATH:'trusted',HOME:'home',OPENAI_API_KEY:'private',STUDIO_TRANSFER_KEY:'private',ACTIONS_ID_TOKEN_REQUEST_TOKEN:'private',NODE_OPTIONS:'injected',DOCKER_HOST:'remote',HTTPS_PROXY:'proxy'}),{PATH:'trusted',HOME:'home'});
 });

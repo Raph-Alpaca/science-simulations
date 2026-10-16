@@ -6,6 +6,8 @@ import {createWorkerHttpHandler,WORKER_BODY_LIMIT} from '../../apps/studio/lib/w
 import {createBoundedResponses,PRICING} from '../../automation/runner/bounded-responses.mjs';
 import {executeStoredPipeline} from '../../automation/runner/worker-store.mjs';
 import {runtimeSubmission} from '../../packages/contracts/runtime-report.js';
+import {instructionsForRole,roleReviewScope,ROLE_STAGES,ROLE_POLICY_VERSION} from '../../automation/runner/role-instructions.mjs';
+import {hash} from '../../packages/contracts/content-source.js';
 import {setup,token,sha} from './worker-http-fixture.mjs';
 test('signed worker HTTP request binds to one job; replay/cross-job and browser requests fail',async()=>{
  const f=await setup();try{
@@ -43,7 +45,24 @@ test('full synthetic pipeline uses signed HTTP for budget/evidence and a distinc
   const store={
    async authorize({sourceSnapshotHash}){assert.equal(sourceSnapshotHash,source.sourceSnapshotHash);return {sourceSnapshotHash,aiProcessingAllowed:true,publicInputApproved:true};},
    async claimRun(){return (await f.post('claim')).claimed;},async checkpoint(){return (await f.post('checkpoint')).active;},
-   async record(event){if(event.kind==='runtime_evidence'){assert.deepEqual(event.evidence,reported);return;}return f.post('evidence',{event});},
+   async record(event){
+    if(event.kind==='runtime_evidence'){assert.deepEqual(event.evidence,reported);return;}
+    if(event.kind==='role_output'){
+     assert.equal(event.instructionsHash,hash(instructionsForRole(event.role,source.context)));
+     assert.equal(event.reviewScope,roleReviewScope(source.context));
+     assert.equal(event.rolePolicyVersion,ROLE_POLICY_VERSION);assert.equal(event.reviewStage,ROLE_STAGES[event.role]);
+     if(event.role==='curriculum'){
+      for(const patch of [{reviewStage:'candidate_review'},{reviewScope:'general_concepts'},{instructionsHash:'b'.repeat(64)},{rolePolicyVersion:'unrecognized'}]){
+       const rejected=await f.request('evidence',{event:{...event,...patch}});
+       assert.equal(rejected.status,409);assert.equal((await rejected.json()).error,'WORKER_REVIEW_POLICY_MISMATCH');
+      }
+      const partial={...event};delete partial.instructionsHash;
+      assert.equal((await f.request('evidence',{event:partial})).status,400);
+      assert.equal((await f.db.query('select count(*)::int n from studio.worker_evidence')).rows[0].n,0);
+     }
+    }
+    return f.post('evidence',{event});
+   },
    async finish(result){return f.post('finish',{kind:result.kind,candidateHash:result.candidate?.candidateHash??null,reason:result.reason??null});},
   };
   const ledger={reserve:({callId,requestHash,role,maxUsdMicros})=>f.post('reserve',{callId,requestHash,role,maxUsdMicros}),settle:({callId,chargedUsdMicros,uncertain})=>f.post('settle',{callId,chargedUsdMicros,uncertain})};

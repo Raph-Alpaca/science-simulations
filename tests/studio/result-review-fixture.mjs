@@ -9,7 +9,7 @@ import {createResultReviewService} from '../../apps/studio/lib/result-review.mjs
 
 // Signed HTTP + actual local SQL; model opinions and browser measurements are
 // deliberately synthetic. No actual AI, source validation or browser execution.
-export async function resultFixture({missing=false,repair=false,finish=true,metadata=null,sources=null,sourcePreparation=null}={}){
+export async function resultFixture({missing=false,repair=false,finish=true,metadata=null,sources=null,sourcePreparation=null,screenshots=null}={}){
  const f=await setup({metadata,sources,sourcePreparation});
  try{
   await f.db.exec('reset role');await f.db.exec(await readFile('supabase/proposals/studio_result_review_v1.sql','utf8'));await f.db.exec('set role service_role');
@@ -33,6 +33,7 @@ export async function resultFixture({missing=false,repair=false,finish=true,meta
    await f.post('evidence',{event:{jobId:f.jobId,sourceSnapshotHash:f.sourceSnapshotHash,kind:'candidate',attempt,candidateHash:candidate.candidateHash,manifest:candidate.manifest}});
    const report={candidateHash:candidate.candidateHash,sourceSnapshotHash:f.sourceSnapshotHash,baselineSha:sha,attempt,checks:{runtime:failing?'fail':'pass',contract:'pass'},checksExecuted:['contract','runtime'],issues:failing?['RESET_FAILED']:[],
     details:{contractVersion:'browser-v1',browserVersion:'150.0.0.0',browserStopped:true,durationMs:100,requests:12,observations:failing?[]:[...[390,1440].map(width=>({width,controlChanged:true,outputChanged:true,viewChanged:true,resetRestored:true,initialViewHash:'a'.repeat(64),changedViewHash:'b'.repeat(64),webgl:{width:320,height:240,lost:false},cameraChanged:true,alternativeVisible:true})),{width:390,webglUnavailable:true,alternativeVisible:true}]}};
+   if(screenshots)report.details.screenshots=screenshots;
    await f.post('runtime-report',report,{role:'report'});
    const review={status:failing?'fail':'pass',candidateHash:candidate.candidateHash,checks:{science:'pass',learning:failing?'fail':'pass',curriculum:'pass',textbook:'pass'},findings:['합성 독립 검토 <img src=x onerror="globalThis.RESULT_CODE_EXECUTED=true">'],blockingIssues:failing?['초기화 동작을 수정하세요.']:[]};
    await output('reviewer',review);

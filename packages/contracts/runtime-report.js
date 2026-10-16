@@ -1,4 +1,5 @@
 import {RUNTIME_CONTRACT} from './runtime-spec.js';
+import {assertRuntimeScreenshot} from './runtime-screenshot.js';
 const need=value=>{if(!value)throw new Error('RUNTIME_REPORT_INVALID');};
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const exact=(value,keys)=>need(value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===[...keys].sort().join(','));
@@ -12,7 +13,13 @@ export function assertRuntimeReport(report,generationKind){
  exact(report.checks,['runtime','contract']);need(Object.values(report.checks).every(s=>['pass','fail','not_run'].includes(s))&&list(report.checksExecuted)&&list(report.issues));
  need(new Set(report.checksExecuted).size===report.checksExecuted.length&&report.checksExecuted.every(s=>['runtime','contract'].includes(s)));
  for(const key of ['runtime','contract'])if(report.checks[key]!=='not_run')need(report.checksExecuted.includes(key));
- const d=report.details;exact(d,['contractVersion','browserVersion','browserStopped','durationMs','requests','observations']);
+ const d=report.details;exact(d,['contractVersion','browserVersion','browserStopped','durationMs','requests','observations',...(Object.hasOwn(d??{},'screenshots')?['screenshots']:[])]);
+ if(d.screenshots!==undefined){
+  need(Array.isArray(d.screenshots)&&d.screenshots.length<=2);
+  for(const shot of d.screenshots)assertRuntimeScreenshot(shot);
+  need(new Set(d.screenshots.map(s=>s.width)).size===d.screenshots.length);
+  need(d.screenshots.length===0||report.checksExecuted.includes('runtime')&&d.browserVersion!==null);
+ }
  need(typeof d.browserStopped==='boolean');
  need(d.contractVersion===RUNTIME_CONTRACT.version&&(d.browserVersion===null||typeof d.browserVersion==='string'&&/^\d{1,3}(?:\.\d{1,6}){1,3}$/.test(d.browserVersion)));
  need(Number.isInteger(d.durationMs)&&d.durationMs>=0&&d.durationMs<=60000&&Number.isInteger(d.requests)&&d.requests>=0&&d.requests<=201&&Array.isArray(d.observations)&&d.observations.length<=3);
@@ -36,6 +43,6 @@ export function assertRuntimeReport(report,generationKind){
 export function runtimeSubmission(result){
  const report={candidateHash:result.candidateHash,sourceSnapshotHash:result.sourceSnapshotHash,baselineSha:result.baselineSha,attempt:result.attempt,
   checks:result.checks,checksExecuted:result.checksExecuted,issues:result.issues,
-  details:{contractVersion:result.contractVersion,browserVersion:result.browserVersion??null,browserStopped:result.browserStopped,durationMs:result.durationMs,requests:result.requests??0,observations:result.observations}};
+  details:{contractVersion:result.contractVersion,browserVersion:result.browserVersion??null,browserStopped:result.browserStopped,durationMs:result.durationMs,requests:result.requests??0,observations:result.observations,...(result.screenshots?{screenshots:result.screenshots}:{})}};
  return assertRuntimeReport(report);
 }
