@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {PGlite} from '@electric-sql/pglite';
 import {hash} from '../../automation/catalog/content.mjs';
-export async function workerFixture({legacy=false,auth=false,metadata=null}={}){
+export async function workerFixture({legacy=false,auth=false,metadata=null,sources=null,sourcePreparation=null}={}){
  const db=new PGlite();
  try{
   await db.exec("create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql as $$select null::uuid$$;");
@@ -27,7 +27,7 @@ export async function workerFixture({legacy=false,auth=false,metadata=null}={}){
   const conversation=await rpc('new_conversation_v2',{p_owner:ownerId,p_title:'Synthetic worker fixture',p_request:randomUUID()});
   const meta=metadata??JSON.parse(readFileSync('content/simulations/mendel-inheritance/meta.json','utf8'));
   const input={generationKind:'interactive_3d',requirements:[{id:'R1',text:'Synthetic fixture only, no real curriculum review.'}]};
-  const context={contentId:meta.id,grade:meta.grade,unit:meta.unit,schoolYear:null,curriculumRevision:meta.curriculumRevision,config:JSON.parse(readFileSync('config/catalog.json','utf8')),sources:meta.sourceIds.map(id=>({id}))};
+  const context={contentId:meta.id,grade:meta.grade,unit:meta.unit,schoolYear:null,curriculumRevision:meta.curriculumRevision,config:JSON.parse(readFileSync('config/catalog.json','utf8')),sources:sources??meta.sourceIds.map(id=>({id})),...(sourcePreparation?{sourcePreparation}:{})};
   const inputText=JSON.stringify({input,context}),sourceSnapshotHash=hash(inputText);
   const submission={p_owner:ownerId,p_conversation:conversation.id,p_client:randomUUID(),p_job:randomUUID(),p_idempotency:randomUUID(),p_request:{schemaVersion:2,payload:{requirements:'Synthetic fixture only.'}},p_input:inputText,p_hash:sourceSnapshotHash,p_input_review:randomUUID()};
   const identity={p_job:submission.p_job,p_run:101,p_attempt:1},jobId=identity.p_job;

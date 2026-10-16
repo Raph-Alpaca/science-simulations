@@ -45,6 +45,7 @@ export default function RevisionRequest({jobId,version,feedback,disabled,realRea
    <p>기준 결과 <code>{review.revision.candidateHash.slice(0,12)}</code> · 콘텐츠 ID <code>{review.contentId}</code></p>
    <p className="preserve-lines">{review.requirements}</p>
    <SourcePreparation value={review}/>
+   {review.state!=='consumed'&&(expired||evidenceBlocked)&&<div><p className="muted">자료 확인을 마친 뒤 같은 수정 요청을 새 입력으로 준비하세요. 기존 결과·참고 자료·수정 내용은 유지하며 자료 이용과 비용을 다시 확인합니다.</p><button type="button" disabled={locked} onClick={()=>void run(()=>prepare(review.revision.feedbackId))}>자료 확인 후 수정 입력 새로 준비</button></div>}
    <details><summary>유지할 참고 자료 요약</summary>{review.sources.length?<ul>{review.sources.map((s,i)=><li key={i}><strong>{s.title||'참고 자료 '+(i+1)}</strong><p>{s.location}</p><p className="preserve-lines">{s.summary||'저장된 요약 없음'}</p></li>)}</ul>:<p>등록된 참고 자료가 없습니다.</p>}<p>출처 원문 대조 여부는 기존 기록을 따르며, 새 결과의 과학·학습 설계·실제 동작을 다시 검토합니다.</p></details>
    <p>내부 예산 한도: 월 {review.budget.monthlyLimitKrw.toLocaleString()}원·{review.budget.monthlyJobLimit}건, 이번 수정 작업 최대 {review.budget.jobLimitKrw.toLocaleString()}원. 검토와 작업 내 최대 {review.budget.maxRepairAttempts}회 수정을 포함합니다.</p>
    {expired?<p className="notice">확인 기한이 지났습니다. 수정 요청을 다시 준비해 주세요.</p>:review.state==='prepared'?<fieldset disabled={locked||evidenceBlocked}>

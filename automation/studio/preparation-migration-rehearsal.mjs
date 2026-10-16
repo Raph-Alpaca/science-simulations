@@ -33,7 +33,11 @@ try{
  stage='verify_restore';const tables=backupScope('publication-foundation');
  const before=await fingerprint(session,{tables}),saved=JSON.parse(readFileSync(join(root,'restored-fingerprint.json'),'utf8'));
  assert.equal(before.dataHash,saved.dataHash,'RESTORE_DATA_CHANGED');assert.equal(before.metadataHash,saved.metadataHash,'RESTORE_SCHEMA_CHANGED');
- assert.ok(Date.now()<deadline,'TOTAL_TIME_LIMIT');stage='apply_local';await session.sql(sql);
+ assert.ok(Date.now()<deadline,'TOTAL_TIME_LIMIT');stage='apply_local';
+ // Restored studio objects belong to postgres, as in production. Creating
+ // new objects as restore_admin would make a correct production schema
+ // falsely differ in ownership and ACL grantors during later verification.
+ await session.sql('set role postgres;');await session.sql(sql);
  stage='verify_increment';const after=await fingerprint(session,{tables});assert.equal(after.dataHash,before.dataHash,'EXISTING_DATA_CHANGED');
  const known=new Set(before.metadata.functions.map(fn=>fn.name+'|'+fn.args));
  assert.deepEqual(after.metadata.functions.filter(fn=>known.has(fn.name+'|'+fn.args)),before.metadata.functions,'EXISTING_FUNCTION_CHANGED');
