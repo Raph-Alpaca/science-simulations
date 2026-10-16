@@ -4,8 +4,8 @@ import {resultFixture} from './result-review-fixture.mjs';
 import {createInputReviewService} from '../../apps/studio/lib/input-review.mjs';
 import {createRevisionService} from '../../apps/studio/lib/revision.mjs';
 
-export async function revisionFixture(){
- const f=await resultFixture();
+export async function revisionFixture(options={}){
+ const f=await resultFixture(options);
  try{
   await f.db.exec('reset role');
   for(const name of ['studio_runner_v1','studio_input_review_v1','studio_dispatch_v1','studio_revision_v1'])await f.db.exec(await readFile('supabase/proposals/'+name+'.sql','utf8'));
